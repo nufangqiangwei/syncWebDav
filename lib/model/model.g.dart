@@ -89,6 +89,7 @@ class TablePassword extends SqfEntityTableBase {
       SqfEntityFieldBase('webKey', DbType.text),
       SqfEntityFieldBase('value', DbType.text, isNotNull: true),
       SqfEntityFieldBase('version', DbType.integer),
+      SqfEntityFieldBase('isModify', DbType.bool, defaultValue: false),
       SqfEntityFieldBase('dateCreated', DbType.datetime,
           defaultValue: DateTime.now(), minValue: DateTime.parse('1900-01-01')),
     ];
@@ -97,6 +98,58 @@ class TablePassword extends SqfEntityTableBase {
   static SqfEntityTableBase? _instance;
   static SqfEntityTableBase get getInstance {
     return _instance = _instance ?? TablePassword();
+  }
+}
+
+// Notebook TABLE
+class TableNotebook extends SqfEntityTableBase {
+  TableNotebook() {
+    // declare properties of EntityTable
+    tableName = 'notebook';
+    primaryKeyName = 'id';
+    primaryKeyType = PrimaryKeyType.integer_auto_incremental;
+    useSoftDeleting = true;
+    // when useSoftDeleting is true, creates a field named 'isDeleted' on the table, and set to '1' this field when item deleted (does not hard delete)
+
+    // declare fields
+    fields = [
+      SqfEntityFieldBase('isImportant', DbType.bool),
+      SqfEntityFieldBase('number', DbType.integer),
+      SqfEntityFieldBase('title', DbType.text),
+      SqfEntityFieldBase('description', DbType.text),
+      SqfEntityFieldBase('isModify', DbType.bool, defaultValue: false),
+      SqfEntityFieldBase('dateCreated', DbType.datetime,
+          defaultValue: DateTime.now(), minValue: DateTime.parse('1900-01-01')),
+    ];
+    super.init();
+  }
+  static SqfEntityTableBase? _instance;
+  static SqfEntityTableBase get getInstance {
+    return _instance = _instance ?? TableNotebook();
+  }
+}
+
+// SysLog TABLE
+class TableSysLog extends SqfEntityTableBase {
+  TableSysLog() {
+    // declare properties of EntityTable
+    tableName = 'sysLog';
+    primaryKeyName = 'id';
+    primaryKeyType = PrimaryKeyType.integer_auto_incremental;
+    useSoftDeleting = true;
+    // when useSoftDeleting is true, creates a field named 'isDeleted' on the table, and set to '1' this field when item deleted (does not hard delete)
+
+    // declare fields
+    fields = [
+      SqfEntityFieldBase('content', DbType.text),
+      SqfEntityFieldBase('dateCreated', DbType.datetime,
+          defaultValue: DateTime.now(), minValue: DateTime.parse('1900-01-01')),
+    ];
+    super.init();
+  }
+  static SqfEntityTableBase? _instance;
+  static SqfEntityTableBase get getInstance {
+    return _instance = _instance ?? TableSysLog();
   }
 }
 // END TABLES
@@ -113,6 +166,8 @@ class MyPasswordManage extends SqfEntityModelProvider {
       TableSysConfig.getInstance,
       TableWebSite.getInstance,
       TablePassword.getInstance,
+      TableNotebook.getInstance,
+      TableSysLog.getInstance,
     ];
 
     bundledDatabasePath = databaseModel
@@ -1948,16 +2003,17 @@ class Password extends TableBase {
       this.webKey,
       this.value,
       this.version,
+      this.isModify,
       this.dateCreated,
       this.isDeleted}) {
     _setDefaultValues();
     softDeleteActivated = true;
   }
-  Password.withFields(
-      this.webKey, this.value, this.version, this.dateCreated, this.isDeleted) {
+  Password.withFields(this.webKey, this.value, this.version, this.isModify,
+      this.dateCreated, this.isDeleted) {
     _setDefaultValues();
   }
-  Password.withId(this.id, this.webKey, this.value, this.version,
+  Password.withId(this.id, this.webKey, this.value, this.version, this.isModify,
       this.dateCreated, this.isDeleted) {
     _setDefaultValues();
   }
@@ -1976,6 +2032,10 @@ class Password extends TableBase {
     if (o['version'] != null) {
       version = int.tryParse(o['version'].toString());
     }
+    if (o['isModify'] != null) {
+      isModify =
+          o['isModify'].toString() == '1' || o['isModify'].toString() == 'true';
+    }
     if (o['dateCreated'] != null) {
       dateCreated = int.tryParse(o['dateCreated'].toString()) != null
           ? DateTime.fromMillisecondsSinceEpoch(
@@ -1991,6 +2051,7 @@ class Password extends TableBase {
   String? webKey;
   String? value;
   int? version;
+  bool? isModify;
   DateTime? dateCreated;
   bool? isDeleted;
 
@@ -2017,6 +2078,11 @@ class Password extends TableBase {
     }
     if (version != null || !forView) {
       map['version'] = version;
+    }
+    if (isModify != null) {
+      map['isModify'] = forQuery ? (isModify! ? 1 : 0) : isModify;
+    } else if (isModify != null || !forView) {
+      map['isModify'] = null;
     }
     if (dateCreated != null) {
       map['dateCreated'] = forJson
@@ -2049,6 +2115,11 @@ class Password extends TableBase {
     }
     if (version != null || !forView) {
       map['version'] = version;
+    }
+    if (isModify != null) {
+      map['isModify'] = forQuery ? (isModify! ? 1 : 0) : isModify;
+    } else if (isModify != null || !forView) {
+      map['isModify'] = null;
     }
     if (dateCreated != null) {
       map['dateCreated'] = forJson
@@ -2084,6 +2155,7 @@ class Password extends TableBase {
       webKey,
       value,
       version,
+      isModify,
       dateCreated != null ? dateCreated!.millisecondsSinceEpoch : null,
       isDeleted
     ];
@@ -2096,6 +2168,7 @@ class Password extends TableBase {
       webKey,
       value,
       version,
+      isModify,
       dateCreated != null ? dateCreated!.millisecondsSinceEpoch : null,
       isDeleted
     ];
@@ -2246,12 +2319,13 @@ class Password extends TableBase {
   Future<int?> upsert({bool ignoreBatch = true}) async {
     try {
       final result = await _mnPassword.rawInsert(
-          'INSERT OR REPLACE INTO password (id, webKey, value, version, dateCreated,isDeleted)  VALUES (?,?,?,?,?,?)',
+          'INSERT OR REPLACE INTO password (id, webKey, value, version, isModify, dateCreated,isDeleted)  VALUES (?,?,?,?,?,?,?)',
           [
             id,
             webKey,
             value,
             version,
+            isModify,
             dateCreated != null ? dateCreated!.millisecondsSinceEpoch : null,
             isDeleted
           ],
@@ -2280,7 +2354,7 @@ class Password extends TableBase {
   Future<BoolCommitResult> upsertAll(List<Password> passwords,
       {bool? exclusive, bool? noResult, bool? continueOnError}) async {
     final results = await _mnPassword.rawInsertAll(
-        'INSERT OR REPLACE INTO password (id, webKey, value, version, dateCreated,isDeleted)  VALUES (?,?,?,?,?,?)',
+        'INSERT OR REPLACE INTO password (id, webKey, value, version, isModify, dateCreated,isDeleted)  VALUES (?,?,?,?,?,?,?)',
         passwords,
         exclusive: exclusive,
         noResult: noResult,
@@ -2333,6 +2407,7 @@ class Password extends TableBase {
   }
 
   void _setDefaultValues() {
+    isModify = isModify ?? false;
     dateCreated = dateCreated ?? DateTime.now();
     isDeleted = isDeleted ?? false;
   }
@@ -2559,6 +2634,11 @@ class PasswordFilterBuilder extends ConjunctionBase {
   PasswordField? _version;
   PasswordField get version {
     return _version = _setField(_version, 'version', DbType.integer);
+  }
+
+  PasswordField? _isModify;
+  PasswordField get isModify {
+    return _isModify = _setField(_isModify, 'isModify', DbType.bool);
   }
 
   PasswordField? _dateCreated;
@@ -2822,6 +2902,12 @@ class PasswordFields {
         _fVersion ?? SqlSyntax.setField(_fVersion, 'version', DbType.integer);
   }
 
+  static TableField? _fIsModify;
+  static TableField get isModify {
+    return _fIsModify =
+        _fIsModify ?? SqlSyntax.setField(_fIsModify, 'isModify', DbType.bool);
+  }
+
   static TableField? _fDateCreated;
   static TableField get dateCreated {
     return _fDateCreated = _fDateCreated ??
@@ -2849,6 +2935,1827 @@ class PasswordManager extends SqfEntityProvider {
 }
 
 //endregion PasswordManager
+// region Notebook
+class Notebook extends TableBase {
+  Notebook(
+      {this.id,
+      this.isImportant,
+      this.number,
+      this.title,
+      this.description,
+      this.isModify,
+      this.dateCreated,
+      this.isDeleted}) {
+    _setDefaultValues();
+    softDeleteActivated = true;
+  }
+  Notebook.withFields(this.isImportant, this.number, this.title,
+      this.description, this.isModify, this.dateCreated, this.isDeleted) {
+    _setDefaultValues();
+  }
+  Notebook.withId(this.id, this.isImportant, this.number, this.title,
+      this.description, this.isModify, this.dateCreated, this.isDeleted) {
+    _setDefaultValues();
+  }
+  // fromMap v2.0
+  Notebook.fromMap(Map<String, dynamic> o, {bool setDefaultValues = true}) {
+    if (setDefaultValues) {
+      _setDefaultValues();
+    }
+    id = int.tryParse(o['id'].toString());
+    if (o['isImportant'] != null) {
+      isImportant = o['isImportant'].toString() == '1' ||
+          o['isImportant'].toString() == 'true';
+    }
+    if (o['number'] != null) {
+      number = int.tryParse(o['number'].toString());
+    }
+    if (o['title'] != null) {
+      title = o['title'].toString();
+    }
+    if (o['description'] != null) {
+      description = o['description'].toString();
+    }
+    if (o['isModify'] != null) {
+      isModify =
+          o['isModify'].toString() == '1' || o['isModify'].toString() == 'true';
+    }
+    if (o['dateCreated'] != null) {
+      dateCreated = int.tryParse(o['dateCreated'].toString()) != null
+          ? DateTime.fromMillisecondsSinceEpoch(
+              int.tryParse(o['dateCreated'].toString())!)
+          : DateTime.tryParse(o['dateCreated'].toString());
+    }
+    isDeleted = o['isDeleted'] != null
+        ? o['isDeleted'] == 1 || o['isDeleted'] == true
+        : null;
+  }
+  // FIELDS (Notebook)
+  int? id;
+  bool? isImportant;
+  int? number;
+  String? title;
+  String? description;
+  bool? isModify;
+  DateTime? dateCreated;
+  bool? isDeleted;
+
+  // end FIELDS (Notebook)
+
+  static const bool _softDeleteActivated = true;
+  NotebookManager? __mnNotebook;
+
+  NotebookManager get _mnNotebook {
+    return __mnNotebook = __mnNotebook ?? NotebookManager();
+  }
+
+  // METHODS
+  @override
+  Map<String, dynamic> toMap(
+      {bool forQuery = false, bool forJson = false, bool forView = false}) {
+    final map = <String, dynamic>{};
+    map['id'] = id;
+    if (isImportant != null) {
+      map['isImportant'] = forQuery ? (isImportant! ? 1 : 0) : isImportant;
+    } else if (isImportant != null || !forView) {
+      map['isImportant'] = null;
+    }
+    if (number != null || !forView) {
+      map['number'] = number;
+    }
+    if (title != null || !forView) {
+      map['title'] = title;
+    }
+    if (description != null || !forView) {
+      map['description'] = description;
+    }
+    if (isModify != null) {
+      map['isModify'] = forQuery ? (isModify! ? 1 : 0) : isModify;
+    } else if (isModify != null || !forView) {
+      map['isModify'] = null;
+    }
+    if (dateCreated != null) {
+      map['dateCreated'] = forJson
+          ? dateCreated!.toString()
+          : forQuery
+              ? dateCreated!.millisecondsSinceEpoch
+              : dateCreated;
+    } else if (dateCreated != null || !forView) {
+      map['dateCreated'] = null;
+    }
+    if (isDeleted != null) {
+      map['isDeleted'] = forQuery ? (isDeleted! ? 1 : 0) : isDeleted;
+    }
+
+    return map;
+  }
+
+  @override
+  Future<Map<String, dynamic>> toMapWithChildren(
+      [bool forQuery = false,
+      bool forJson = false,
+      bool forView = false]) async {
+    final map = <String, dynamic>{};
+    map['id'] = id;
+    if (isImportant != null) {
+      map['isImportant'] = forQuery ? (isImportant! ? 1 : 0) : isImportant;
+    } else if (isImportant != null || !forView) {
+      map['isImportant'] = null;
+    }
+    if (number != null || !forView) {
+      map['number'] = number;
+    }
+    if (title != null || !forView) {
+      map['title'] = title;
+    }
+    if (description != null || !forView) {
+      map['description'] = description;
+    }
+    if (isModify != null) {
+      map['isModify'] = forQuery ? (isModify! ? 1 : 0) : isModify;
+    } else if (isModify != null || !forView) {
+      map['isModify'] = null;
+    }
+    if (dateCreated != null) {
+      map['dateCreated'] = forJson
+          ? dateCreated!.toString()
+          : forQuery
+              ? dateCreated!.millisecondsSinceEpoch
+              : dateCreated;
+    } else if (dateCreated != null || !forView) {
+      map['dateCreated'] = null;
+    }
+    if (isDeleted != null) {
+      map['isDeleted'] = forQuery ? (isDeleted! ? 1 : 0) : isDeleted;
+    }
+
+    return map;
+  }
+
+  /// This method returns Json String [Notebook]
+  @override
+  String toJson() {
+    return json.encode(toMap(forJson: true));
+  }
+
+  /// This method returns Json String [Notebook]
+  @override
+  Future<String> toJsonWithChilds() async {
+    return json.encode(await toMapWithChildren(false, true));
+  }
+
+  @override
+  List<dynamic> toArgs() {
+    return [
+      isImportant,
+      number,
+      title,
+      description,
+      isModify,
+      dateCreated != null ? dateCreated!.millisecondsSinceEpoch : null,
+      isDeleted
+    ];
+  }
+
+  @override
+  List<dynamic> toArgsWithIds() {
+    return [
+      id,
+      isImportant,
+      number,
+      title,
+      description,
+      isModify,
+      dateCreated != null ? dateCreated!.millisecondsSinceEpoch : null,
+      isDeleted
+    ];
+  }
+
+  static Future<List<Notebook>?> fromWebUrl(Uri uri,
+      {Map<String, String>? headers}) async {
+    try {
+      final response = await http.get(uri, headers: headers);
+      return await fromJson(response.body);
+    } catch (e) {
+      debugPrint(
+          'SQFENTITY ERROR Notebook.fromWebUrl: ErrorMessage: ${e.toString()}');
+      return null;
+    }
+  }
+
+  Future<http.Response> postUrl(Uri uri, {Map<String, String>? headers}) {
+    return http.post(uri, headers: headers, body: toJson());
+  }
+
+  static Future<List<Notebook>> fromJson(String jsonBody) async {
+    final Iterable list = await json.decode(jsonBody) as Iterable;
+    var objList = <Notebook>[];
+    try {
+      objList = list
+          .map((notebook) => Notebook.fromMap(notebook as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint(
+          'SQFENTITY ERROR Notebook.fromJson: ErrorMessage: ${e.toString()}');
+    }
+    return objList;
+  }
+
+  static Future<List<Notebook>> fromMapList(List<dynamic> data,
+      {bool preload = false,
+      List<String>? preloadFields,
+      bool loadParents = false,
+      List<String>? loadedFields,
+      bool setDefaultValues = true}) async {
+    final List<Notebook> objList = <Notebook>[];
+    loadedFields = loadedFields ?? [];
+    for (final map in data) {
+      final obj = Notebook.fromMap(map as Map<String, dynamic>,
+          setDefaultValues: setDefaultValues);
+
+      objList.add(obj);
+    }
+    return objList;
+  }
+
+  /// returns Notebook by ID if exist, otherwise returns null
+  /// Primary Keys: int? id
+  /// bool preload: if true, loads all related child objects (Set preload to true if you want to load all fields related to child or parent)
+  /// ex: getById(preload:true) -> Loads all related objects
+  /// List<String> preloadFields: specify the fields you want to preload (preload parameter's value should also be "true")
+  /// ex: getById(preload:true, preloadFields:['plField1','plField2'... etc])  -> Loads only certain fields what you specified
+  /// bool loadParents: if true, loads all parent objects until the object has no parent
+
+  /// <returns>returns [Notebook] if exist, otherwise returns null
+  Future<Notebook?> getById(int? id,
+      {bool preload = false,
+      List<String>? preloadFields,
+      bool loadParents = false,
+      List<String>? loadedFields}) async {
+    if (id == null) {
+      return null;
+    }
+    Notebook? obj;
+    final data = await _mnNotebook.getById([id]);
+    if (data.length != 0) {
+      obj = Notebook.fromMap(data[0] as Map<String, dynamic>);
+    } else {
+      obj = null;
+    }
+    return obj;
+  }
+
+  /// Saves the (Notebook) object. If the id field is null, saves as a new record and returns new id, if id is not null then updates record
+  /// ignoreBatch = true as a default. Set ignoreBatch to false if you run more than one save() operation those are between batchStart and batchCommit
+  /// <returns>Returns id
+  @override
+  Future<int?> save({bool ignoreBatch = true}) async {
+    if (id == null || id == 0) {
+      id = await _mnNotebook.insert(this, ignoreBatch);
+    } else {
+      await _mnNotebook.update(this);
+    }
+
+    return id;
+  }
+
+  /// Saves the (Notebook) object. If the id field is null, saves as a new record and returns new id, if id is not null then updates record
+  /// ignoreBatch = true as a default. Set ignoreBatch to false if you run more than one save() operation those are between batchStart and batchCommit
+  /// <returns>Returns id
+  @override
+  Future<int?> saveOrThrow({bool ignoreBatch = true}) async {
+    if (id == null || id == 0) {
+      id = await _mnNotebook.insertOrThrow(this, ignoreBatch);
+
+      isInsert = true;
+    } else {
+      // id= await _upsert(); // removed in sqfentity_gen 1.3.0+6
+      await _mnNotebook.updateOrThrow(this);
+    }
+
+    return id;
+  }
+
+  /// saveAs Notebook. Returns a new Primary Key value of Notebook
+
+  /// <returns>Returns a new Primary Key value of Notebook
+  @override
+  Future<int?> saveAs({bool ignoreBatch = true}) async {
+    id = null;
+
+    return save(ignoreBatch: ignoreBatch);
+  }
+
+  /// saveAll method saves the sent List<Notebook> as a bulk in one transaction
+  /// Returns a <List<BoolResult>>
+  static Future<List<dynamic>> saveAll(List<Notebook> notebooks,
+      {bool? exclusive, bool? noResult, bool? continueOnError}) async {
+    List<dynamic>? result = [];
+    // If there is no open transaction, start one
+    final isStartedBatch = await MyPasswordManage().batchStart();
+    for (final obj in notebooks) {
+      await obj.save(ignoreBatch: false);
+    }
+    if (!isStartedBatch) {
+      result = await MyPasswordManage().batchCommit(
+          exclusive: exclusive,
+          noResult: noResult,
+          continueOnError: continueOnError);
+      for (int i = 0; i < notebooks.length; i++) {
+        if (notebooks[i].id == null) {
+          notebooks[i].id = result![i] as int;
+        }
+      }
+    }
+    return result!;
+  }
+
+  /// Updates if the record exists, otherwise adds a new row
+  /// <returns>Returns id
+  @override
+  Future<int?> upsert({bool ignoreBatch = true}) async {
+    try {
+      final result = await _mnNotebook.rawInsert(
+          'INSERT OR REPLACE INTO notebook (id, isImportant, number, title, description, isModify, dateCreated,isDeleted)  VALUES (?,?,?,?,?,?,?,?)',
+          [
+            id,
+            isImportant,
+            number,
+            title,
+            description,
+            isModify,
+            dateCreated != null ? dateCreated!.millisecondsSinceEpoch : null,
+            isDeleted
+          ],
+          ignoreBatch);
+      if (result! > 0) {
+        saveResult = BoolResult(
+            success: true,
+            successMessage: 'Notebook id=$id updated successfully');
+      } else {
+        saveResult = BoolResult(
+            success: false, errorMessage: 'Notebook id=$id did not update');
+      }
+      return id;
+    } catch (e) {
+      saveResult = BoolResult(
+          success: false,
+          errorMessage: 'Notebook Save failed. Error: ${e.toString()}');
+      return null;
+    }
+  }
+
+  /// inserts or replaces the sent List<<Notebook>> as a bulk in one transaction.
+  /// upsertAll() method is faster then saveAll() method. upsertAll() should be used when you are sure that the primary key is greater than zero
+  /// Returns a BoolCommitResult
+  @override
+  Future<BoolCommitResult> upsertAll(List<Notebook> notebooks,
+      {bool? exclusive, bool? noResult, bool? continueOnError}) async {
+    final results = await _mnNotebook.rawInsertAll(
+        'INSERT OR REPLACE INTO notebook (id, isImportant, number, title, description, isModify, dateCreated,isDeleted)  VALUES (?,?,?,?,?,?,?,?)',
+        notebooks,
+        exclusive: exclusive,
+        noResult: noResult,
+        continueOnError: continueOnError);
+    return results;
+  }
+
+  /// Deletes Notebook
+
+  /// <returns>BoolResult res.success= true (Deleted), false (Could not be deleted)
+  @override
+  Future<BoolResult> delete([bool hardDelete = false]) async {
+    debugPrint('SQFENTITIY: delete Notebook invoked (id=$id)');
+    if (!_softDeleteActivated || hardDelete || isDeleted!) {
+      return _mnNotebook
+          .delete(QueryParams(whereString: 'id=?', whereArguments: [id]));
+    } else {
+      return _mnNotebook.updateBatch(
+          QueryParams(whereString: 'id=?', whereArguments: [id]),
+          {'isDeleted': 1});
+    }
+  }
+
+  /// Recover Notebook
+
+  /// <returns>BoolResult res.success=Recovered, not res.success=Can not recovered
+  @override
+  Future<BoolResult> recover([bool recoverChilds = true]) async {
+    debugPrint('SQFENTITIY: recover Notebook invoked (id=$id)');
+    {
+      return _mnNotebook.updateBatch(
+          QueryParams(whereString: 'id=?', whereArguments: [id]),
+          {'isDeleted': 0});
+    }
+  }
+
+  @override
+  NotebookFilterBuilder select(
+      {List<String>? columnsToSelect, bool? getIsDeleted}) {
+    return NotebookFilterBuilder(this, getIsDeleted)
+      ..qparams.selectColumns = columnsToSelect;
+  }
+
+  @override
+  NotebookFilterBuilder distinct(
+      {List<String>? columnsToSelect, bool? getIsDeleted}) {
+    return NotebookFilterBuilder(this, getIsDeleted)
+      ..qparams.selectColumns = columnsToSelect
+      ..qparams.distinct = true;
+  }
+
+  void _setDefaultValues() {
+    isModify = isModify ?? false;
+    dateCreated = dateCreated ?? DateTime.now();
+    isDeleted = isDeleted ?? false;
+  }
+
+  @override
+  void rollbackPk() {
+    if (isInsert == true) {
+      id = null;
+    }
+  }
+
+  // END METHODS
+  // BEGIN CUSTOM CODE
+  /*
+      you can define customCode property of your SqfEntityTable constant. For example:
+      const tablePerson = SqfEntityTable(
+      tableName: 'person',
+      primaryKeyName: 'id',
+      primaryKeyType: PrimaryKeyType.integer_auto_incremental,
+      fields: [
+        SqfEntityField('firstName', DbType.text),
+        SqfEntityField('lastName', DbType.text),
+      ],
+      customCode: '''
+       String fullName()
+       { 
+         return '$firstName $lastName';
+       }
+      ''');
+     */
+  // END CUSTOM CODE
+}
+// endregion notebook
+
+// region NotebookField
+class NotebookField extends FilterBase {
+  NotebookField(NotebookFilterBuilder notebookFB) : super(notebookFB);
+
+  @override
+  NotebookFilterBuilder equals(dynamic pValue) {
+    return super.equals(pValue) as NotebookFilterBuilder;
+  }
+
+  @override
+  NotebookFilterBuilder equalsOrNull(dynamic pValue) {
+    return super.equalsOrNull(pValue) as NotebookFilterBuilder;
+  }
+
+  @override
+  NotebookFilterBuilder isNull() {
+    return super.isNull() as NotebookFilterBuilder;
+  }
+
+  @override
+  NotebookFilterBuilder contains(dynamic pValue) {
+    return super.contains(pValue) as NotebookFilterBuilder;
+  }
+
+  @override
+  NotebookFilterBuilder startsWith(dynamic pValue) {
+    return super.startsWith(pValue) as NotebookFilterBuilder;
+  }
+
+  @override
+  NotebookFilterBuilder endsWith(dynamic pValue) {
+    return super.endsWith(pValue) as NotebookFilterBuilder;
+  }
+
+  @override
+  NotebookFilterBuilder between(dynamic pFirst, dynamic pLast) {
+    return super.between(pFirst, pLast) as NotebookFilterBuilder;
+  }
+
+  @override
+  NotebookFilterBuilder greaterThan(dynamic pValue) {
+    return super.greaterThan(pValue) as NotebookFilterBuilder;
+  }
+
+  @override
+  NotebookFilterBuilder lessThan(dynamic pValue) {
+    return super.lessThan(pValue) as NotebookFilterBuilder;
+  }
+
+  @override
+  NotebookFilterBuilder greaterThanOrEquals(dynamic pValue) {
+    return super.greaterThanOrEquals(pValue) as NotebookFilterBuilder;
+  }
+
+  @override
+  NotebookFilterBuilder lessThanOrEquals(dynamic pValue) {
+    return super.lessThanOrEquals(pValue) as NotebookFilterBuilder;
+  }
+
+  @override
+  NotebookFilterBuilder inValues(dynamic pValue) {
+    return super.inValues(pValue) as NotebookFilterBuilder;
+  }
+
+  @override
+  NotebookField get not {
+    return super.not as NotebookField;
+  }
+}
+// endregion NotebookField
+
+// region NotebookFilterBuilder
+class NotebookFilterBuilder extends ConjunctionBase {
+  NotebookFilterBuilder(Notebook obj, bool? getIsDeleted)
+      : super(obj, getIsDeleted) {
+    _mnNotebook = obj._mnNotebook;
+    _softDeleteActivated = obj.softDeleteActivated;
+  }
+
+  bool _softDeleteActivated = false;
+  NotebookManager? _mnNotebook;
+
+  /// put the sql keyword 'AND'
+  @override
+  NotebookFilterBuilder get and {
+    super.and;
+    return this;
+  }
+
+  /// put the sql keyword 'OR'
+  @override
+  NotebookFilterBuilder get or {
+    super.or;
+    return this;
+  }
+
+  /// open parentheses
+  @override
+  NotebookFilterBuilder get startBlock {
+    super.startBlock;
+    return this;
+  }
+
+  /// String whereCriteria, write raw query without 'where' keyword. Like this: 'field1 like 'test%' and field2 = 3'
+  @override
+  NotebookFilterBuilder where(String? whereCriteria, {dynamic parameterValue}) {
+    super.where(whereCriteria, parameterValue: parameterValue);
+    return this;
+  }
+
+  /// page = page number,
+  /// pagesize = row(s) per page
+  @override
+  NotebookFilterBuilder page(int page, int pagesize) {
+    super.page(page, pagesize);
+    return this;
+  }
+
+  /// int count = LIMIT
+  @override
+  NotebookFilterBuilder top(int count) {
+    super.top(count);
+    return this;
+  }
+
+  /// close parentheses
+  @override
+  NotebookFilterBuilder get endBlock {
+    super.endBlock;
+    return this;
+  }
+
+  /// argFields might be String or List<String>.
+  /// Example 1: argFields='name, date'
+  /// Example 2: argFields = ['name', 'date']
+  @override
+  NotebookFilterBuilder orderBy(dynamic argFields) {
+    super.orderBy(argFields);
+    return this;
+  }
+
+  /// argFields might be String or List<String>.
+  /// Example 1: argFields='field1, field2'
+  /// Example 2: argFields = ['field1', 'field2']
+  @override
+  NotebookFilterBuilder orderByDesc(dynamic argFields) {
+    super.orderByDesc(argFields);
+    return this;
+  }
+
+  /// argFields might be String or List<String>.
+  /// Example 1: argFields='field1, field2'
+  /// Example 2: argFields = ['field1', 'field2']
+  @override
+  NotebookFilterBuilder groupBy(dynamic argFields) {
+    super.groupBy(argFields);
+    return this;
+  }
+
+  /// argFields might be String or List<String>.
+  /// Example 1: argFields='name, date'
+  /// Example 2: argFields = ['name', 'date']
+  @override
+  NotebookFilterBuilder having(dynamic argFields) {
+    super.having(argFields);
+    return this;
+  }
+
+  NotebookField _setField(NotebookField? field, String colName, DbType dbtype) {
+    return NotebookField(this)
+      ..param = DbParameter(
+          dbType: dbtype, columnName: colName, wStartBlock: openedBlock);
+  }
+
+  NotebookField? _id;
+  NotebookField get id {
+    return _id = _setField(_id, 'id', DbType.integer);
+  }
+
+  NotebookField? _isImportant;
+  NotebookField get isImportant {
+    return _isImportant = _setField(_isImportant, 'isImportant', DbType.bool);
+  }
+
+  NotebookField? _number;
+  NotebookField get number {
+    return _number = _setField(_number, 'number', DbType.integer);
+  }
+
+  NotebookField? _title;
+  NotebookField get title {
+    return _title = _setField(_title, 'title', DbType.text);
+  }
+
+  NotebookField? _description;
+  NotebookField get description {
+    return _description = _setField(_description, 'description', DbType.text);
+  }
+
+  NotebookField? _isModify;
+  NotebookField get isModify {
+    return _isModify = _setField(_isModify, 'isModify', DbType.bool);
+  }
+
+  NotebookField? _dateCreated;
+  NotebookField get dateCreated {
+    return _dateCreated =
+        _setField(_dateCreated, 'dateCreated', DbType.datetime);
+  }
+
+  NotebookField? _isDeleted;
+  NotebookField get isDeleted {
+    return _isDeleted = _setField(_isDeleted, 'isDeleted', DbType.bool);
+  }
+
+  /// Deletes List<Notebook> bulk by query
+  ///
+  /// <returns>BoolResult res.success= true (Deleted), false (Could not be deleted)
+  @override
+  Future<BoolResult> delete([bool hardDelete = false]) async {
+    buildParameters();
+    var r = BoolResult(success: false);
+
+    if (_softDeleteActivated && !hardDelete) {
+      r = await _mnNotebook!.updateBatch(qparams, {'isDeleted': 1});
+    } else {
+      r = await _mnNotebook!.delete(qparams);
+    }
+    return r;
+  }
+
+  /// Recover List<Notebook> bulk by query
+  @override
+  Future<BoolResult> recover() async {
+    buildParameters(getIsDeleted: true);
+    debugPrint('SQFENTITIY: recover Notebook bulk invoked');
+    return _mnNotebook!.updateBatch(qparams, {'isDeleted': 0});
+  }
+
+  /// using:
+  /// update({'fieldName': Value})
+  /// fieldName must be String. Value is dynamic, it can be any of the (int, bool, String.. )
+  @override
+  Future<BoolResult> update(Map<String, dynamic> values) {
+    buildParameters();
+    if (qparams.limit! > 0 || qparams.offset! > 0) {
+      qparams.whereString =
+          'id IN (SELECT id from notebook ${qparams.whereString!.isNotEmpty ? 'WHERE ${qparams.whereString}' : ''}${qparams.limit! > 0 ? ' LIMIT ${qparams.limit}' : ''}${qparams.offset! > 0 ? ' OFFSET ${qparams.offset}' : ''})';
+    }
+    return _mnNotebook!.updateBatch(qparams, values);
+  }
+
+  /// This method always returns [Notebook] Obj if exist, otherwise returns null
+  /// bool preload: if true, loads all related child objects (Set preload to true if you want to load all fields related to child or parent)
+  /// ex: toSingle(preload:true) -> Loads all related objects
+  /// List<String> preloadFields: specify the fields you want to preload (preload parameter's value should also be "true")
+  /// ex: toSingle(preload:true, preloadFields:['plField1','plField2'... etc])  -> Loads only certain fields what you specified
+  /// bool loadParents: if true, loads all parent objects until the object has no parent
+
+  /// <returns> Notebook?
+  @override
+  Future<Notebook?> toSingle(
+      {bool preload = false,
+      List<String>? preloadFields,
+      bool loadParents = false,
+      List<String>? loadedFields}) async {
+    buildParameters(pSize: 1);
+    final objFuture = _mnNotebook!.toList(qparams);
+    final data = await objFuture;
+    Notebook? obj;
+    if (data.isNotEmpty) {
+      obj = Notebook.fromMap(data[0] as Map<String, dynamic>);
+    } else {
+      obj = null;
+    }
+    return obj;
+  }
+
+  /// This method always returns [Notebook]
+  /// bool preload: if true, loads all related child objects (Set preload to true if you want to load all fields related to child or parent)
+  /// ex: toSingle(preload:true) -> Loads all related objects
+  /// List<String> preloadFields: specify the fields you want to preload (preload parameter's value should also be "true")
+  /// ex: toSingle(preload:true, preloadFields:['plField1','plField2'... etc])  -> Loads only certain fields what you specified
+  /// bool loadParents: if true, loads all parent objects until the object has no parent
+
+  /// <returns> Notebook?
+  @override
+  Future<Notebook> toSingleOrDefault(
+      {bool preload = false,
+      List<String>? preloadFields,
+      bool loadParents = false,
+      List<String>? loadedFields}) async {
+    return await toSingle(
+            preload: preload,
+            preloadFields: preloadFields,
+            loadParents: loadParents,
+            loadedFields: loadedFields) ??
+        Notebook();
+  }
+
+  /// This method returns int. [Notebook]
+  /// <returns>int
+  @override
+  Future<int> toCount([VoidCallback Function(int c)? notebookCount]) async {
+    buildParameters();
+    qparams.selectColumns = ['COUNT(1) AS CNT'];
+    final notebooksFuture = await _mnNotebook!.toList(qparams);
+    final int count = notebooksFuture[0]['CNT'] as int;
+    if (notebookCount != null) {
+      notebookCount(count);
+    }
+    return count;
+  }
+
+  /// This method returns List<Notebook> [Notebook]
+  /// bool preload: if true, loads all related child objects (Set preload to true if you want to load all fields related to child or parent)
+  /// ex: toList(preload:true) -> Loads all related objects
+  /// List<String> preloadFields: specify the fields you want to preload (preload parameter's value should also be "true")
+  /// ex: toList(preload:true, preloadFields:['plField1','plField2'... etc])  -> Loads only certain fields what you specified
+  /// bool loadParents: if true, loads all parent objects until the object has no parent
+
+  /// <returns>List<Notebook>
+  @override
+  Future<List<Notebook>> toList(
+      {bool preload = false,
+      List<String>? preloadFields,
+      bool loadParents = false,
+      List<String>? loadedFields}) async {
+    final data = await toMapList();
+    final List<Notebook> notebooksData = await Notebook.fromMapList(data,
+        preload: preload,
+        preloadFields: preloadFields,
+        loadParents: loadParents,
+        loadedFields: loadedFields,
+        setDefaultValues: qparams.selectColumns == null);
+    return notebooksData;
+  }
+
+  /// This method returns Json String [Notebook]
+  @override
+  Future<String> toJson() async {
+    final list = <dynamic>[];
+    final data = await toList();
+    for (var o in data) {
+      list.add(o.toMap(forJson: true));
+    }
+    return json.encode(list);
+  }
+
+  /// This method returns Json String. [Notebook]
+  @override
+  Future<String> toJsonWithChilds() async {
+    final list = <dynamic>[];
+    final data = await toList();
+    for (var o in data) {
+      list.add(await o.toMapWithChildren(false, true));
+    }
+    return json.encode(list);
+  }
+
+  /// This method returns List<dynamic>. [Notebook]
+  /// <returns>List<dynamic>
+  @override
+  Future<List<dynamic>> toMapList() async {
+    buildParameters();
+    return await _mnNotebook!.toList(qparams);
+  }
+
+  /// This method returns Primary Key List SQL and Parameters retVal = Map<String,dynamic>. [Notebook]
+  /// retVal['sql'] = SQL statement string, retVal['args'] = whereArguments List<dynamic>;
+  /// <returns>List<String>
+  @override
+  Map<String, dynamic> toListPrimaryKeySQL([bool buildParams = true]) {
+    final Map<String, dynamic> _retVal = <String, dynamic>{};
+    if (buildParams) {
+      buildParameters();
+    }
+    _retVal['sql'] = 'SELECT `id` FROM notebook WHERE ${qparams.whereString}';
+    _retVal['args'] = qparams.whereArguments;
+    return _retVal;
+  }
+
+  /// This method returns Primary Key List<int>.
+  /// <returns>List<int>
+  @override
+  Future<List<int>> toListPrimaryKey([bool buildParams = true]) async {
+    if (buildParams) {
+      buildParameters();
+    }
+    final List<int> idData = <int>[];
+    qparams.selectColumns = ['id'];
+    final idFuture = await _mnNotebook!.toList(qparams);
+
+    final int count = idFuture.length;
+    for (int i = 0; i < count; i++) {
+      idData.add(idFuture[i]['id'] as int);
+    }
+    return idData;
+  }
+
+  /// Returns List<dynamic> for selected columns. Use this method for 'groupBy' with min,max,avg..  [Notebook]
+  /// Sample usage: (see EXAMPLE 4.2 at https://github.com/hhtokpinar/sqfEntity#group-by)
+  @override
+  Future<List<dynamic>> toListObject() async {
+    buildParameters();
+
+    final objectFuture = _mnNotebook!.toList(qparams);
+
+    final List<dynamic> objectsData = <dynamic>[];
+    final data = await objectFuture;
+    final int count = data.length;
+    for (int i = 0; i < count; i++) {
+      objectsData.add(data[i]);
+    }
+    return objectsData;
+  }
+
+  /// Returns List<String> for selected first column
+  /// Sample usage: await Notebook.select(columnsToSelect: ['columnName']).toListString()
+  @override
+  Future<List<String>> toListString(
+      [VoidCallback Function(List<String> o)? listString]) async {
+    buildParameters();
+
+    final objectFuture = _mnNotebook!.toList(qparams);
+
+    final List<String> objectsData = <String>[];
+    final data = await objectFuture;
+    final int count = data.length;
+    for (int i = 0; i < count; i++) {
+      objectsData.add(data[i][qparams.selectColumns![0]].toString());
+    }
+    if (listString != null) {
+      listString(objectsData);
+    }
+    return objectsData;
+  }
+}
+// endregion NotebookFilterBuilder
+
+// region NotebookFields
+class NotebookFields {
+  static TableField? _fId;
+  static TableField get id {
+    return _fId = _fId ?? SqlSyntax.setField(_fId, 'id', DbType.integer);
+  }
+
+  static TableField? _fIsImportant;
+  static TableField get isImportant {
+    return _fIsImportant = _fIsImportant ??
+        SqlSyntax.setField(_fIsImportant, 'isImportant', DbType.bool);
+  }
+
+  static TableField? _fNumber;
+  static TableField get number {
+    return _fNumber =
+        _fNumber ?? SqlSyntax.setField(_fNumber, 'number', DbType.integer);
+  }
+
+  static TableField? _fTitle;
+  static TableField get title {
+    return _fTitle =
+        _fTitle ?? SqlSyntax.setField(_fTitle, 'title', DbType.text);
+  }
+
+  static TableField? _fDescription;
+  static TableField get description {
+    return _fDescription = _fDescription ??
+        SqlSyntax.setField(_fDescription, 'description', DbType.text);
+  }
+
+  static TableField? _fIsModify;
+  static TableField get isModify {
+    return _fIsModify =
+        _fIsModify ?? SqlSyntax.setField(_fIsModify, 'isModify', DbType.bool);
+  }
+
+  static TableField? _fDateCreated;
+  static TableField get dateCreated {
+    return _fDateCreated = _fDateCreated ??
+        SqlSyntax.setField(_fDateCreated, 'dateCreated', DbType.datetime);
+  }
+
+  static TableField? _fIsDeleted;
+  static TableField get isDeleted {
+    return _fIsDeleted = _fIsDeleted ??
+        SqlSyntax.setField(_fIsDeleted, 'isDeleted', DbType.integer);
+  }
+}
+// endregion NotebookFields
+
+//region NotebookManager
+class NotebookManager extends SqfEntityProvider {
+  NotebookManager()
+      : super(MyPasswordManage(),
+            tableName: _tableName,
+            primaryKeyList: _primaryKeyList,
+            whereStr: _whereStr);
+  static const String _tableName = 'notebook';
+  static const List<String> _primaryKeyList = ['id'];
+  static const String _whereStr = 'id=?';
+}
+
+//endregion NotebookManager
+// region SysLog
+class SysLog extends TableBase {
+  SysLog({this.id, this.content, this.dateCreated, this.isDeleted}) {
+    _setDefaultValues();
+    softDeleteActivated = true;
+  }
+  SysLog.withFields(this.content, this.dateCreated, this.isDeleted) {
+    _setDefaultValues();
+  }
+  SysLog.withId(this.id, this.content, this.dateCreated, this.isDeleted) {
+    _setDefaultValues();
+  }
+  // fromMap v2.0
+  SysLog.fromMap(Map<String, dynamic> o, {bool setDefaultValues = true}) {
+    if (setDefaultValues) {
+      _setDefaultValues();
+    }
+    id = int.tryParse(o['id'].toString());
+    if (o['content'] != null) {
+      content = o['content'].toString();
+    }
+    if (o['dateCreated'] != null) {
+      dateCreated = int.tryParse(o['dateCreated'].toString()) != null
+          ? DateTime.fromMillisecondsSinceEpoch(
+              int.tryParse(o['dateCreated'].toString())!)
+          : DateTime.tryParse(o['dateCreated'].toString());
+    }
+    isDeleted = o['isDeleted'] != null
+        ? o['isDeleted'] == 1 || o['isDeleted'] == true
+        : null;
+  }
+  // FIELDS (SysLog)
+  int? id;
+  String? content;
+  DateTime? dateCreated;
+  bool? isDeleted;
+
+  // end FIELDS (SysLog)
+
+  static const bool _softDeleteActivated = true;
+  SysLogManager? __mnSysLog;
+
+  SysLogManager get _mnSysLog {
+    return __mnSysLog = __mnSysLog ?? SysLogManager();
+  }
+
+  // METHODS
+  @override
+  Map<String, dynamic> toMap(
+      {bool forQuery = false, bool forJson = false, bool forView = false}) {
+    final map = <String, dynamic>{};
+    map['id'] = id;
+    if (content != null || !forView) {
+      map['content'] = content;
+    }
+    if (dateCreated != null) {
+      map['dateCreated'] = forJson
+          ? dateCreated!.toString()
+          : forQuery
+              ? dateCreated!.millisecondsSinceEpoch
+              : dateCreated;
+    } else if (dateCreated != null || !forView) {
+      map['dateCreated'] = null;
+    }
+    if (isDeleted != null) {
+      map['isDeleted'] = forQuery ? (isDeleted! ? 1 : 0) : isDeleted;
+    }
+
+    return map;
+  }
+
+  @override
+  Future<Map<String, dynamic>> toMapWithChildren(
+      [bool forQuery = false,
+      bool forJson = false,
+      bool forView = false]) async {
+    final map = <String, dynamic>{};
+    map['id'] = id;
+    if (content != null || !forView) {
+      map['content'] = content;
+    }
+    if (dateCreated != null) {
+      map['dateCreated'] = forJson
+          ? dateCreated!.toString()
+          : forQuery
+              ? dateCreated!.millisecondsSinceEpoch
+              : dateCreated;
+    } else if (dateCreated != null || !forView) {
+      map['dateCreated'] = null;
+    }
+    if (isDeleted != null) {
+      map['isDeleted'] = forQuery ? (isDeleted! ? 1 : 0) : isDeleted;
+    }
+
+    return map;
+  }
+
+  /// This method returns Json String [SysLog]
+  @override
+  String toJson() {
+    return json.encode(toMap(forJson: true));
+  }
+
+  /// This method returns Json String [SysLog]
+  @override
+  Future<String> toJsonWithChilds() async {
+    return json.encode(await toMapWithChildren(false, true));
+  }
+
+  @override
+  List<dynamic> toArgs() {
+    return [
+      content,
+      dateCreated != null ? dateCreated!.millisecondsSinceEpoch : null,
+      isDeleted
+    ];
+  }
+
+  @override
+  List<dynamic> toArgsWithIds() {
+    return [
+      id,
+      content,
+      dateCreated != null ? dateCreated!.millisecondsSinceEpoch : null,
+      isDeleted
+    ];
+  }
+
+  static Future<List<SysLog>?> fromWebUrl(Uri uri,
+      {Map<String, String>? headers}) async {
+    try {
+      final response = await http.get(uri, headers: headers);
+      return await fromJson(response.body);
+    } catch (e) {
+      debugPrint(
+          'SQFENTITY ERROR SysLog.fromWebUrl: ErrorMessage: ${e.toString()}');
+      return null;
+    }
+  }
+
+  Future<http.Response> postUrl(Uri uri, {Map<String, String>? headers}) {
+    return http.post(uri, headers: headers, body: toJson());
+  }
+
+  static Future<List<SysLog>> fromJson(String jsonBody) async {
+    final Iterable list = await json.decode(jsonBody) as Iterable;
+    var objList = <SysLog>[];
+    try {
+      objList = list
+          .map((syslog) => SysLog.fromMap(syslog as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint(
+          'SQFENTITY ERROR SysLog.fromJson: ErrorMessage: ${e.toString()}');
+    }
+    return objList;
+  }
+
+  static Future<List<SysLog>> fromMapList(List<dynamic> data,
+      {bool preload = false,
+      List<String>? preloadFields,
+      bool loadParents = false,
+      List<String>? loadedFields,
+      bool setDefaultValues = true}) async {
+    final List<SysLog> objList = <SysLog>[];
+    loadedFields = loadedFields ?? [];
+    for (final map in data) {
+      final obj = SysLog.fromMap(map as Map<String, dynamic>,
+          setDefaultValues: setDefaultValues);
+
+      objList.add(obj);
+    }
+    return objList;
+  }
+
+  /// returns SysLog by ID if exist, otherwise returns null
+  /// Primary Keys: int? id
+  /// bool preload: if true, loads all related child objects (Set preload to true if you want to load all fields related to child or parent)
+  /// ex: getById(preload:true) -> Loads all related objects
+  /// List<String> preloadFields: specify the fields you want to preload (preload parameter's value should also be "true")
+  /// ex: getById(preload:true, preloadFields:['plField1','plField2'... etc])  -> Loads only certain fields what you specified
+  /// bool loadParents: if true, loads all parent objects until the object has no parent
+
+  /// <returns>returns [SysLog] if exist, otherwise returns null
+  Future<SysLog?> getById(int? id,
+      {bool preload = false,
+      List<String>? preloadFields,
+      bool loadParents = false,
+      List<String>? loadedFields}) async {
+    if (id == null) {
+      return null;
+    }
+    SysLog? obj;
+    final data = await _mnSysLog.getById([id]);
+    if (data.length != 0) {
+      obj = SysLog.fromMap(data[0] as Map<String, dynamic>);
+    } else {
+      obj = null;
+    }
+    return obj;
+  }
+
+  /// Saves the (SysLog) object. If the id field is null, saves as a new record and returns new id, if id is not null then updates record
+  /// ignoreBatch = true as a default. Set ignoreBatch to false if you run more than one save() operation those are between batchStart and batchCommit
+  /// <returns>Returns id
+  @override
+  Future<int?> save({bool ignoreBatch = true}) async {
+    if (id == null || id == 0) {
+      id = await _mnSysLog.insert(this, ignoreBatch);
+    } else {
+      await _mnSysLog.update(this);
+    }
+
+    return id;
+  }
+
+  /// Saves the (SysLog) object. If the id field is null, saves as a new record and returns new id, if id is not null then updates record
+  /// ignoreBatch = true as a default. Set ignoreBatch to false if you run more than one save() operation those are between batchStart and batchCommit
+  /// <returns>Returns id
+  @override
+  Future<int?> saveOrThrow({bool ignoreBatch = true}) async {
+    if (id == null || id == 0) {
+      id = await _mnSysLog.insertOrThrow(this, ignoreBatch);
+
+      isInsert = true;
+    } else {
+      // id= await _upsert(); // removed in sqfentity_gen 1.3.0+6
+      await _mnSysLog.updateOrThrow(this);
+    }
+
+    return id;
+  }
+
+  /// saveAs SysLog. Returns a new Primary Key value of SysLog
+
+  /// <returns>Returns a new Primary Key value of SysLog
+  @override
+  Future<int?> saveAs({bool ignoreBatch = true}) async {
+    id = null;
+
+    return save(ignoreBatch: ignoreBatch);
+  }
+
+  /// saveAll method saves the sent List<SysLog> as a bulk in one transaction
+  /// Returns a <List<BoolResult>>
+  static Future<List<dynamic>> saveAll(List<SysLog> syslogs,
+      {bool? exclusive, bool? noResult, bool? continueOnError}) async {
+    List<dynamic>? result = [];
+    // If there is no open transaction, start one
+    final isStartedBatch = await MyPasswordManage().batchStart();
+    for (final obj in syslogs) {
+      await obj.save(ignoreBatch: false);
+    }
+    if (!isStartedBatch) {
+      result = await MyPasswordManage().batchCommit(
+          exclusive: exclusive,
+          noResult: noResult,
+          continueOnError: continueOnError);
+      for (int i = 0; i < syslogs.length; i++) {
+        if (syslogs[i].id == null) {
+          syslogs[i].id = result![i] as int;
+        }
+      }
+    }
+    return result!;
+  }
+
+  /// Updates if the record exists, otherwise adds a new row
+  /// <returns>Returns id
+  @override
+  Future<int?> upsert({bool ignoreBatch = true}) async {
+    try {
+      final result = await _mnSysLog.rawInsert(
+          'INSERT OR REPLACE INTO sysLog (id, content, dateCreated,isDeleted)  VALUES (?,?,?,?)',
+          [
+            id,
+            content,
+            dateCreated != null ? dateCreated!.millisecondsSinceEpoch : null,
+            isDeleted
+          ],
+          ignoreBatch);
+      if (result! > 0) {
+        saveResult = BoolResult(
+            success: true,
+            successMessage: 'SysLog id=$id updated successfully');
+      } else {
+        saveResult = BoolResult(
+            success: false, errorMessage: 'SysLog id=$id did not update');
+      }
+      return id;
+    } catch (e) {
+      saveResult = BoolResult(
+          success: false,
+          errorMessage: 'SysLog Save failed. Error: ${e.toString()}');
+      return null;
+    }
+  }
+
+  /// inserts or replaces the sent List<<SysLog>> as a bulk in one transaction.
+  /// upsertAll() method is faster then saveAll() method. upsertAll() should be used when you are sure that the primary key is greater than zero
+  /// Returns a BoolCommitResult
+  @override
+  Future<BoolCommitResult> upsertAll(List<SysLog> syslogs,
+      {bool? exclusive, bool? noResult, bool? continueOnError}) async {
+    final results = await _mnSysLog.rawInsertAll(
+        'INSERT OR REPLACE INTO sysLog (id, content, dateCreated,isDeleted)  VALUES (?,?,?,?)',
+        syslogs,
+        exclusive: exclusive,
+        noResult: noResult,
+        continueOnError: continueOnError);
+    return results;
+  }
+
+  /// Deletes SysLog
+
+  /// <returns>BoolResult res.success= true (Deleted), false (Could not be deleted)
+  @override
+  Future<BoolResult> delete([bool hardDelete = false]) async {
+    debugPrint('SQFENTITIY: delete SysLog invoked (id=$id)');
+    if (!_softDeleteActivated || hardDelete || isDeleted!) {
+      return _mnSysLog
+          .delete(QueryParams(whereString: 'id=?', whereArguments: [id]));
+    } else {
+      return _mnSysLog.updateBatch(
+          QueryParams(whereString: 'id=?', whereArguments: [id]),
+          {'isDeleted': 1});
+    }
+  }
+
+  /// Recover SysLog
+
+  /// <returns>BoolResult res.success=Recovered, not res.success=Can not recovered
+  @override
+  Future<BoolResult> recover([bool recoverChilds = true]) async {
+    debugPrint('SQFENTITIY: recover SysLog invoked (id=$id)');
+    {
+      return _mnSysLog.updateBatch(
+          QueryParams(whereString: 'id=?', whereArguments: [id]),
+          {'isDeleted': 0});
+    }
+  }
+
+  @override
+  SysLogFilterBuilder select(
+      {List<String>? columnsToSelect, bool? getIsDeleted}) {
+    return SysLogFilterBuilder(this, getIsDeleted)
+      ..qparams.selectColumns = columnsToSelect;
+  }
+
+  @override
+  SysLogFilterBuilder distinct(
+      {List<String>? columnsToSelect, bool? getIsDeleted}) {
+    return SysLogFilterBuilder(this, getIsDeleted)
+      ..qparams.selectColumns = columnsToSelect
+      ..qparams.distinct = true;
+  }
+
+  void _setDefaultValues() {
+    dateCreated = dateCreated ?? DateTime.now();
+    isDeleted = isDeleted ?? false;
+  }
+
+  @override
+  void rollbackPk() {
+    if (isInsert == true) {
+      id = null;
+    }
+  }
+
+  // END METHODS
+  // BEGIN CUSTOM CODE
+  /*
+      you can define customCode property of your SqfEntityTable constant. For example:
+      const tablePerson = SqfEntityTable(
+      tableName: 'person',
+      primaryKeyName: 'id',
+      primaryKeyType: PrimaryKeyType.integer_auto_incremental,
+      fields: [
+        SqfEntityField('firstName', DbType.text),
+        SqfEntityField('lastName', DbType.text),
+      ],
+      customCode: '''
+       String fullName()
+       { 
+         return '$firstName $lastName';
+       }
+      ''');
+     */
+  // END CUSTOM CODE
+}
+// endregion syslog
+
+// region SysLogField
+class SysLogField extends FilterBase {
+  SysLogField(SysLogFilterBuilder syslogFB) : super(syslogFB);
+
+  @override
+  SysLogFilterBuilder equals(dynamic pValue) {
+    return super.equals(pValue) as SysLogFilterBuilder;
+  }
+
+  @override
+  SysLogFilterBuilder equalsOrNull(dynamic pValue) {
+    return super.equalsOrNull(pValue) as SysLogFilterBuilder;
+  }
+
+  @override
+  SysLogFilterBuilder isNull() {
+    return super.isNull() as SysLogFilterBuilder;
+  }
+
+  @override
+  SysLogFilterBuilder contains(dynamic pValue) {
+    return super.contains(pValue) as SysLogFilterBuilder;
+  }
+
+  @override
+  SysLogFilterBuilder startsWith(dynamic pValue) {
+    return super.startsWith(pValue) as SysLogFilterBuilder;
+  }
+
+  @override
+  SysLogFilterBuilder endsWith(dynamic pValue) {
+    return super.endsWith(pValue) as SysLogFilterBuilder;
+  }
+
+  @override
+  SysLogFilterBuilder between(dynamic pFirst, dynamic pLast) {
+    return super.between(pFirst, pLast) as SysLogFilterBuilder;
+  }
+
+  @override
+  SysLogFilterBuilder greaterThan(dynamic pValue) {
+    return super.greaterThan(pValue) as SysLogFilterBuilder;
+  }
+
+  @override
+  SysLogFilterBuilder lessThan(dynamic pValue) {
+    return super.lessThan(pValue) as SysLogFilterBuilder;
+  }
+
+  @override
+  SysLogFilterBuilder greaterThanOrEquals(dynamic pValue) {
+    return super.greaterThanOrEquals(pValue) as SysLogFilterBuilder;
+  }
+
+  @override
+  SysLogFilterBuilder lessThanOrEquals(dynamic pValue) {
+    return super.lessThanOrEquals(pValue) as SysLogFilterBuilder;
+  }
+
+  @override
+  SysLogFilterBuilder inValues(dynamic pValue) {
+    return super.inValues(pValue) as SysLogFilterBuilder;
+  }
+
+  @override
+  SysLogField get not {
+    return super.not as SysLogField;
+  }
+}
+// endregion SysLogField
+
+// region SysLogFilterBuilder
+class SysLogFilterBuilder extends ConjunctionBase {
+  SysLogFilterBuilder(SysLog obj, bool? getIsDeleted)
+      : super(obj, getIsDeleted) {
+    _mnSysLog = obj._mnSysLog;
+    _softDeleteActivated = obj.softDeleteActivated;
+  }
+
+  bool _softDeleteActivated = false;
+  SysLogManager? _mnSysLog;
+
+  /// put the sql keyword 'AND'
+  @override
+  SysLogFilterBuilder get and {
+    super.and;
+    return this;
+  }
+
+  /// put the sql keyword 'OR'
+  @override
+  SysLogFilterBuilder get or {
+    super.or;
+    return this;
+  }
+
+  /// open parentheses
+  @override
+  SysLogFilterBuilder get startBlock {
+    super.startBlock;
+    return this;
+  }
+
+  /// String whereCriteria, write raw query without 'where' keyword. Like this: 'field1 like 'test%' and field2 = 3'
+  @override
+  SysLogFilterBuilder where(String? whereCriteria, {dynamic parameterValue}) {
+    super.where(whereCriteria, parameterValue: parameterValue);
+    return this;
+  }
+
+  /// page = page number,
+  /// pagesize = row(s) per page
+  @override
+  SysLogFilterBuilder page(int page, int pagesize) {
+    super.page(page, pagesize);
+    return this;
+  }
+
+  /// int count = LIMIT
+  @override
+  SysLogFilterBuilder top(int count) {
+    super.top(count);
+    return this;
+  }
+
+  /// close parentheses
+  @override
+  SysLogFilterBuilder get endBlock {
+    super.endBlock;
+    return this;
+  }
+
+  /// argFields might be String or List<String>.
+  /// Example 1: argFields='name, date'
+  /// Example 2: argFields = ['name', 'date']
+  @override
+  SysLogFilterBuilder orderBy(dynamic argFields) {
+    super.orderBy(argFields);
+    return this;
+  }
+
+  /// argFields might be String or List<String>.
+  /// Example 1: argFields='field1, field2'
+  /// Example 2: argFields = ['field1', 'field2']
+  @override
+  SysLogFilterBuilder orderByDesc(dynamic argFields) {
+    super.orderByDesc(argFields);
+    return this;
+  }
+
+  /// argFields might be String or List<String>.
+  /// Example 1: argFields='field1, field2'
+  /// Example 2: argFields = ['field1', 'field2']
+  @override
+  SysLogFilterBuilder groupBy(dynamic argFields) {
+    super.groupBy(argFields);
+    return this;
+  }
+
+  /// argFields might be String or List<String>.
+  /// Example 1: argFields='name, date'
+  /// Example 2: argFields = ['name', 'date']
+  @override
+  SysLogFilterBuilder having(dynamic argFields) {
+    super.having(argFields);
+    return this;
+  }
+
+  SysLogField _setField(SysLogField? field, String colName, DbType dbtype) {
+    return SysLogField(this)
+      ..param = DbParameter(
+          dbType: dbtype, columnName: colName, wStartBlock: openedBlock);
+  }
+
+  SysLogField? _id;
+  SysLogField get id {
+    return _id = _setField(_id, 'id', DbType.integer);
+  }
+
+  SysLogField? _content;
+  SysLogField get content {
+    return _content = _setField(_content, 'content', DbType.text);
+  }
+
+  SysLogField? _dateCreated;
+  SysLogField get dateCreated {
+    return _dateCreated =
+        _setField(_dateCreated, 'dateCreated', DbType.datetime);
+  }
+
+  SysLogField? _isDeleted;
+  SysLogField get isDeleted {
+    return _isDeleted = _setField(_isDeleted, 'isDeleted', DbType.bool);
+  }
+
+  /// Deletes List<SysLog> bulk by query
+  ///
+  /// <returns>BoolResult res.success= true (Deleted), false (Could not be deleted)
+  @override
+  Future<BoolResult> delete([bool hardDelete = false]) async {
+    buildParameters();
+    var r = BoolResult(success: false);
+
+    if (_softDeleteActivated && !hardDelete) {
+      r = await _mnSysLog!.updateBatch(qparams, {'isDeleted': 1});
+    } else {
+      r = await _mnSysLog!.delete(qparams);
+    }
+    return r;
+  }
+
+  /// Recover List<SysLog> bulk by query
+  @override
+  Future<BoolResult> recover() async {
+    buildParameters(getIsDeleted: true);
+    debugPrint('SQFENTITIY: recover SysLog bulk invoked');
+    return _mnSysLog!.updateBatch(qparams, {'isDeleted': 0});
+  }
+
+  /// using:
+  /// update({'fieldName': Value})
+  /// fieldName must be String. Value is dynamic, it can be any of the (int, bool, String.. )
+  @override
+  Future<BoolResult> update(Map<String, dynamic> values) {
+    buildParameters();
+    if (qparams.limit! > 0 || qparams.offset! > 0) {
+      qparams.whereString =
+          'id IN (SELECT id from sysLog ${qparams.whereString!.isNotEmpty ? 'WHERE ${qparams.whereString}' : ''}${qparams.limit! > 0 ? ' LIMIT ${qparams.limit}' : ''}${qparams.offset! > 0 ? ' OFFSET ${qparams.offset}' : ''})';
+    }
+    return _mnSysLog!.updateBatch(qparams, values);
+  }
+
+  /// This method always returns [SysLog] Obj if exist, otherwise returns null
+  /// bool preload: if true, loads all related child objects (Set preload to true if you want to load all fields related to child or parent)
+  /// ex: toSingle(preload:true) -> Loads all related objects
+  /// List<String> preloadFields: specify the fields you want to preload (preload parameter's value should also be "true")
+  /// ex: toSingle(preload:true, preloadFields:['plField1','plField2'... etc])  -> Loads only certain fields what you specified
+  /// bool loadParents: if true, loads all parent objects until the object has no parent
+
+  /// <returns> SysLog?
+  @override
+  Future<SysLog?> toSingle(
+      {bool preload = false,
+      List<String>? preloadFields,
+      bool loadParents = false,
+      List<String>? loadedFields}) async {
+    buildParameters(pSize: 1);
+    final objFuture = _mnSysLog!.toList(qparams);
+    final data = await objFuture;
+    SysLog? obj;
+    if (data.isNotEmpty) {
+      obj = SysLog.fromMap(data[0] as Map<String, dynamic>);
+    } else {
+      obj = null;
+    }
+    return obj;
+  }
+
+  /// This method always returns [SysLog]
+  /// bool preload: if true, loads all related child objects (Set preload to true if you want to load all fields related to child or parent)
+  /// ex: toSingle(preload:true) -> Loads all related objects
+  /// List<String> preloadFields: specify the fields you want to preload (preload parameter's value should also be "true")
+  /// ex: toSingle(preload:true, preloadFields:['plField1','plField2'... etc])  -> Loads only certain fields what you specified
+  /// bool loadParents: if true, loads all parent objects until the object has no parent
+
+  /// <returns> SysLog?
+  @override
+  Future<SysLog> toSingleOrDefault(
+      {bool preload = false,
+      List<String>? preloadFields,
+      bool loadParents = false,
+      List<String>? loadedFields}) async {
+    return await toSingle(
+            preload: preload,
+            preloadFields: preloadFields,
+            loadParents: loadParents,
+            loadedFields: loadedFields) ??
+        SysLog();
+  }
+
+  /// This method returns int. [SysLog]
+  /// <returns>int
+  @override
+  Future<int> toCount([VoidCallback Function(int c)? syslogCount]) async {
+    buildParameters();
+    qparams.selectColumns = ['COUNT(1) AS CNT'];
+    final syslogsFuture = await _mnSysLog!.toList(qparams);
+    final int count = syslogsFuture[0]['CNT'] as int;
+    if (syslogCount != null) {
+      syslogCount(count);
+    }
+    return count;
+  }
+
+  /// This method returns List<SysLog> [SysLog]
+  /// bool preload: if true, loads all related child objects (Set preload to true if you want to load all fields related to child or parent)
+  /// ex: toList(preload:true) -> Loads all related objects
+  /// List<String> preloadFields: specify the fields you want to preload (preload parameter's value should also be "true")
+  /// ex: toList(preload:true, preloadFields:['plField1','plField2'... etc])  -> Loads only certain fields what you specified
+  /// bool loadParents: if true, loads all parent objects until the object has no parent
+
+  /// <returns>List<SysLog>
+  @override
+  Future<List<SysLog>> toList(
+      {bool preload = false,
+      List<String>? preloadFields,
+      bool loadParents = false,
+      List<String>? loadedFields}) async {
+    final data = await toMapList();
+    final List<SysLog> syslogsData = await SysLog.fromMapList(data,
+        preload: preload,
+        preloadFields: preloadFields,
+        loadParents: loadParents,
+        loadedFields: loadedFields,
+        setDefaultValues: qparams.selectColumns == null);
+    return syslogsData;
+  }
+
+  /// This method returns Json String [SysLog]
+  @override
+  Future<String> toJson() async {
+    final list = <dynamic>[];
+    final data = await toList();
+    for (var o in data) {
+      list.add(o.toMap(forJson: true));
+    }
+    return json.encode(list);
+  }
+
+  /// This method returns Json String. [SysLog]
+  @override
+  Future<String> toJsonWithChilds() async {
+    final list = <dynamic>[];
+    final data = await toList();
+    for (var o in data) {
+      list.add(await o.toMapWithChildren(false, true));
+    }
+    return json.encode(list);
+  }
+
+  /// This method returns List<dynamic>. [SysLog]
+  /// <returns>List<dynamic>
+  @override
+  Future<List<dynamic>> toMapList() async {
+    buildParameters();
+    return await _mnSysLog!.toList(qparams);
+  }
+
+  /// This method returns Primary Key List SQL and Parameters retVal = Map<String,dynamic>. [SysLog]
+  /// retVal['sql'] = SQL statement string, retVal['args'] = whereArguments List<dynamic>;
+  /// <returns>List<String>
+  @override
+  Map<String, dynamic> toListPrimaryKeySQL([bool buildParams = true]) {
+    final Map<String, dynamic> _retVal = <String, dynamic>{};
+    if (buildParams) {
+      buildParameters();
+    }
+    _retVal['sql'] = 'SELECT `id` FROM sysLog WHERE ${qparams.whereString}';
+    _retVal['args'] = qparams.whereArguments;
+    return _retVal;
+  }
+
+  /// This method returns Primary Key List<int>.
+  /// <returns>List<int>
+  @override
+  Future<List<int>> toListPrimaryKey([bool buildParams = true]) async {
+    if (buildParams) {
+      buildParameters();
+    }
+    final List<int> idData = <int>[];
+    qparams.selectColumns = ['id'];
+    final idFuture = await _mnSysLog!.toList(qparams);
+
+    final int count = idFuture.length;
+    for (int i = 0; i < count; i++) {
+      idData.add(idFuture[i]['id'] as int);
+    }
+    return idData;
+  }
+
+  /// Returns List<dynamic> for selected columns. Use this method for 'groupBy' with min,max,avg..  [SysLog]
+  /// Sample usage: (see EXAMPLE 4.2 at https://github.com/hhtokpinar/sqfEntity#group-by)
+  @override
+  Future<List<dynamic>> toListObject() async {
+    buildParameters();
+
+    final objectFuture = _mnSysLog!.toList(qparams);
+
+    final List<dynamic> objectsData = <dynamic>[];
+    final data = await objectFuture;
+    final int count = data.length;
+    for (int i = 0; i < count; i++) {
+      objectsData.add(data[i]);
+    }
+    return objectsData;
+  }
+
+  /// Returns List<String> for selected first column
+  /// Sample usage: await SysLog.select(columnsToSelect: ['columnName']).toListString()
+  @override
+  Future<List<String>> toListString(
+      [VoidCallback Function(List<String> o)? listString]) async {
+    buildParameters();
+
+    final objectFuture = _mnSysLog!.toList(qparams);
+
+    final List<String> objectsData = <String>[];
+    final data = await objectFuture;
+    final int count = data.length;
+    for (int i = 0; i < count; i++) {
+      objectsData.add(data[i][qparams.selectColumns![0]].toString());
+    }
+    if (listString != null) {
+      listString(objectsData);
+    }
+    return objectsData;
+  }
+}
+// endregion SysLogFilterBuilder
+
+// region SysLogFields
+class SysLogFields {
+  static TableField? _fId;
+  static TableField get id {
+    return _fId = _fId ?? SqlSyntax.setField(_fId, 'id', DbType.integer);
+  }
+
+  static TableField? _fContent;
+  static TableField get content {
+    return _fContent =
+        _fContent ?? SqlSyntax.setField(_fContent, 'content', DbType.text);
+  }
+
+  static TableField? _fDateCreated;
+  static TableField get dateCreated {
+    return _fDateCreated = _fDateCreated ??
+        SqlSyntax.setField(_fDateCreated, 'dateCreated', DbType.datetime);
+  }
+
+  static TableField? _fIsDeleted;
+  static TableField get isDeleted {
+    return _fIsDeleted = _fIsDeleted ??
+        SqlSyntax.setField(_fIsDeleted, 'isDeleted', DbType.integer);
+  }
+}
+// endregion SysLogFields
+
+//region SysLogManager
+class SysLogManager extends SqfEntityProvider {
+  SysLogManager()
+      : super(MyPasswordManage(),
+            tableName: _tableName,
+            primaryKeyList: _primaryKeyList,
+            whereStr: _whereStr);
+  static const String _tableName = 'sysLog';
+  static const List<String> _primaryKeyList = ['id'];
+  static const String _whereStr = 'id=?';
+}
+
+//endregion SysLogManager
 class MyPasswordManageSequenceManager extends SqfEntityProvider {
   MyPasswordManageSequenceManager() : super(MyPasswordManage());
 }

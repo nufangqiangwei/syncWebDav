@@ -1,12 +1,15 @@
-import 'dart:ui';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/common/passwordUtils.dart';
-import 'package:sync_webdav/common/utils.dart';
+import 'package:sync_webdav/model/JsonModel.dart';
 import 'package:sync_webdav/model/class.dart';
 import 'package:sync_webdav/model/model.dart';
+import 'package:sync_webdav/utils/modifyData.dart';
+
+import 'drawer.dart';
 
 class PassWordPage extends StatefulWidget {
   const PassWordPage({Key? key}) : super(key: key);
@@ -16,96 +19,267 @@ class PassWordPage extends StatefulWidget {
 }
 
 class _PassWordPageState extends State<PassWordPage> {
-  final _formKey = GlobalKey<FormState>();
+  late String page = 'webSite';
   List<PassWordData> webSiteAccountData = [];
   late PassWordData accountDetail;
-  double _sliderValue = 16;
+  PassWordPageDetailData detailData = PassWordPageDetailData();
 
   @override
   initState() {
-
+    page = 'webSite';
     super.initState();
   }
 
+  savePassword() async {
+    if (detailData.selectIndex == -1) {
+      webSiteAccountData.add(detailData.data);
+    } else {
+      webSiteAccountData[detailData.selectIndex] = detailData.data;
+    }
+    await Password(
+      webKey: detailData.webSite.webKey,
+      value: await encodeData(webSiteAccountData),
+      isModify: true,
+    ).save();
+    uploadData("password");
+  }
+
   Widget showPage(BuildContext context) {
-    switch (Provider.of<GlobalParams>(context).page) {
+    switch (page) {
       case 'webSite':
         {
-          return webSiteList(context);
+          return WebSitePage(touchFunc: onTouchWebSite);
         }
       case 'account':
         {
-          return webSiteAccount(context);
+          return UserAccountPage(
+              web: detailData.webSite,
+              accountData: webSiteAccountData,
+              touchFunc: onTouchAccount);
         }
       case 'detail':
         {
-          return passwordDetail(context);
+          return UserAccountDetailPage(
+              detailData: detailData, blackPage: blackPage);
+        }
+      case "modifyDetail":
+        {
+          return ModifyAccountDetailPage(
+            detailData: detailData,
+            webSiteAccountData: webSiteAccountData,
+            blackPage: blackPage,
+          );
         }
       default:
         {
-          return webSiteList(context);
+          return WebSitePage(touchFunc: onTouchWebSite);
         }
     }
   }
 
-  onTouchWebSite(String webSite) {
-    getWebSitePassword(webSite).then((value) => setState(() {
-          webSiteAccountData = value;
-        }));
+  blackPage(int? status) {
+    switch (page) {
+      case 'webSite':
+        {
+          return true;
+        }
+      case 'account':
+        {
+          detailData = PassWordPageDetailData();
+
+          setState(() {
+            page = 'webSite';
+          });
+          return false;
+        }
+      case 'detail':
+        {
+          if (status == null) {
+            detailData.data = PassWordData('', '');
+            detailData.selectIndex = -1;
+            setState(() {
+              page = 'account';
+            });
+          } else {
+            setState(() {
+              page = 'modifyDetail';
+            });
+          }
+          return false;
+        }
+      case "modifyDetail":
+        {
+          setState(() {
+            page = 'detail';
+          });
+          return false;
+        }
+      default:
+        {
+          return false;
+        }
+    }
   }
 
-  Widget webSiteList(BuildContext context) {
+  onTouchWebSite(WebSite web) async {
+    detailData.webSite = web;
+    webSiteAccountData = await getWebSitePassword(detailData.webSite.name!);
+    setState(() {
+      page = 'account';
+    });
+  }
+
+  onTouchAccount(PassWordData account, int index) {
+    detailData.data = account;
+    detailData.selectIndex = index;
+    setState(() {
+      page = 'detail';
+    });
+  }
+
+  Widget? addIcon() {
+    if (page == "webSite" || page == "detail" || page == "modifyDetail") {
+      return null;
+    }
+    return FloatingActionButton(
+      onPressed: () {
+        setState(() {
+          page = 'modifyDetail';
+        });
+      },
+      tooltip: 'Increment',
+      child: const Icon(Icons.add),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: const SAppBarSearch(),
+      drawer: const MyDrawer(),
+      body: WillPopScope(
+        child: showPage(context),
+        onWillPop: () async {
+          return blackPage(null);
+        },
+      ),
+      floatingActionButton: addIcon(),
+    );
+  }
+}
+
+class WebSitePage extends StatelessWidget {
+  const WebSitePage({Key? key, required this.touchFunc}) : super(key: key);
+  final Function(WebSite) touchFunc;
+
+  @override
+  Widget build(BuildContext context) {
     List<WebSite> webSiteList = Provider.of<GlobalParams>(context).webSiteList;
-    // List<WebSite> webSiteList = [
-    //   WebSite(icon: './assets/icons/google.ico',name: 'google',url:'https://www.google.com')
-    // ];
     return ListView.separated(
       itemCount: webSiteList.length,
       shrinkWrap: true,
       itemBuilder: (BuildContext context, int index) {
         var web = webSiteList[index];
-        return ListTile(
-          // leading:Image(image: AssetImage(web.icon)),
-          leading: ClipRRect(
-            borderRadius: BorderRadius.circular(50),
-            child: FadeInImage.assetNetwork(
-              placeholder: "assets/icons/defaultWebsite.ico",
-              image: web.icon!,
-              fit: BoxFit.cover,
-              imageErrorBuilder: (context, error, stackTrace) {
-                return Image.asset("assets/icons/defaultWebsite.ico");
-              },
-            ),
+        return Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0x00000000), width: 0.5),
+            // 边色与边宽度
+            color: const Color.fromARGB(255, 219, 244, 241),
+            // 底色
+            //        borderRadius: new BorderRadius.circular((20.0)), // 圆角度
+            borderRadius: const BorderRadius.all(
+              Radius.circular(20),
+            ), // 也可控件一边圆角大小
           ),
-          title: Text(web.name!),
-          subtitle: Text(web.url!),
-          selectedColor: Colors.blue,
-          onTap: () {
-            onTouchWebSite(web.name!);
-          },
+          child: ListTile(
+            // leading:Image(image: AssetImage(web.icon)),
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(50),
+              child: FadeInImage.assetNetwork(
+                placeholder: "assets/icons/defaultWebsite.ico",
+                image: web.icon!,
+                fit: BoxFit.cover,
+                imageErrorBuilder: (context, error, stackTrace) {
+                  return Image.asset("assets/icons/defaultWebsite.ico");
+                },
+              ),
+            ),
+            title: Text(web.name!),
+            subtitle: Text(web.url!, overflow: TextOverflow.ellipsis),
+            // tileColor: Colors.pinkAccent,
+            onTap: () {
+              touchFunc(web);
+            },
+          ),
         );
       },
+      padding: const EdgeInsets.all(10),
       separatorBuilder: (BuildContext context, int index) {
-        return const Divider(color: Colors.blue);
+        return const Padding(
+          padding: EdgeInsets.all(5),
+        );
       },
     );
   }
+}
 
-  Widget webSiteAccount(BuildContext context) {
+class UserAccountPage extends StatelessWidget {
+  const UserAccountPage(
+      {Key? key,
+      required this.web,
+      required this.accountData,
+      required this.touchFunc})
+      : super(key: key);
+  final List<PassWordData> accountData;
+  final Function(PassWordData, int) touchFunc;
+  final WebSite web;
+
+  Widget weiSiteHeader() {
+    return Column(
+      // crossAxisAlignment:CrossAxisAlignment.baseline,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(50),
+          child: FadeInImage.assetNetwork(
+            placeholder: "assets/icons/defaultWebsite.ico",
+            image: web.icon!,
+            fit: BoxFit.cover,
+            imageErrorBuilder: (context, error, stackTrace) {
+              return Image.asset("assets/icons/defaultWebsite.ico");
+            },
+          ),
+        ),
+        Text(
+          web.name!,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        Text("上次修改时间  ${web.dateCreated?.toString()}"),
+        const Text("网站改密规则"),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return ListView.separated(
-      itemCount: webSiteAccountData.length,
+      itemCount: accountData.length + 1,
       shrinkWrap: true,
       itemBuilder: (BuildContext context, int index) {
-        var account = webSiteAccountData[index];
+        if (index == 0) {
+          return weiSiteHeader();
+        }
+        index--;
+        var account = accountData[index];
         return ListTile(
           // leading:Image(image: AssetImage(web.icon)),
           // leading: Image.asset(web.icon),
           title: Text(account.userName),
           subtitle: const Text('*********'),
           onTap: () {
-            Provider.of<GlobalParams>(context, listen: false)
-                .ModifyPage("detail");
-            accountDetail = account;
+            touchFunc(account, index);
           },
         );
       },
@@ -114,51 +288,202 @@ class _PassWordPageState extends State<PassWordPage> {
       },
     );
   }
+}
 
-  passwordDetail(BuildContext context) {
+class UserAccountDetailPage extends StatelessWidget {
+  const UserAccountDetailPage(
+      {Key? key, required this.detailData, required this.blackPage})
+      : super(key: key);
+  final PassWordPageDetailData detailData;
+  final Function(int? status) blackPage;
+
+  @override
+  Widget build(BuildContext context) {
     var windowsWidth = MediaQuery.of(context).size.width;
-    return SizedBox(
-      width: windowsWidth * 0.85,
+    return SingleChildScrollView(
+      padding:
+          EdgeInsets.symmetric(vertical: 0, horizontal: windowsWidth * 0.07),
       child: Form(
-        key: _formKey,
+        autovalidateMode: AutovalidateMode.always,
         child: Column(
           // crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.max,
           children: [
             const Padding(padding: EdgeInsets.only(top: 30)),
             TextFormField(
-                // The validator receives the text that the user has entered.
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter some text';
-                  }
-                  return null;
+              initialValue: detailData.data.userName,
+              // The validator receives the text that the user has entered.
+              validator: (value) {},
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                icon: Icon(Icons.verified_user),
+                labelText: "用户名",
+              ),
+            ),
+            const Padding(padding: EdgeInsets.only(top: 20)),
+            TextFormField(
+              initialValue: detailData.data.password,
+              // The validator receives the text that the user has entered.
+              validator: (value) {},
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                icon: Icon(Icons.password),
+                labelText: "密码",
+              ),
+            ),
+            const Padding(padding: EdgeInsets.only(top: 20)),
+            const TextField(
+                decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              icon: Icon(Icons.speaker_notes_outlined),
+              labelText: "备注",
+            )),
+            const Padding(padding: EdgeInsets.only(top: 20)),
+            const TextField(
+                decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              icon: Icon(Icons.speaker_notes_outlined),
+              labelText: "备注",
+            )),
+            const Padding(padding: EdgeInsets.only(top: 20)),
+            const TextField(
+                decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              icon: Icon(Icons.speaker_notes_outlined),
+              labelText: "备注",
+            )),
+            const Padding(padding: EdgeInsets.only(top: 20)),
+            const TextField(
+                decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              icon: Icon(Icons.speaker_notes_outlined),
+              labelText: "备注",
+            )),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  blackPage(1);
                 },
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  icon: Icon(Icons.verified_user),
-                  labelText: "用户名",
-                )),
+                child: const Text('修改'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ModifyAccountDetailPage extends StatefulWidget {
+  const ModifyAccountDetailPage(
+      {Key? key,
+      required this.detailData,
+      required this.webSiteAccountData,
+      required this.blackPage})
+      : super(key: key);
+  final PassWordPageDetailData detailData;
+  final List<PassWordData> webSiteAccountData;
+  final Function(int? status) blackPage;
+
+  @override
+  State<StatefulWidget> createState() => _ModifyAccountDetailPageState();
+}
+
+class _ModifyAccountDetailPageState extends State<ModifyAccountDetailPage> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController passwordController = TextEditingController();
+  double _sliderValue = 12;
+
+  getRandomPassword(int passwordLength) {
+    final _random = Random();
+    const _availableChars =
+        'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890!@#%^&*';
+    final randomString = List.generate(passwordLength,
+            (index) => _availableChars[_random.nextInt(_availableChars.length)])
+        .join();
+    print(randomString);
+    return randomString;
+  }
+
+  savePassword() async {
+    if (widget.detailData.selectIndex == -1) {
+      widget.webSiteAccountData.add(widget.detailData.data);
+    } else {
+      widget.webSiteAccountData[widget.detailData.selectIndex] =
+          widget.detailData.data;
+    }
+    await Password(
+      webKey: widget.detailData.webSite.webKey,
+      value: await encodeData(widget.webSiteAccountData),
+      isModify: true
+    ).save();
+    widget.blackPage(1);
+    uploadData("password");
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    passwordController.text = widget.detailData.data.password;
+    var windowsWidth = MediaQuery.of(context).size.width;
+    return SingleChildScrollView(
+      padding:
+          EdgeInsets.symmetric(vertical: 0, horizontal: windowsWidth * 0.07),
+      child: Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.always,
+        child: Column(
+          // crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            const Padding(padding: EdgeInsets.only(top: 30)),
+            TextFormField(
+              initialValue: widget.detailData.data.userName,
+              // The validator receives the text that the user has entered.
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return '请输入用户名';
+                }
+                widget.detailData.data.userName = value;
+                return null;
+              },
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                icon: Icon(Icons.verified_user),
+                labelText: "用户名",
+              ),
+            ),
             const Padding(padding: EdgeInsets.only(top: 20)),
             Row(children: [
               SizedBox(
-                width: windowsWidth * 0.75,
+                width: windowsWidth * 0.70,
                 child: TextFormField(
-                    // The validator receives the text that the user has entered.
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter some text';
-                      }
+                  controller: passwordController,
+                  // The validator receives the text that the user has entered.
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      passwordController.text =
+                          getRandomPassword(_sliderValue.toInt());
                       return null;
-                    },
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      icon: Icon(Icons.password),
-                      labelText: "密码",
-                    )),
+                    }
+                    widget.detailData.data.password = value;
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    icon: Icon(Icons.password),
+                    labelText: "密码",
+                  ),
+                ),
               ),
-              const Padding(padding: EdgeInsets.only(left: 15)),
-              const Icon(Icons.add_alarm),
+              const Padding(padding: EdgeInsets.only(left: 10)),
+              IconButton(
+                icon: const Icon(Icons.add_alarm),
+                onPressed: () {
+                  passwordController.text =
+                      getRandomPassword(_sliderValue.toInt());
+                },
+              ),
               // const SizedBox(
               //   width: 20,
               //   child: Icon(Icons.add_alarm),
@@ -169,60 +494,61 @@ class _PassWordPageState extends State<PassWordPage> {
                 const Text('位数'),
                 SizedBox(
                   width: windowsWidth * 0.7,
-                  child: Slider(
+                  child: Slider.adaptive(
+                    divisions: 16,
+
+                    ///已滑动过得颜色
+                    activeColor: Colors.red,
+
+                    ///未滑动的颜色
+                    thumbColor: Colors.cyan,
+                    min: 8,
+                    max: 24,
+
+                    ///当前进度 取值(0 - 1)
                     value: _sliderValue,
-                    onChanged: (double value) {},
-                    // onChanged: (double  data){
-                    //   print('change:$data');
-                    //   setState(() {
-                    //     _sliderValue = data.ceilToDouble();
-                    //   });
-                    // },
-                    // onChangeStart: (data){
-                    //   print('start:$data');
-                    // },
-                    onChangeEnd: (data) {
+                    //进度条进度 返回值为(0-1)
+                    onChanged: (double value) {
                       setState(() {
-                        _sliderValue = data.ceilToDouble();
+                        _sliderValue = value;
+                        //拖动进度条改变数值
                       });
                     },
-                    min: 8.0,
-                    max: 36.0,
-                    divisions: 10,
-                    label: '$_sliderValue',
-                    activeColor: Colors.green,
-                    inactiveColor: Colors.grey,
-                    semanticFormatterCallback: (double newValue) {
-                      return '${newValue.round()} dollars}';
+                    //滑动开始回调
+                    onChangeStart: (double value) {},
+                    //滑动结束回调
+                    onChangeEnd: (double value) {
+                      passwordController.text =
+                          getRandomPassword(_sliderValue.toInt());
                     },
                   ),
                 ),
-                Text(_sliderValue.toString())
+                Text(_sliderValue.toInt().toString())
               ],
             ),
-            TextFormField(
-                decoration: const InputDecoration(
+            const TextField(
+                decoration: InputDecoration(
               border: OutlineInputBorder(),
               icon: Icon(Icons.speaker_notes_outlined),
               labelText: "备注",
             )),
             const Padding(padding: EdgeInsets.only(top: 20)),
-            TextFormField(
-                decoration: const InputDecoration(
+            const TextField(
+                decoration: InputDecoration(
               border: OutlineInputBorder(),
               icon: Icon(Icons.speaker_notes_outlined),
               labelText: "备注",
             )),
             const Padding(padding: EdgeInsets.only(top: 20)),
-            TextFormField(
-                decoration: const InputDecoration(
+            const TextField(
+                decoration: InputDecoration(
               border: OutlineInputBorder(),
               icon: Icon(Icons.speaker_notes_outlined),
               labelText: "备注",
             )),
             const Padding(padding: EdgeInsets.only(top: 20)),
-            TextFormField(
-                decoration: const InputDecoration(
+            const TextField(
+                decoration: InputDecoration(
               border: OutlineInputBorder(),
               icon: Icon(Icons.speaker_notes_outlined),
               labelText: "备注",
@@ -233,12 +559,10 @@ class _PassWordPageState extends State<PassWordPage> {
                 onPressed: () {
                   // Validate returns true if the form is valid, or false otherwise.
                   if (_formKey.currentState!.validate()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Processing Data')),
-                    );
+                    savePassword();
                   }
                 },
-                child: const Text('Submit'),
+                child: const Text('保存'),
               ),
             ),
           ],
@@ -246,46 +570,9 @@ class _PassWordPageState extends State<PassWordPage> {
       ),
     );
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-      child: SingleChildScrollView(
-          child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [const SearchPassword(), showPage(context)],
-      )),
-      onWillPop: () async {
-        switch (Provider.of<GlobalParams>(context).page) {
-          case 'webSite':
-            {
-              Navigator.pop(context);
-              break;
-            }
-          case 'account':
-            {
-              Provider.of<GlobalParams>(context, listen: false)
-                  .ModifyPage('webSite');
-              break;
-            }
-          case 'detail':
-            {
-              Provider.of<GlobalParams>(context, listen: false)
-                  .ModifyPage('account');
-              break;
-            }
-          default:
-            {
-              return false;
-            }
-        }
-        return false;
-      },
-    );
-  }
 }
 
+/*
 class SearchPassword extends StatefulWidget {
   const SearchPassword({Key? key}) : super(key: key);
 
@@ -347,15 +634,13 @@ class _SearchInput extends State<SearchInput> {
     final popupButtonObject = context.findRenderObject() as RenderBox;
     // Get the render object of the overlay used in `Navigator` / `MaterialApp`, i.e. screen size reference
     var overlay = Overlay.of(context)!.context.findRenderObject() as RenderBox;
-    print('windowHeight: ${window.physicalSize.width}');
     // print('popupButtonObjectWidth: ${popupButtonObject.size.width}, popupButtonObjectHeight: ${popupButtonObject.size.height}');
     // print('overlayWidth: ${overlay.size.width},overlayHeight: ${overlay.size.height}');
     showMenu(
       context: context,
       position: _position(popupButtonObject, overlay),
       items: <PopupMenuEntry>[
-        const PopupMenuItem(
-            child: Text("RNG")), // Menu Item
+        const PopupMenuItem(child: Text("RNG")), // Menu Item
         const PopupMenuItem(child: Text("342")), // Menu Item
         const PopupMenuItem(child: Text("sdrf")), // Menu Item
         const PopupMenuItem(child: Text("rt34")), // Menu Item
@@ -394,5 +679,214 @@ class _SearchInput extends State<SearchInput> {
   void dispose() {
     focusNode.dispose();
     super.dispose();
+  }
+}
+*/
+class SAppBarSearch extends StatefulWidget implements PreferredSizeWidget {
+  const SAppBarSearch({
+    Key? key,
+    this.borderRadius = 20,
+    this.autoFocus = false,
+    this.focusNode,
+    this.controller,
+    this.height = 40,
+    this.value = '',
+    this.leading,
+    this.suffix,
+    this.actions = const [],
+    this.hintText,
+    this.onTap,
+    this.onClear,
+    this.onCancel,
+    this.onChanged,
+    this.onSearch,
+  }) : super(key: key);
+  final double borderRadius;
+  final bool autoFocus;
+  final FocusNode? focusNode;
+  final TextEditingController? controller;
+
+  // 输入框高度 默认40
+  final double height;
+
+  // 默认值
+  final String? value;
+
+  // 最前面的组件
+  final Widget? leading;
+
+  // 搜索框后缀组件
+  final Widget? suffix;
+  final List<Widget> actions;
+
+  // 提示文字
+  final String? hintText;
+
+  // 输入框点击
+  final VoidCallback? onTap;
+
+  // 单独清除输入框内容
+  final VoidCallback? onClear;
+
+  // 清除输入框内容并取消输入
+  final VoidCallback? onCancel;
+
+  // 输入框内容改变
+  final ValueChanged? onChanged;
+
+  // 点击键盘搜索
+  final ValueChanged? onSearch;
+
+  @override
+  _SAppBarSearchState createState() => _SAppBarSearchState();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+class _SAppBarSearchState extends State<SAppBarSearch> {
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
+  bool isInput = false;
+
+  bool get isFocus => _focusNode.hasFocus;
+
+  bool get isTextEmpty => _controller.text.isEmpty;
+
+  bool get isActionEmpty => widget.actions.isEmpty;
+
+  @override
+  void initState() {
+    _controller = widget.controller ?? TextEditingController();
+    _focusNode = widget.focusNode ?? FocusNode();
+    if (widget.value != null) _controller.text = widget.value!;
+    // 监听输入框状态
+    _focusNode.addListener(() => setState(() {}));
+    // 监听输入框变化
+    // 解决当外部改变输入框内容时 控件处于正确的状态中 (显示清除图标按钮和取消按钮等)
+    _controller.addListener(() {
+      setState(() {});
+      widget.onChanged?.call(_controller.text);
+    });
+    super.initState();
+  }
+
+  // 清除输入框内容
+  void _onClearInput() {
+    _controller.clear();
+    if (!isFocus) _focusNode.requestFocus();
+    setState(() {});
+    widget.onClear?.call();
+  }
+
+  // 取消输入框编辑
+  void _onCancelInput() {
+    _controller.clear();
+    _focusNode.unfocus();
+    setState(() {});
+    widget.onCancel?.call();
+  }
+
+  Widget _suffix() {
+    if (!isTextEmpty) {
+      return GestureDetector(
+        onTap: _onClearInput,
+        child: SizedBox(
+          width: widget.height,
+          height: widget.height,
+          child: Icon(Icons.cancel, size: 22, color: Color(0xFF999999)),
+        ),
+      );
+    }
+    return widget.suffix ?? SizedBox();
+  }
+
+  List<Widget> _actions() {
+    List<Widget> list = [];
+    if (isFocus || !isTextEmpty) {
+      list.add(GestureDetector(
+        onTap: _onCancelInput,
+        child: Container(
+          constraints: BoxConstraints(minWidth: 48),
+          alignment: Alignment.center,
+          child: Text(
+            '取消',
+            style: TextStyle(color: Color(0xFF666666), fontSize: 15),
+          ),
+        ),
+      ));
+    } else if (!isActionEmpty) {
+      list.addAll(widget.actions);
+    }
+    return list;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ModalRoute<Object?>? parentRoute = ModalRoute.of(context);
+    final bool canPop = parentRoute?.canPop ?? false;
+    const bool hasDrawer = false;
+    double left = !canPop && !hasDrawer && widget.leading == null ? 15 : 0;
+    double right = isActionEmpty && !isFocus && isTextEmpty ? 15 : 0;
+    return AppBar(
+      titleSpacing: 0,
+      leading: isFocus ? const SizedBox() : widget.leading,
+      leadingWidth: isFocus ? 15 : kToolbarHeight,
+      title: Container(
+        margin: EdgeInsets.only(right: right, left: left),
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: Color(0xFFF2F2F2),
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: widget.height,
+              height: widget.height,
+              child: Icon(Icons.search, size: 22, color: Color(0xFF999999)),
+            ),
+            Expanded(
+              child: TextField(
+                autofocus: widget.autoFocus,
+                focusNode: _focusNode,
+                controller: _controller,
+                decoration: InputDecoration(
+                  isDense: true,
+                  border: InputBorder.none,
+                  hintText: widget.hintText ?? '请输入关键字',
+                  hintStyle:
+                      const TextStyle(fontSize: 15, color: Color(0xFF999999)),
+                ),
+                style: const TextStyle(
+                    fontSize: 15, color: Color(0xFF333333), height: 1.3),
+                textInputAction: TextInputAction.search,
+                onTap: widget.onTap,
+                onSubmitted: widget.onSearch,
+              ),
+            ),
+            _suffix(),
+          ],
+        ),
+      ),
+      actions: _actions(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+}
+
+class WebSiteListView extends StatelessWidget {
+  const WebSiteListView({Key? key, required this.webSite}) : super(key: key);
+  final WebSite webSite;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row();
   }
 }

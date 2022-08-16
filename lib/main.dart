@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sync_webdav/pages/home.dart';
+import 'package:sync_webdav/utils/route.dart';
 
 import 'common/Global.dart';
-import 'common/utils.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
-  await globalParams.initPasswordData();
+  await globalParams.initAppConfig();
   runApp(
     MultiProvider(
         providers:[
@@ -23,15 +22,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final size = MediaQuery.of(context).size;
-    //  globalParams.windowsWith = size.width;
-    //  globalParams.windowsHeight = size.height;
     return MaterialApp(
       title: 'Flutter Demo',
+      initialRoute: "/index",
+      routes:myRoute,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(),
     );
   }
 }

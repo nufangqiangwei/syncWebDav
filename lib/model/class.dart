@@ -1,7 +1,15 @@
-class PassWordData{
-  PassWordData(this.userName,this.Password);
+import 'package:sync_webdav/model/model.dart';
+import 'package:sync_webdav/model/JsonModel.dart';
 
+class PassWordPageDetailData {
+  PassWordPageDetailData() {
+    webSite = WebSite();
+    data = PassWordData('', '');
+    mark = [];
+  }
 
-  late String userName;
-  late String Password;
+  late WebSite webSite;
+  late int selectIndex = -1;
+  late PassWordData data;
+  late List<AccountMark> mark;
 }

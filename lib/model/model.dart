@@ -5,10 +5,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:sqfentity/sqfentity.dart';
 import 'package:sqfentity_gen/sqfentity_gen.dart';
 
-
 part 'model.g.dart';
 
-
+// flutter pub run build_runner build --delete-conflicting-outputs
 const tableSysConfig = SqfEntityTable(
   tableName: 'sysConfig',
   primaryKeyName: 'id',
@@ -27,10 +26,10 @@ const tableWebSite = SqfEntityTable(
   primaryKeyType: PrimaryKeyType.integer_auto_incremental,
   useSoftDeleting: true,
   fields: [
-    SqfEntityField('icon', DbType.text, isNotNull: false,defaultValue: ''),
-    SqfEntityField('name', DbType.text, isNotNull: true,defaultValue: ''),
-    SqfEntityField('url', DbType.text, isNotNull: false,defaultValue: ''),
-    SqfEntityField('webKey', DbType.text, isNotNull: false,defaultValue: ''),
+    SqfEntityField('icon', DbType.text, isNotNull: false, defaultValue: ''),
+    SqfEntityField('name', DbType.text, isNotNull: true, defaultValue: ''),
+    SqfEntityField('url', DbType.text, isNotNull: false, defaultValue: ''),
+    SqfEntityField('webKey', DbType.text, isNotNull: false, defaultValue: ''),
   ],
 );
 
@@ -43,7 +42,32 @@ const tablePassWord = SqfEntityTable(
     SqfEntityField('webKey', DbType.text, isNotNull: false),
     SqfEntityField('value', DbType.text, isNotNull: true),
     SqfEntityField('version', DbType.integer, isNotNull: false),
+    SqfEntityField('isModify', DbType.bool, defaultValue: false),
   ],
+);
+
+const tableNoteBook = SqfEntityTable(
+    tableName: 'notebook',
+    primaryKeyName: 'id',
+    primaryKeyType: PrimaryKeyType.integer_auto_incremental,
+    useSoftDeleting: true,
+    fields: [
+      SqfEntityField('isImportant', DbType.bool, isNotNull: false),
+      SqfEntityField('number', DbType.integer, isNotNull: false),
+      SqfEntityField('title', DbType.text, isNotNull: false),
+      SqfEntityField('description', DbType.text, isNotNull: false),
+      SqfEntityField('isModify', DbType.bool, defaultValue: false),
+    ],
+);
+
+const tableSysLog = SqfEntityTable(
+  tableName: 'sysLog',
+  primaryKeyName: 'id',
+  primaryKeyType: PrimaryKeyType.integer_auto_incremental,
+  useSoftDeleting: true,
+    fields:[
+      SqfEntityField('content', DbType.text, isNotNull: false),
+    ]
 );
 
 @SqfEntityBuilder(databaseModel)
@@ -51,7 +75,13 @@ const databaseModel = SqfEntityModel(
     modelName: 'MyPasswordManage',
     databaseName: 'PasswordManage.db',
     password: null,
-    databaseTables: [tableSysConfig,tableWebSite,tablePassWord],
+    databaseTables: [
+      tableSysConfig,
+      tableWebSite,
+      tablePassWord,
+      tableNoteBook,
+      tableSysLog
+    ],
     // formTables: [tableSysConfig],
     dbVersion: 2,
     // 指定数据库位置，null则框架兴建一个文件 例：'assets/sample.db'
@@ -62,4 +92,22 @@ const databaseModel = SqfEntityModel(
       SqfEntityField('dateCreated', DbType.datetime,
           defaultValue: 'DateTime.now()'),
     ],
+    // preSaveAction: modelSaveEvent,
 );
+
+Future<TableBase> modelSaveEvent(String tableName, TableBase model) async {
+  if(!model.isInsert && (tableName=="password"||tableName=="notebook")){
+    if (tableName=="password"){
+      model as Password;
+      if (model.isModify==null || model.isModify==false){
+        model.isModify=true;
+      }
+    }else{
+      model as Notebook;
+      if (model.isModify==null || model.isModify==false){
+        model.isModify=true;
+      }
+    }
+  }
+  return model;
+}

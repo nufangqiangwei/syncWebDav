@@ -2,26 +2,36 @@ import 'dart:convert';
 
 import 'package:sync_webdav/common/utils.dart';
 import 'package:sync_webdav/model/JsonModel.dart';
-import 'package:sync_webdav/model/class.dart';
 
 import 'Global.dart';
-import 'encryption.dart';
 
 Future<List<PassWordData>> getWebSitePassword(String webSiteName) async {
   String encodeData = await getWebSiteData(webSiteName);
-  if (GlobalParams.publicKeyStr == '') {
-    await globalParams.initPasswordData();
+  print(encodeData);
+  if (encodeData.isEmpty) {
+    return [];
   }
-  if (GlobalParams.publicKeyStr == '') {
+  if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
     throw "缺少密钥";
   }
-  RsaEncrypt rsa =
-      RsaEncrypt.initKey(GlobalParams.publicKeyStr, GlobalParams.privateKeyStr);
 
-  var decodeData = await rsa.decodeString(encodeData);
 
-  return DecodePassWordData.fromJson(json.decode(decodeData)).data as List<PassWordData>;
+  var decodeData = globalParams.userRSA.decodeString(encodeData);
+  List<PassWordData> result = [];
+  for(var i in json.decode(decodeData)){
+    result.add(PassWordData.fromJson(i as Map<String,dynamic>));
+  }
+  return result;
 }
 
+
+Future<String> encodeData(List<PassWordData> data) async {
+  if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
+    throw "缺少密钥";
+  }
+  String encodeStr = json.encode(data);
+  print("解密完成");
+  return globalParams.userRSA.encodeString(encodeStr);
+}
 
 

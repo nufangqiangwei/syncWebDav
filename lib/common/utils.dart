@@ -12,12 +12,12 @@ Future<String> getSysConfig(String key, {String? defaultValue}) async {
 }
 
 Future<String> getWebSiteData(String webSiteName) async {
-  return (await Password()
+  var data = await Password()
       .select()
       .webKey
       .equals(webSiteName)
-      .toSingleOrDefault())
-      .value!;
+      .toSingleOrDefault();
+  return data.value??'';
 }
 
 List<WebSite> initDatabaseData() {

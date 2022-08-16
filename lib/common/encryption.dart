@@ -1,25 +1,23 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:encrypt/encrypt_io.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:encrypt/encrypt.dart';
-import 'package:pointycastle/asymmetric/api.dart';
 
 class RsaEncrypt {
-  late Encrypter encrypter;
+  late Encrypter _encrypter;
 
-  RsaEncrypt.initKey(String publicKeyStr,String privateKeyStr) {
+  RsaEncrypt();
+
+  RsaEncrypt.initKey(String publicKeyStr, String privateKeyStr) {
     // var publicKeyStr =
     //     await File('assets/data/rsa_public_key.pem').readAsString();
     // var privateKeyStr =
     //     await File('assets/data/rsa_private_key.pem').readAsString();
     dynamic publicKey = RSAKeyParser().parse(publicKeyStr);
     dynamic privateKey = RSAKeyParser().parse(privateKeyStr);
-    encrypter = Encrypter(RSA(publicKey: publicKey, privateKey: privateKey));
+    _encrypter = Encrypter(RSA(publicKey: publicKey, privateKey: privateKey));
   }
 
-  Future<String> encodeString(String content) async {
+  String encodeString(String content) {
     List<int> sourceBytes = utf8.encode(content);
     int inputLen = sourceBytes.length;
     int maxLen = 117;
@@ -32,13 +30,13 @@ class RsaEncrypt {
       } else {
         item = sourceBytes.sublist(i, i + endLen);
       }
-      totalBytes.addAll(encrypter.encryptBytes(item).bytes);
+      totalBytes.addAll(_encrypter.encryptBytes(item).bytes);
     }
     return base64.encode(totalBytes);
     // return encrypter.encrypt(content).base64.toUpperCase();
   }
 
-  Future<String> decodeString(String content) async {
+  String decodeString(String content) {
     Uint8List sourceBytes = base64.decode(content);
     int inputLen = sourceBytes.length;
     int maxLen = 128;
@@ -51,7 +49,7 @@ class RsaEncrypt {
       } else {
         item = sourceBytes.sublist(i, i + endLen);
       }
-      totalBytes.addAll(encrypter.decryptBytes(Encrypted(item)));
+      totalBytes.addAll(_encrypter.decryptBytes(Encrypted(item)));
     }
     return utf8.decode(totalBytes);
   }
