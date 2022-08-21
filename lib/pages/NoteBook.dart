@@ -79,6 +79,7 @@ class _NotesPageState extends State<NotebookListPage> {
             refreshNotes();
           },
         ),
+
       );
 
   Widget buildNotes() => StaggeredGridView.countBuilder(
@@ -265,7 +266,7 @@ class _AddEditNotePageState extends State<AddEditNotePage> {
           }
         },
         child: const Text(
-          'Save',
+          '保存',
           style: TextStyle(
             color: Colors.black,
             fontSize: 25,

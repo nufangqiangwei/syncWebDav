@@ -1,37 +1,38 @@
 import 'dart:convert';
 
-import 'package:sync_webdav/common/utils.dart';
 import 'package:sync_webdav/model/JsonModel.dart';
+import 'package:sync_webdav/model/model.dart';
 
 import 'Global.dart';
 
-Future<List<PassWordData>> getWebSitePassword(String webSiteName) async {
-  String encodeData = await getWebSiteData(webSiteName);
-  print(encodeData);
-  if (encodeData.isEmpty) {
-    return [];
-  }
-  if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
-    throw "缺少密钥";
-  }
 
-
-  var decodeData = globalParams.userRSA.decodeString(encodeData);
+Future<List<PassWordData>> decodePassword(Password data) async {
+  String s = "";
+  if (data.isEncryption ?? false) {
+    if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
+      throw "缺少密钥";
+    }
+    s = globalParams.userRSA.decodeString(data.value!);
+  } else {
+    s = data.value??"[]";
+  }
   List<PassWordData> result = [];
-  for(var i in json.decode(decodeData)){
-    result.add(PassWordData.fromJson(i as Map<String,dynamic>));
+  print("decodePassword: $s");
+  for (var i in json.decode(s)) {
+    result.add(PassWordData.fromJson(i as Map<String, dynamic>));
   }
   return result;
 }
 
-
-Future<String> encodeData(List<PassWordData> data) async {
+Future<Password> encodePassword(
+    Password data, List<PassWordData> detail) async {
+  String encodeStr = json.encode(detail);
   if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
-    throw "缺少密钥";
+    data.value = encodeStr;
+    data.isEncryption = false;
+    return data;
   }
-  String encodeStr = json.encode(data);
-  print("解密完成");
-  return globalParams.userRSA.encodeString(encodeStr);
+  data.value = globalParams.userRSA.encodeString(encodeStr);
+  data.isEncryption = true;
+  return data;
 }
-
-

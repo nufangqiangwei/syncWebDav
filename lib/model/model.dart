@@ -43,6 +43,7 @@ const tablePassWord = SqfEntityTable(
     SqfEntityField('value', DbType.text, isNotNull: true),
     SqfEntityField('version', DbType.integer, isNotNull: false),
     SqfEntityField('isModify', DbType.bool, defaultValue: false),
+    SqfEntityField('isEncryption', DbType.bool, defaultValue: false),
   ],
 );
 
@@ -85,7 +86,7 @@ const databaseModel = SqfEntityModel(
     // formTables: [tableSysConfig],
     dbVersion: 2,
     // 指定数据库位置，null则框架兴建一个文件 例：'assets/sample.db'
-    bundledDatabasePath: 'assets/database/PasswordManage.db',
+    // bundledDatabasePath: 'assets/database/PasswordManage.db',
     // 指定绝对目录，不传则调用 sqflite.getDatabasesPath() 获取
     databasePath: null,
     defaultColumns: [

@@ -90,6 +90,7 @@ class TablePassword extends SqfEntityTableBase {
       SqfEntityFieldBase('value', DbType.text, isNotNull: true),
       SqfEntityFieldBase('version', DbType.integer),
       SqfEntityFieldBase('isModify', DbType.bool, defaultValue: false),
+      SqfEntityFieldBase('isEncryption', DbType.bool, defaultValue: false),
       SqfEntityFieldBase('dateCreated', DbType.datetime,
           defaultValue: DateTime.now(), minValue: DateTime.parse('1900-01-01')),
     ];
@@ -2004,17 +2005,18 @@ class Password extends TableBase {
       this.value,
       this.version,
       this.isModify,
+      this.isEncryption,
       this.dateCreated,
       this.isDeleted}) {
     _setDefaultValues();
     softDeleteActivated = true;
   }
   Password.withFields(this.webKey, this.value, this.version, this.isModify,
-      this.dateCreated, this.isDeleted) {
+      this.isEncryption, this.dateCreated, this.isDeleted) {
     _setDefaultValues();
   }
   Password.withId(this.id, this.webKey, this.value, this.version, this.isModify,
-      this.dateCreated, this.isDeleted) {
+      this.isEncryption, this.dateCreated, this.isDeleted) {
     _setDefaultValues();
   }
   // fromMap v2.0
@@ -2036,6 +2038,10 @@ class Password extends TableBase {
       isModify =
           o['isModify'].toString() == '1' || o['isModify'].toString() == 'true';
     }
+    if (o['isEncryption'] != null) {
+      isEncryption = o['isEncryption'].toString() == '1' ||
+          o['isEncryption'].toString() == 'true';
+    }
     if (o['dateCreated'] != null) {
       dateCreated = int.tryParse(o['dateCreated'].toString()) != null
           ? DateTime.fromMillisecondsSinceEpoch(
@@ -2052,6 +2058,7 @@ class Password extends TableBase {
   String? value;
   int? version;
   bool? isModify;
+  bool? isEncryption;
   DateTime? dateCreated;
   bool? isDeleted;
 
@@ -2083,6 +2090,11 @@ class Password extends TableBase {
       map['isModify'] = forQuery ? (isModify! ? 1 : 0) : isModify;
     } else if (isModify != null || !forView) {
       map['isModify'] = null;
+    }
+    if (isEncryption != null) {
+      map['isEncryption'] = forQuery ? (isEncryption! ? 1 : 0) : isEncryption;
+    } else if (isEncryption != null || !forView) {
+      map['isEncryption'] = null;
     }
     if (dateCreated != null) {
       map['dateCreated'] = forJson
@@ -2121,6 +2133,11 @@ class Password extends TableBase {
     } else if (isModify != null || !forView) {
       map['isModify'] = null;
     }
+    if (isEncryption != null) {
+      map['isEncryption'] = forQuery ? (isEncryption! ? 1 : 0) : isEncryption;
+    } else if (isEncryption != null || !forView) {
+      map['isEncryption'] = null;
+    }
     if (dateCreated != null) {
       map['dateCreated'] = forJson
           ? dateCreated!.toString()
@@ -2156,6 +2173,7 @@ class Password extends TableBase {
       value,
       version,
       isModify,
+      isEncryption,
       dateCreated != null ? dateCreated!.millisecondsSinceEpoch : null,
       isDeleted
     ];
@@ -2169,6 +2187,7 @@ class Password extends TableBase {
       value,
       version,
       isModify,
+      isEncryption,
       dateCreated != null ? dateCreated!.millisecondsSinceEpoch : null,
       isDeleted
     ];
@@ -2319,13 +2338,14 @@ class Password extends TableBase {
   Future<int?> upsert({bool ignoreBatch = true}) async {
     try {
       final result = await _mnPassword.rawInsert(
-          'INSERT OR REPLACE INTO password (id, webKey, value, version, isModify, dateCreated,isDeleted)  VALUES (?,?,?,?,?,?,?)',
+          'INSERT OR REPLACE INTO password (id, webKey, value, version, isModify, isEncryption, dateCreated,isDeleted)  VALUES (?,?,?,?,?,?,?,?)',
           [
             id,
             webKey,
             value,
             version,
             isModify,
+            isEncryption,
             dateCreated != null ? dateCreated!.millisecondsSinceEpoch : null,
             isDeleted
           ],
@@ -2354,7 +2374,7 @@ class Password extends TableBase {
   Future<BoolCommitResult> upsertAll(List<Password> passwords,
       {bool? exclusive, bool? noResult, bool? continueOnError}) async {
     final results = await _mnPassword.rawInsertAll(
-        'INSERT OR REPLACE INTO password (id, webKey, value, version, isModify, dateCreated,isDeleted)  VALUES (?,?,?,?,?,?,?)',
+        'INSERT OR REPLACE INTO password (id, webKey, value, version, isModify, isEncryption, dateCreated,isDeleted)  VALUES (?,?,?,?,?,?,?,?)',
         passwords,
         exclusive: exclusive,
         noResult: noResult,
@@ -2408,6 +2428,7 @@ class Password extends TableBase {
 
   void _setDefaultValues() {
     isModify = isModify ?? false;
+    isEncryption = isEncryption ?? false;
     dateCreated = dateCreated ?? DateTime.now();
     isDeleted = isDeleted ?? false;
   }
@@ -2639,6 +2660,12 @@ class PasswordFilterBuilder extends ConjunctionBase {
   PasswordField? _isModify;
   PasswordField get isModify {
     return _isModify = _setField(_isModify, 'isModify', DbType.bool);
+  }
+
+  PasswordField? _isEncryption;
+  PasswordField get isEncryption {
+    return _isEncryption =
+        _setField(_isEncryption, 'isEncryption', DbType.bool);
   }
 
   PasswordField? _dateCreated;
@@ -2906,6 +2933,12 @@ class PasswordFields {
   static TableField get isModify {
     return _fIsModify =
         _fIsModify ?? SqlSyntax.setField(_fIsModify, 'isModify', DbType.bool);
+  }
+
+  static TableField? _fIsEncryption;
+  static TableField get isEncryption {
+    return _fIsEncryption = _fIsEncryption ??
+        SqlSyntax.setField(_fIsEncryption, 'isEncryption', DbType.bool);
   }
 
   static TableField? _fDateCreated;

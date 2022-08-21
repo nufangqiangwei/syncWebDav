@@ -30,20 +30,6 @@ class _PassWordPageState extends State<PassWordPage> {
     super.initState();
   }
 
-  savePassword() async {
-    if (detailData.selectIndex == -1) {
-      webSiteAccountData.add(detailData.data);
-    } else {
-      webSiteAccountData[detailData.selectIndex] = detailData.data;
-    }
-    await Password(
-      webKey: detailData.webSite.webKey,
-      value: await encodeData(webSiteAccountData),
-      isModify: true,
-    ).save();
-    uploadData("password");
-  }
-
   Widget showPage(BuildContext context) {
     switch (page) {
       case 'webSite':
@@ -123,7 +109,10 @@ class _PassWordPageState extends State<PassWordPage> {
 
   onTouchWebSite(WebSite web) async {
     detailData.webSite = web;
-    webSiteAccountData = await getWebSitePassword(detailData.webSite.name!);
+    detailData.webSiteData =
+        await Password().select().webKey.equals(web.webKey).toSingleOrDefault();
+    detailData.webSiteData.webKey ??= web.webKey;
+    webSiteAccountData = await decodePassword(detailData.webSiteData);
     setState(() {
       page = 'account';
     });
@@ -148,7 +137,7 @@ class _PassWordPageState extends State<PassWordPage> {
         });
       },
       tooltip: 'Increment',
-      child: const Icon(Icons.add),
+      child: const Icon(Icons.add, color: Colors.white,),
     );
   }
 
@@ -175,6 +164,7 @@ class WebSitePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<WebSite> webSiteList = Provider.of<GlobalParams>(context).webSiteList;
+    print("webSiteList: ${webSiteList.length}");
     return ListView.separated(
       itemCount: webSiteList.length,
       shrinkWrap: true,
@@ -296,6 +286,7 @@ class UserAccountDetailPage extends StatelessWidget {
       : super(key: key);
   final PassWordPageDetailData detailData;
   final Function(int? status) blackPage;
+  final isRead = true;
 
   @override
   Widget build(BuildContext context) {
@@ -311,6 +302,7 @@ class UserAccountDetailPage extends StatelessWidget {
           children: [
             const Padding(padding: EdgeInsets.only(top: 30)),
             TextFormField(
+              readOnly: isRead,
               initialValue: detailData.data.userName,
               // The validator receives the text that the user has entered.
               validator: (value) {},
@@ -322,6 +314,7 @@ class UserAccountDetailPage extends StatelessWidget {
             ),
             const Padding(padding: EdgeInsets.only(top: 20)),
             TextFormField(
+              readOnly: isRead,
               initialValue: detailData.data.password,
               // The validator receives the text that the user has entered.
               validator: (value) {},
@@ -332,33 +325,37 @@ class UserAccountDetailPage extends StatelessWidget {
               ),
             ),
             const Padding(padding: EdgeInsets.only(top: 20)),
-            const TextField(
-                decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              icon: Icon(Icons.speaker_notes_outlined),
-              labelText: "备注",
-            )),
+            TextField(
+                readOnly: isRead,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  icon: Icon(Icons.speaker_notes_outlined),
+                  labelText: "备注",
+                )),
             const Padding(padding: EdgeInsets.only(top: 20)),
-            const TextField(
-                decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              icon: Icon(Icons.speaker_notes_outlined),
-              labelText: "备注",
-            )),
+            TextField(
+                readOnly: isRead,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  icon: Icon(Icons.speaker_notes_outlined),
+                  labelText: "备注",
+                )),
             const Padding(padding: EdgeInsets.only(top: 20)),
-            const TextField(
-                decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              icon: Icon(Icons.speaker_notes_outlined),
-              labelText: "备注",
-            )),
+            TextField(
+                readOnly: isRead,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  icon: Icon(Icons.speaker_notes_outlined),
+                  labelText: "备注",
+                )),
             const Padding(padding: EdgeInsets.only(top: 20)),
-            const TextField(
-                decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              icon: Icon(Icons.speaker_notes_outlined),
-              labelText: "备注",
-            )),
+            TextField(
+                readOnly: isRead,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  icon: Icon(Icons.speaker_notes_outlined),
+                  labelText: "备注",
+                )),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
               child: ElevatedButton(
@@ -413,11 +410,11 @@ class _ModifyAccountDetailPageState extends State<ModifyAccountDetailPage> {
       widget.webSiteAccountData[widget.detailData.selectIndex] =
           widget.detailData.data;
     }
-    await Password(
-      webKey: widget.detailData.webSite.webKey,
-      value: await encodeData(widget.webSiteAccountData),
-      isModify: true
-    ).save();
+    print(widget.detailData.webSiteData.webKey);
+    await (await encodePassword(
+            widget.detailData.webSiteData, widget.webSiteAccountData))
+        .save();
+    widget.detailData.selectIndex++;
     widget.blackPage(1);
     uploadData("password");
   }
@@ -878,15 +875,5 @@ class _SAppBarSearchState extends State<SAppBarSearch> {
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
-  }
-}
-
-class WebSiteListView extends StatelessWidget {
-  const WebSiteListView({Key? key, required this.webSite}) : super(key: key);
-  final WebSite webSite;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row();
   }
 }

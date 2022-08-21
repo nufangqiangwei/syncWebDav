@@ -3,11 +3,12 @@ import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/model/model.dart';
 
 // 'https://ouliguojiashengsiyi.xyz/'
-const webHost = 'http://127.0.0.1:5000/';
+const webHost = 'http://192.168.1.21:5000';
+const webPathPrefix = '';
 
 register(String userPubKey, String encryptStr) async {
   var response = await Dio().post<Map<String, dynamic>>(
-      webHost + 'password/api/register',
+      webHost + webPathPrefix + '/register',
       queryParameters: {"UserPubKey": userPubKey, "EncryptStr": encryptStr});
 
   globalParams.setWebConfig(
@@ -17,8 +18,7 @@ register(String userPubKey, String encryptStr) async {
 }
 
 Future<List<WebSite>> getWebSiteList() async {
-  var response =
-      await Dio().get<Map<String, dynamic>>(webHost + 'password/api/webList');
+  var response = await Dio().get<Map<String, dynamic>>(webHost + webPathPrefix + '/webList');
   var webSiteList = response.data?['data'] as List<dynamic>;
   List<WebSite> result = [];
   for (var i = 0; i < webSiteList.length; i++) {
@@ -39,15 +39,13 @@ pushDataToServer(String data, String dataType) async {
   requestData["UserData"] = globalParams.userRSA.encodeString(data);
   String webPath;
   if (dataType == "password") {
-    webPath = 'password/api/SaveUserData';
+    webPath = '/SaveUserData';
   } else {
-    webPath = 'password/api/SaveUserNote';
+    webPath = '/SaveUserNote';
   }
   Response<Map<String, dynamic>> response =
-      await Dio().post<Map<String, dynamic>>(webHost + webPath);
+      await Dio().post<Map<String, dynamic>>(webHost + webPathPrefix + webPath);
   if (response.statusCode != 200) {
     throw response.statusMessage ?? "备份数据失败";
   }
 }
-
-

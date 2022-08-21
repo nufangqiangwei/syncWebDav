@@ -355,12 +355,40 @@ class DatabaseSettingPage extends StatefulWidget {
 
 class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
   synchronizeWebSite() async {
-    var webSet = Set.from(await getWebSiteList());
-    var localSet = Set.from(await WebSite().select().toList());
-    // webSiteList.sort((a,b)=>(a.webKey??"").compareTo(b.webKey??""));
-    // saveList.sort((a,b)=>(a.webKey??"").compareTo(b.webKey??""));
-    var newSite = webSet.difference(localSet);
-    await WebSite.saveAll(newSite.toList() as List<WebSite>);
+    List<WebSite> webSiteList = await getWebSiteList();
+    // List<WebSite> saveList = globalParams.webSiteList;
+    // webSiteList.sort((a,b)=>(a.id??0) - (b.id??0));
+    //
+    // List<WebSite> result =[];
+    // for (var i=0;i<webSiteList.length;i++){
+    //   var a = webSiteList[i];
+    //   var b=WebSite();
+    //   if (i<saveList.length) {
+    //     WebSite b = saveList[i];
+    //   }
+    //   if (a.name != b.name || a.webKey != b.webKey||a.icon!=b.icon) {
+    //     result.add(a);
+    //   }
+    // }
+
+    await WebSite.saveAll(webSiteList);
+    globalParams.refreshWebSiteList();
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("提示"),
+            content: const Text("同步完成"),
+            actions: <Widget>[
+              TextButton(
+                child: const Text("确定"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        });
   }
 
   selectFolder(BuildContext context) async {

@@ -7,9 +7,9 @@ class GlobalParams extends ChangeNotifier {
   String _appBarText = 'Flutter Demo Home Page';
 
   // web Setting params
-  late int userId = 5;
+  late int userId = -1;
   late String webPubKey = '';
-  late String encryptStr = 'wqwdw3edq12wqdawqa'; // 加密字符串
+  late String encryptStr = ''; // 加密字符串
   late String publicKeyStr = '';
   late String privateKeyStr = '';
   late RsaEncrypt userRSA = RsaEncrypt.initKey("", "");
@@ -33,16 +33,21 @@ class GlobalParams extends ChangeNotifier {
     _webSiteList = value;
     notifyListeners();
   }
+  refreshWebSiteList()async{
+    _webSiteList = await WebSite().select(getIsDeleted: false).orderBy('id').toList();
+  }
 
   Future<bool> initAppConfig() async {
     // await initDatabaseData();
-    _webSiteList =
-        await WebSite().select(getIsDeleted: false).orderBy('id').toList();
+    await refreshWebSiteList();
     if (publicKeyStr == '') {
       publicKeyStr = await getSysConfig('publicKeyStr');
     }
     if (privateKeyStr == '') {
       privateKeyStr = await getSysConfig('privateKeyStr');
+    }
+    if (publicKeyStr == ''||privateKeyStr == '') {
+      return false;
     }
     userRSA = RsaEncrypt.initKey(publicKeyStr, privateKeyStr);
     return true;
