@@ -13,6 +13,8 @@ import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:group_button/group_button.dart';
 import 'dart:io';
 
+import 'package:sync_webdav/utils/modifyData.dart';
+
 class SettingPage extends StatefulWidget {
   const SettingPage({Key? key}) : super(key: key);
 
@@ -152,6 +154,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
   final TextEditingController priController =
       TextEditingController(text: globalParams.privateKeyStr);
 
+  // 验证输入的密钥是否正确
   Future<bool> examineKey() async {
     RsaEncrypt rsa = RsaEncrypt.initKey(pubController.text, priController.text);
     String str = rsa.decodeString( rsa.encodeString(globalParams.encryptStr));
@@ -220,13 +223,23 @@ class _UserSettingPageState extends State<UserSettingPage> {
     // todo 替换 password 表中的数据
   }
 
-  Function()? getLoginCallback() {
+  String butterText(){
     if (Provider.of<GlobalParams>(context).userId == -1) {
-      return null;
+      return "注销";
+    }
+    return "登录";
+  }
+
+  Function() getLoginCallback() {
+    if (Provider.of<GlobalParams>(context).userId == -1) {
+      return logoutServer;
     }
     return loginDatabaseWebSite;
   }
 
+  logoutServer()async{
+    globalParams.clearUserInfo();
+  }
   loginDatabaseWebSite() async {
     if (globalParams.userId != -1) {
       return promptDialog(context, "当前已登录");
@@ -312,17 +325,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
                   ),
                   ElevatedButton(
                     onPressed: getLoginCallback(),
-                    child: const Text('登录'),
-                    style: ElevatedButton.styleFrom(
-                      shadowColor: Colors.green,
-                      shape: const StadiumBorder(),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      globalParams.clearUserInfo();
-                    },
-                    child: const Text('注销'),
+                    child: Text(butterText()),
                     style: ElevatedButton.styleFrom(
                       shadowColor: Colors.green,
                       shape: const StadiumBorder(),
@@ -424,6 +427,36 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
     await file.writeAsString(strJson);
   }
 
+  uploadDataToServer(BuildContext context)async{
+    List<String> uploadList = ["password","notebook"];
+    aa(String type)async {
+      String? err = await uploadData(type);
+      if (err != null){
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text("提示"),
+                content: const Text("无法连接到服务器。"),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text("确定"),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            });
+      }
+    }
+
+    for(int i=0;i<uploadList.length;i++){
+      await aa(uploadList[i]);
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -442,11 +475,12 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
                   synchronizeWebSite();
                 },
               ),
-              SettingsTile(
-                title: const UserUploadSetting(),
-              ),
+              // SettingsTile(
+              //   title: const UserUploadSetting(),
+              // ),
               SettingsTile.navigation(
                 title: const Text("备份到服务器"),
+                onPressed: uploadDataToServer,
               ),
               SettingsTile.navigation(
                 title: const Text("同步服务器数据"),

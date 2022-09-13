@@ -4,26 +4,37 @@ import 'package:sync_webdav/Net/myServer.dart';
 import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/model/model.dart';
 
-uploadData(String tableName)async {
-  globalParams.userId;
+Future<String?> uploadData(String tableName) async {
+  if (globalParams.userId == -1) {
+    return null;
+  }
 
   List<dynamic> data;
-  if (tableName=="password") {
-   data = await Password().select().isModify.equals(true).toList();
-  }else if(tableName=="notebook") {
+  if (tableName == "password") {
+    data = await Password().select().isModify.equals(true).toList();
+  } else if (tableName == "notebook") {
     data = await Notebook().select().isModify.equals(true).toList();
-  }else{
-  throw "错误的表名 $tableName";
+  } else {
+    throw "错误的表名 $tableName";
   }
-  try{
-    await pushDataToServer(jsonEncode({"saveType":tableName,"data":data}),tableName);
-  }catch(e){
+  try {
+    await pushDataToServer(
+        jsonEncode({"saveType": tableName, "data": data}), tableName);
+  } catch (e) {
     await SysLog(content: e.toString()).save();
-    return ;
+    return "网络请求错误";
   }
-  if (tableName=="password"){
-    await Password().select().isModify.equals(true).update({"isModify":false});
-  }else{
-    await Notebook().select().isModify.equals(true).update({"isModify":false});
+  if (tableName == "password") {
+    await Password().select().isModify.equals(true).update({"isModify": false});
+  } else {
+    await Notebook().select().isModify.equals(true).update({"isModify": false});
   }
+  return null;
+}
+
+downloadData(){
+  if (globalParams.userId == -1) {
+    return null;
+  }
+
 }

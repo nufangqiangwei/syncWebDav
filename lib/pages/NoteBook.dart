@@ -161,7 +161,7 @@ class NoteFormWidget extends StatelessWidget {
           hintText: 'Title',
           hintStyle: TextStyle(
             color: Colors.black,
-            fontFamily: 'EduVICWANTBeginner',
+            fontFamily: 'EduVICWANTBeginner——',
           ),
         ),
         validator: (title) =>

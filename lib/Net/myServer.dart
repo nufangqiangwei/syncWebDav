@@ -11,14 +11,15 @@ register(String userPubKey, String encryptStr) async {
       webHost + webPathPrefix + '/register',
       queryParameters: {"UserPubKey": userPubKey, "EncryptStr": encryptStr});
 
-  globalParams.setWebConfig(
+  globalParams.setUserConfig(
       response.data?['UserId'] as int,
       response.data?['WebPubKey'] as String,
       response.data?['EncryptStr'] as String);
 }
 
 Future<List<WebSite>> getWebSiteList() async {
-  var response = await Dio().get<Map<String, dynamic>>(webHost + webPathPrefix + '/webList');
+  var response = await Dio()
+      .get<Map<String, dynamic>>(webHost + webPathPrefix + '/webList');
   var webSiteList = response.data?['data'] as List<dynamic>;
   List<WebSite> result = [];
   for (var i = 0; i < webSiteList.length; i++) {
@@ -43,9 +44,45 @@ pushDataToServer(String data, String dataType) async {
   } else {
     webPath = '/SaveUserNote';
   }
-  Response<Map<String, dynamic>> response =
-      await Dio().post<Map<String, dynamic>>(webHost + webPathPrefix + webPath);
+  Response<Map<String, dynamic>> response = await Dio()
+      .post<Map<String, dynamic>>(webHost + webPathPrefix + webPath,
+          data: requestData);
   if (response.statusCode != 200) {
     throw response.statusMessage ?? "备份数据失败";
   }
+}
+
+Future<List<Map<String, String>>> getPasswordData(int version) async {
+  Map<String, dynamic> requestData = {
+    "EncryptStr": getEncryptStr(),
+    "Version": version,
+  };
+  Response<Map<String, dynamic>> response = await Dio()
+      .post<Map<String, dynamic>>(webHost + webPathPrefix + "/GetUserData",
+          data: requestData);
+  if (response.statusCode != 200) {
+    throw response.statusMessage ?? "获取备份失败";
+  }
+  if (response.data!['version']!= version){
+    throw  "获取备份失败,返回的不是指定的版本";
+  }
+  List<Map<String, String>> data =
+      response.data!['data'] as List<Map<String, String>>;
+  return data;
+}
+
+Future<Map<String, List<int>>> getDataVersion() async {
+  Map<String, dynamic> requestData = {
+    "EncryptStr": getEncryptStr(),
+    "dataType": "password",
+  };
+  Response<Map<String, dynamic>> response = await Dio()
+      .post<Map<String, dynamic>>(webHost + webPathPrefix + "/GetUserData",
+          data: requestData);
+  if (response.statusCode != 200) {
+    throw response.statusMessage ?? "获取版本号失败";
+  }
+  Map<String, List<int>> data =
+      response.data!['data'] as Map<String, List<int>>;
+  return data;
 }

@@ -410,7 +410,7 @@ class _ModifyAccountDetailPageState extends State<ModifyAccountDetailPage> {
       widget.webSiteAccountData[widget.detailData.selectIndex] =
           widget.detailData.data;
     }
-    print(widget.detailData.webSiteData.webKey);
+    widget.detailData.webSiteData.isModify = true;
     await (await encodePassword(
             widget.detailData.webSiteData, widget.webSiteAccountData))
         .save();
