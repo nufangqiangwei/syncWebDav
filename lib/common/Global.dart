@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:sync_webdav/common/utils.dart';
+import 'package:sync_webdav/utils/initData.dart';
 import '../model/model.dart';
 import 'encryption.dart';
 
@@ -41,8 +42,8 @@ class GlobalParams extends ChangeNotifier {
   }
 
   refreshWebSiteList() async {
-    _webSiteList =
-        await WebSite().select(getIsDeleted: false).orderBy('id').toList();
+    _webSiteList = initWebSiteData;
+        // await WebSite().select().orderBy('id').toList();
   }
 
   getUserInfo() async {

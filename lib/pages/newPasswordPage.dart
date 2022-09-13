@@ -280,7 +280,7 @@ class _PassWordPageState extends State<PassWordPage> {
 
   @override
   Widget build(BuildContext context) {
-    detailData.webSite = Provider.of<GlobalParams>(context).webSiteList[0];
+    // detailData.webSite = Provider.of<GlobalParams>(context).webSiteList[0];
     return WillPopScope(
       child: showPage(context),
       onWillPop: () async {

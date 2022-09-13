@@ -3,9 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:sync_webdav/utils/route.dart';
 
 import 'common/Global.dart';
-
+// import 'utils/initData.dart';
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
+  // await initDatabaseData();
   await globalParams.initAppConfig();
   runApp(
     MultiProvider(
