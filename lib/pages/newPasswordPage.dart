@@ -9,6 +9,7 @@ import 'package:sync_webdav/common/passwordUtils.dart';
 import 'package:sync_webdav/model/JsonModel.dart';
 import 'package:sync_webdav/model/class.dart';
 import 'package:sync_webdav/model/model.dart';
+import 'package:sync_webdav/utils/gather.dart';
 import 'package:sync_webdav/utils/modifyData.dart';
 
 const double webSiteMaxWidth = 600;
@@ -1091,16 +1092,6 @@ class _ViewPageState extends State<ViewPage> {
 
   _getErrorText() {
     return _errorText;
-  }
-
-  getRandomPassword(int passwordLength) {
-    final _random = Random();
-    const _availableChars =
-        'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890!@#%^&*';
-    final randomString = List.generate(passwordLength,
-            (index) => _availableChars[_random.nextInt(_availableChars.length)])
-        .join();
-    return randomString;
   }
 
   @override

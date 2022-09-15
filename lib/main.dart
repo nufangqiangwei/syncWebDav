@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sync_webdav/utils/log.dart';
 import 'package:sync_webdav/utils/route.dart';
 
 import 'common/Global.dart';
-// import 'utils/initData.dart';
+
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
-  // await initDatabaseData();
+  await initLog();
   await globalParams.initAppConfig();
   runApp(
     MultiProvider(
@@ -17,6 +18,7 @@ void main() async{
     )
   );
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);

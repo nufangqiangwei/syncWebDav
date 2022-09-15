@@ -1,33 +1,23 @@
-import 'dart:html';
-
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:logger/src/outputs/file_output.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import 'dart:developer' as developer;
 
-class Log {
-  late File logFile;
-  Logger _logger = Logger();
+Logger? log;
 
-   void v(dynamic message) {
-    _logger.v(message);
-  }
-
-   void d(dynamic message) {
-    _logger.d(message);
-  }
-
-   void i(dynamic message) {
-    _logger.i(message);
-  }
-
-   void w(dynamic message) {
-    _logger.w(message);
-  }
-
-   void e(dynamic message) {
-    _logger.e(message);
-  }
-
-   void wtf(dynamic message) {
-    _logger.wtf(message);
+initLog() async {
+  try {
+    Directory cachePath = await getTemporaryDirectory();
+    log = Logger(
+      output: FileOutput(file: File(path.join(cachePath.path, "app.log"))),
+    );
+    developer.log('log me', name: 'my.app.category');
+  } catch (e) {
+    Map<String, dynamic> map = {};
+    map['msg'] = e.toString();
+    Dio().post('http://192.168.1.21:5000/error', data: map);
   }
 }

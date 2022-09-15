@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
@@ -11,6 +13,7 @@ import 'package:sync_webdav/model/model.dart';
 import 'package:sync_webdav/utils/components.dart';
 import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:group_button/group_button.dart';
+import 'package:sync_webdav/utils/gather.dart';
 import 'dart:io';
 
 import 'package:sync_webdav/utils/modifyData.dart';
@@ -154,16 +157,115 @@ class _UserSettingPageState extends State<UserSettingPage> {
   final TextEditingController priController =
       TextEditingController(text: globalParams.privateKeyStr);
 
+  final FocusNode _pubFocusNode = FocusNode();
+  final FocusNode _priFocusNode = FocusNode();
+
+  final GlobalKey _pubGlobalKey = GlobalKey();
+  final GlobalKey _priGlobalKey = GlobalKey();
+
+  bool _showPubPopupMenuView = false;
+  bool _showPriPopupMenuView = false;
+
+  Map<String,BuildContext>dialogContext={};
+
+
+  @override
+  void initState() {
+    _pubFocusNode.addListener(() {
+      _pubFocusNode.unfocus();
+      if (!_pubFocusNode.hasFocus && !_showPubPopupMenuView) {
+        RenderBox? box = _pubGlobalKey.currentContext?.findRenderObject() as RenderBox?;
+        RelativeRect popupMenuPosition;
+        if (box!=null){
+          Offset boxInitCoordinate = box.localToGlobal(Offset.zero);
+           popupMenuPosition = RelativeRect.fromLTRB(
+              boxInitCoordinate.dx+(box.size.width/2),
+              boxInitCoordinate.dy+(box.size.height/2),
+              boxInitCoordinate.dx+(box.size.width/2)+50,
+              boxInitCoordinate.dy+(box.size.height/2)+50,
+          );
+        }else{
+           popupMenuPosition = const RelativeRect.fromLTRB(0, 0, 0, 0);
+        }
+        _showPubPopupMenuView = true;
+        popupMenuView(pubController, _showPubPopupMenuView,popupMenuPosition);
+      }
+    });
+    _priFocusNode.addListener(() {
+      _priFocusNode.unfocus();
+      if (!_priFocusNode.hasFocus && !_showPriPopupMenuView) {
+        RenderBox? box = _priGlobalKey.currentContext?.findRenderObject() as RenderBox?;
+        RelativeRect popupMenuPosition;
+        if (box!=null){
+          Offset boxInitCoordinate = box.localToGlobal(Offset.zero);
+          popupMenuPosition = RelativeRect.fromLTRB(
+            boxInitCoordinate.dx+(box.size.width/2),
+            boxInitCoordinate.dy+(box.size.height/2),
+            boxInitCoordinate.dx+(box.size.width/2)+50,
+            boxInitCoordinate.dy+(box.size.height/2)+50,
+          );
+        }else{
+          popupMenuPosition = const RelativeRect.fromLTRB(0, 0, 0, 0);
+        }
+        _showPriPopupMenuView = true;
+        popupMenuView(priController, _showPriPopupMenuView,popupMenuPosition);
+      }
+    });
+    super.initState();
+  }
+
+  @override
+  dispose() {
+    _pubFocusNode.dispose();
+    _priFocusNode.dispose();
+    super.dispose();
+  }
+
+  popupMenuView(TextEditingController textController, bool isShow,RelativeRect popupMenuPosition) async {
+    if (!isShow) return;
+    showMenu<String>(
+      // color: Colors.red,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+      context: context,
+      position: popupMenuPosition,
+      items: <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: '复制',
+          child: Text('复制'),
+        ),
+        const PopupMenuItem<String>(
+          value: '粘贴',
+          child: Text('粘贴'),
+        ),
+      ],
+    ).then<void>((String? selectValue) async {
+      if (selectValue == "复制") {
+        Clipboard.setData(ClipboardData(text: textController.text));
+      } else if (selectValue == "粘贴") {
+        ClipboardData? a = await Clipboard.getData(Clipboard.kTextPlain);
+        if (a != null && a.text != null) {
+          textController.text = a.text!;
+        }
+      }
+      _showPubPopupMenuView = false;
+      _showPriPopupMenuView = false;
+    });
+  }
+
   // 验证输入的密钥是否正确
   Future<bool> examineKey() async {
     RsaEncrypt rsa = RsaEncrypt.initKey(pubController.text, priController.text);
-    String str = rsa.decodeString( rsa.encodeString(globalParams.encryptStr));
-    return str == globalParams.encryptStr;
+    String baseStr = globalParams.encryptStr;
+    if(baseStr==''){
+      baseStr=getRandomPassword(10);
+    }
+    String str = rsa.decodeString(rsa.encodeString(baseStr));
+    print(str);
+    print(baseStr);
+    return str == "baseStr";
   }
 
   modifyKey() async {
-    var hiltContext;
-    bool closeHilt = false;
     bool? status = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -191,10 +293,9 @@ class _UserSettingPageState extends State<UserSettingPage> {
       return;
     }
     // 准备替换密钥
-    showDialog(
+    showDialog<bool>(
         context: context,
         builder: (context) {
-          hiltContext = context;
           return AlertDialog(
             title: const Text("提示"),
             content: const Text("修改密钥需要等待一段时间，请不要退出app。退出app可能会导致数据库损坏无法读取数据。"),
@@ -202,32 +303,28 @@ class _UserSettingPageState extends State<UserSettingPage> {
               TextButton(
                 child: const Text("确定"),
                 onPressed: () {
-                  closeHilt = true;
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(true);
                 },
               ),
             ],
           );
-        });
+        }) ;
     // Future.delayed(const Duration(seconds: 5),(){Navigator.pop(hiltContext);});
     // 校验密钥是否正确
     if (!await examineKey()) {
-      if (!closeHilt) {
-        // 关闭之前的弹窗
-        Navigator.pop(hiltContext);
-      }
-      promptDialog(context, "密钥错误，请重新输入密钥");
+      // 关闭之前的弹窗
+
       return;
     }
 
     // todo 替换 password 表中的数据
   }
 
-  String butterText(){
+  String butterText() {
     if (Provider.of<GlobalParams>(context).userId == -1) {
-      return "注销";
+      return "登录";
     }
-    return "登录";
+    return "注销";
   }
 
   Function() getLoginCallback() {
@@ -237,9 +334,10 @@ class _UserSettingPageState extends State<UserSettingPage> {
     return loginDatabaseWebSite;
   }
 
-  logoutServer()async{
+  logoutServer() async {
     globalParams.clearUserInfo();
   }
+
   loginDatabaseWebSite() async {
     if (globalParams.userId != -1) {
       return promptDialog(context, "当前已登录");
@@ -252,18 +350,74 @@ class _UserSettingPageState extends State<UserSettingPage> {
     promptDialog(context, "登录成功");
   }
 
-  selectFile()async{
-    final Directory rootPath = await getTemporaryDirectory();
-    print(rootPath);
+  Future<String> selectFile() async {
+    // print('getTemporaryDirectory ：${(await getTemporaryDirectory()).path}');
+    // print('getApplicationSupportDirectory ：${(await getApplicationSupportDirectory()).path}');
+    // print('getApplicationDocumentsDirectory ：${(await getApplicationDocumentsDirectory()).path}');
+    // print('getExternalStorageDirectory ：${await getExternalStorageDirectory()}');
+    // print('getExternalCacheDirectories ：${await getExternalCacheDirectories()}');
+    // print("getExternalStorageDirectories ：s ${await getExternalStorageDirectories()}");
+    Directory? directory;
+    directory = Directory('/storage/emulated/0/Download');
+    if (kDebugMode || !await directory.exists()) {
+      directory = await getExternalStorageDirectory();
+    }
+    if (directory == null) return "";
     String? path = await FilesystemPicker.open(
       title: 'Open file',
       context: context,
-      rootDirectory: rootPath,
+      rootDirectory: directory,
       fsType: FilesystemType.file,
-      allowedExtensions: ['.txt'],
+      allowedExtensions: ['.txt', '.pem'],
       fileTileSelectMode: FileTileSelectMode.wholeTile,
     );
-    print(path);
+    return path!;
+  }
+
+  loadPubKey() async {
+    String filePath = await selectFile();
+    if (filePath == "") return;
+    File file = File(filePath);
+    if (!(await file.exists())) return;
+    String data = file.readAsStringSync();
+    if (!data.contains("PUBLIC")) {
+      AlertDialog(
+        title: const Text("提示"),
+        content: const Text("公钥不正确"),
+        actions: <Widget>[
+          TextButton(
+            child: const Text("确定"),
+            onPressed: () {},
+          ),
+        ],
+      );
+      return;
+    }
+    pubController.text = data;
+    return;
+  }
+
+  loadPriKey() async {
+    String filePath = await selectFile();
+    if (filePath == "") return;
+    File file = File(filePath);
+    if (!(await file.exists())) return;
+    String data = file.readAsStringSync();
+    if (!data.contains("PRIVATE")) {
+      AlertDialog(
+        title: const Text("提示"),
+        content: const Text("公钥不正确"),
+        actions: <Widget>[
+          TextButton(
+            child: const Text("确定"),
+            onPressed: () {},
+          ),
+        ],
+      );
+      return;
+    }
+    priController.text = data;
+    return;
   }
 
   String showUserId() {
@@ -302,16 +456,23 @@ class _UserSettingPageState extends State<UserSettingPage> {
             title: Row(
               children: [
                 const Text('用户密钥-公钥'),
-                TextButton(onPressed: (){ selectFile(); }, child: const Text("选择文件"))
+                TextButton(
+                    onPressed:loadPubKey,
+                    child: const Text("选择文件"))
               ],
-            ) ,
+            ),
             tiles: [
               SettingsTile(
                 title: TextField(
+                  key:_pubGlobalKey,
                   controller: pubController,
+                  focusNode: _pubFocusNode,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                  ),
                   minLines: 5,
                   maxLines: 15,
-                  readOnly: globalParams.userId != -1,
+                  readOnly:true,
                 ),
               ),
             ],
@@ -320,18 +481,23 @@ class _UserSettingPageState extends State<UserSettingPage> {
             title: Row(
               children: [
                 const Text('用户密钥-私钥'),
-                TextButton(onPressed: (){
-                  selectFile();
-                }, child: const Text("选择文件"))
+                TextButton(
+                    onPressed: loadPriKey,
+                    child: const Text("选择文件"))
               ],
-            ) ,
+            ),
             tiles: [
               SettingsTile(
                 title: TextField(
-                    controller: priController,
-                    minLines: 5,
-                    maxLines: 15,
-                    readOnly: globalParams.userId != -1,
+                  key:_priGlobalKey,
+                  controller: priController,
+                  focusNode: _priFocusNode,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                  ),
+                  minLines: 5,
+                  maxLines: 15,
+                  readOnly:true,
                 ),
               )
             ],
@@ -453,11 +619,11 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
     await file.writeAsString(strJson);
   }
 
-  uploadDataToServer(BuildContext context)async{
-    List<String> uploadList = ["password","notebook"];
-    aa(String type)async {
+  uploadDataToServer(BuildContext context) async {
+    List<String> uploadList = ["password", "notebook"];
+    aa(String type) async {
       String? err = await uploadData(type);
-      if (err != null){
+      if (err != null) {
         showDialog(
             context: context,
             builder: (context) {
@@ -477,11 +643,10 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
       }
     }
 
-    for(int i=0;i<uploadList.length;i++){
+    for (int i = 0; i < uploadList.length; i++) {
       await aa(uploadList[i]);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -531,16 +696,19 @@ class UserUploadSetting extends StatefulWidget {
 }
 
 class _UserUploadSettingView extends State<UserUploadSetting> {
-
   final controller = GroupButtonController(
-      selectedIndex:1,
+    selectedIndex: 1,
   );
+
   @override
   Widget build(BuildContext context) {
     // 0xffeeeeee
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('同步设置',style: TextStyle(),),
-      const Divider(height: 0,thickness: 0.7,color: Color(0xffeeeeee)),
+      const Text(
+        '同步设置',
+        style: TextStyle(),
+      ),
+      const Divider(height: 0, thickness: 0.7, color: Color(0xffeeeeee)),
       GroupButton(
         isRadio: true,
         onSelected: (value, index, isSelected) =>
