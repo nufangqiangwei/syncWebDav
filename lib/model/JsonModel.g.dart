@@ -6,12 +6,12 @@ part of 'JsonModel.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-PassWordData _$PassWordDataFromJson(Map<String, dynamic> json) => PassWordData(
+AccountData _$PassWordDataFromJson(Map<String, dynamic> json) => AccountData(
       json['userName'] as String,
       json['password'] as String,
     );
 
-Map<String, dynamic> _$PassWordDataToJson(PassWordData instance) =>
+Map<String, dynamic> _$PassWordDataToJson(AccountData instance) =>
     <String, dynamic>{
       'userName': instance.userName,
       'password': instance.password,
@@ -21,7 +21,7 @@ DecodePassWordData _$DecodePassWordDataFromJson(Map<String, dynamic> json) =>
     DecodePassWordData(
       json['webKey'] as String,
       (json['data'] as List<dynamic>)
-          .map((e) => PassWordData.fromJson(e as Map<String, dynamic>))
+          .map((e) => AccountData.fromJson(e as Map<String, dynamic>))
           .toList(),
       json['lastModifyTime'] as String?,
     );

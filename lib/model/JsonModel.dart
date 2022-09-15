@@ -5,13 +5,13 @@ import 'package:json_annotation/json_annotation.dart';
 part 'JsonModel.g.dart';
 
 @JsonSerializable()
-class PassWordData{
-  PassWordData(this.userName,this.password);
+class AccountData{
+  AccountData(this.userName,this.password);
 
   late String userName;
   late String password;
 
-  factory PassWordData.fromJson(Map<String, dynamic> json) => _$PassWordDataFromJson(json);
+  factory AccountData.fromJson(Map<String, dynamic> json) => _$PassWordDataFromJson(json);
   Map<String, dynamic> toJson() => _$PassWordDataToJson(this);
 }
 
@@ -22,7 +22,7 @@ class DecodePassWordData{
   DecodePassWordData(this.webKey, this.data, this.lastModifyTime);
 
   final String webKey;
-  final List<PassWordData> data;
+  final List<AccountData> data;
   final String? lastModifyTime;
   //不同的类使用不同的mixin即可
   factory DecodePassWordData.fromJson(Map<String, dynamic> json) => _$DecodePassWordDataFromJson(json);

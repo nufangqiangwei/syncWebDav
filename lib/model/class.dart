@@ -1,17 +1,19 @@
 import 'package:sync_webdav/model/model.dart';
 import 'package:sync_webdav/model/JsonModel.dart';
 
-class PassWordPageDetailData {
-  PassWordPageDetailData() {
+class WebSiteAccountData {
+  WebSiteAccountData() {
     webSite = WebSite();
     webSiteData = Password();
-    data = PassWordData('', '');
-    mark = [];
+    selectAccount = AccountData('','');
+    decodeData = [];
+
   }
 
   late WebSite webSite;
   late Password webSiteData;
   late int selectIndex = -1;
-  late PassWordData data;
-  late List<AccountMark> mark;
+  late List<AccountData> decodeData;
+  late AccountData selectAccount;
+
 }

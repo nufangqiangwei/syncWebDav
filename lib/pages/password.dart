@@ -20,9 +20,9 @@ class PassWordPage extends StatefulWidget {
 
 class _PassWordPageState extends State<PassWordPage> {
   late String page = 'webSite';
-  List<PassWordData> webSiteAccountData = [];
-  late PassWordData accountDetail;
-  PassWordPageDetailData detailData = PassWordPageDetailData();
+  List<AccountData> webSiteAccountData = [];
+  late AccountData accountDetail;
+  WebSiteAccountData detailData = WebSiteAccountData();
 
   @override
   initState() {
@@ -71,7 +71,7 @@ class _PassWordPageState extends State<PassWordPage> {
         }
       case 'account':
         {
-          detailData = PassWordPageDetailData();
+          detailData = WebSiteAccountData();
 
           setState(() {
             page = 'webSite';
@@ -81,8 +81,6 @@ class _PassWordPageState extends State<PassWordPage> {
       case 'detail':
         {
           if (status == null) {
-            detailData.data = PassWordData('', '');
-            detailData.selectIndex = -1;
             setState(() {
               page = 'account';
             });
@@ -118,8 +116,7 @@ class _PassWordPageState extends State<PassWordPage> {
     });
   }
 
-  onTouchAccount(PassWordData account, int index) {
-    detailData.data = account;
+  onTouchAccount(AccountData account, int index) {
     detailData.selectIndex = index;
     setState(() {
       page = 'detail';
@@ -220,8 +217,8 @@ class UserAccountPage extends StatelessWidget {
       required this.accountData,
       required this.touchFunc})
       : super(key: key);
-  final List<PassWordData> accountData;
-  final Function(PassWordData, int) touchFunc;
+  final List<AccountData> accountData;
+  final Function(AccountData, int) touchFunc;
   final WebSite web;
 
   Widget weiSiteHeader() {
@@ -284,7 +281,7 @@ class UserAccountDetailPage extends StatelessWidget {
   const UserAccountDetailPage(
       {Key? key, required this.detailData, required this.blackPage})
       : super(key: key);
-  final PassWordPageDetailData detailData;
+  final WebSiteAccountData detailData;
   final Function(int? status) blackPage;
   final isRead = true;
 
@@ -303,7 +300,7 @@ class UserAccountDetailPage extends StatelessWidget {
             const Padding(padding: EdgeInsets.only(top: 30)),
             TextFormField(
               readOnly: isRead,
-              initialValue: detailData.data.userName,
+              initialValue: detailData.selectAccount.userName,
               // The validator receives the text that the user has entered.
               validator: (value) {},
               decoration: const InputDecoration(
@@ -315,7 +312,7 @@ class UserAccountDetailPage extends StatelessWidget {
             const Padding(padding: EdgeInsets.only(top: 20)),
             TextFormField(
               readOnly: isRead,
-              initialValue: detailData.data.password,
+              initialValue: detailData.selectAccount.password,
               // The validator receives the text that the user has entered.
               validator: (value) {},
               decoration: const InputDecoration(
@@ -379,8 +376,8 @@ class ModifyAccountDetailPage extends StatefulWidget {
       required this.webSiteAccountData,
       required this.blackPage})
       : super(key: key);
-  final PassWordPageDetailData detailData;
-  final List<PassWordData> webSiteAccountData;
+  final WebSiteAccountData detailData;
+  final List<AccountData> webSiteAccountData;
   final Function(int? status) blackPage;
 
   @override
@@ -404,24 +401,13 @@ class _ModifyAccountDetailPageState extends State<ModifyAccountDetailPage> {
   }
 
   savePassword() async {
-    if (widget.detailData.selectIndex == -1) {
-      widget.webSiteAccountData.add(widget.detailData.data);
-    } else {
-      widget.webSiteAccountData[widget.detailData.selectIndex] =
-          widget.detailData.data;
-    }
-    widget.detailData.webSiteData.isModify = true;
-    await (await encodePassword(
-            widget.detailData.webSiteData, widget.webSiteAccountData))
-        .save();
-    widget.detailData.selectIndex++;
+
     widget.blackPage(1);
-    uploadData("password");
   }
 
   @override
   Widget build(BuildContext context) {
-    passwordController.text = widget.detailData.data.password;
+    passwordController.text = widget.detailData.selectAccount.password;
     var windowsWidth = MediaQuery.of(context).size.width;
     return SingleChildScrollView(
       padding:
@@ -435,13 +421,13 @@ class _ModifyAccountDetailPageState extends State<ModifyAccountDetailPage> {
           children: [
             const Padding(padding: EdgeInsets.only(top: 30)),
             TextFormField(
-              initialValue: widget.detailData.data.userName,
+              initialValue: widget.detailData.selectAccount.userName,
               // The validator receives the text that the user has entered.
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return '请输入用户名';
                 }
-                widget.detailData.data.userName = value;
+                widget.detailData.selectAccount.userName = value;
                 return null;
               },
               decoration: const InputDecoration(
@@ -463,7 +449,7 @@ class _ModifyAccountDetailPageState extends State<ModifyAccountDetailPage> {
                           getRandomPassword(_sliderValue.toInt());
                       return null;
                     }
-                    widget.detailData.data.password = value;
+                    widget.detailData.selectAccount.password = value;
                     return null;
                   },
                   decoration: const InputDecoration(

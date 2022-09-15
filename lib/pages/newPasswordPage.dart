@@ -1,10 +1,15 @@
+import 'dart:math';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/common/passwordUtils.dart';
 import 'package:sync_webdav/model/JsonModel.dart';
 import 'package:sync_webdav/model/class.dart';
 import 'package:sync_webdav/model/model.dart';
+import 'package:sync_webdav/utils/modifyData.dart';
 
 const double webSiteMaxWidth = 600;
 const double webSiteMinWidth = 500;
@@ -25,13 +30,11 @@ const secundario = Color.fromRGBO(53, 54, 58, 1);
 const fondo = Color.fromRGBO(161, 159, 159, 1);
 const acento = Color.fromRGBO(251, 251, 251, 1);
 
-
 // 详情页配色
 const detailColor = Color.fromRGBO(36, 40, 80, 1);
 const detailBackgroundColor = Color.fromRGBO(27, 30, 60, 1);
 const inputTitleColor = Color.fromRGBO(130, 148, 165, 1);
 const inputTextColor = Color.fromRGBO(254, 254, 254, 1);
-
 
 class PassWordPage extends StatefulWidget {
   const PassWordPage({Key? key}) : super(key: key);
@@ -42,9 +45,7 @@ class PassWordPage extends StatefulWidget {
 
 class _PassWordPageState extends State<PassWordPage> {
   late String page = 'webSite';
-  List<PassWordData> webSiteAccountData = [];
-  late PassWordData accountDetail;
-  PassWordPageDetailData detailData = PassWordPageDetailData();
+  WebSiteAccountData detailData = WebSiteAccountData();
 
   List<double> showWidth(BuildContext context) {
     double windowWidth = MediaQuery.of(context).size.width;
@@ -113,7 +114,7 @@ class _PassWordPageState extends State<PassWordPage> {
             width: showPageNumber[1],
             child: AccountListPage(
               web: detailData.webSite,
-              accountData: webSiteAccountData,
+              accountData: detailData,
               touchFunc: onTouchAccount,
               blackPage: blackPage,
             ),
@@ -145,7 +146,7 @@ class _PassWordPageState extends State<PassWordPage> {
                   width: showPageNumber[1],
                   child: AccountListPage(
                     web: detailData.webSite,
-                    accountData: webSiteAccountData,
+                    accountData: detailData,
                     touchFunc: onTouchAccount,
                     blackPage: blackPage,
                   ),
@@ -157,7 +158,7 @@ class _PassWordPageState extends State<PassWordPage> {
         }
       case 'account':
         {
-          if (showPageNumber.length == 2){
+          if (showPageNumber.length == 2) {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -169,7 +170,7 @@ class _PassWordPageState extends State<PassWordPage> {
                   width: showPageNumber[1],
                   child: AccountListPage(
                     web: detailData.webSite,
-                    accountData: webSiteAccountData,
+                    accountData: detailData,
                     touchFunc: onTouchAccount,
                     blackPage: blackPage,
                   ),
@@ -179,14 +180,14 @@ class _PassWordPageState extends State<PassWordPage> {
           }
           return AccountListPage(
             web: detailData.webSite,
-            accountData: webSiteAccountData,
+            accountData: detailData,
             touchFunc: onTouchAccount,
             blackPage: blackPage,
           );
         }
       case 'detail':
         {
-          if (showPageNumber.length==2){
+          if (showPageNumber.length == 2) {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -194,7 +195,7 @@ class _PassWordPageState extends State<PassWordPage> {
                   width: showPageNumber[0],
                   child: AccountListPage(
                     web: detailData.webSite,
-                    accountData: webSiteAccountData,
+                    accountData: detailData,
                     touchFunc: onTouchAccount,
                     blackPage: blackPage,
                   ),
@@ -261,26 +262,33 @@ class _PassWordPageState extends State<PassWordPage> {
   }
 
   onTouchWebSite(WebSite web) async {
-    detailData.webSite = web;
-    detailData.webSiteData = await Password().select().webKey.equals(web.webKey).toSingleOrDefault();
-    detailData.webSiteData.webKey ??= web.webKey;
-    webSiteAccountData = await decodePassword(detailData.webSiteData);
+    await selectWebSite(web);
     setState(() {
       page = 'account';
     });
   }
 
-  onTouchAccount(PassWordData account, int index) {
-    detailData.data = account;
+  onTouchAccount(AccountData account, int index) {
+    detailData.selectAccount = account;
     detailData.selectIndex = index;
     setState(() {
       page = 'detail';
     });
   }
 
+  selectWebSite(WebSite web) async {
+    detailData.webSite = web;
+    detailData.webSiteData =
+        await Password().select().webKey.equals(web.webKey).toSingleOrDefault();
+    detailData.decodeData = await decodePassword(detailData.webSiteData);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // detailData.webSite = Provider.of<GlobalParams>(context).webSiteList[0];
+    if (detailData.webSite.id == null &&
+        Provider.of<GlobalParams>(context).webSiteList.isNotEmpty) {
+      selectWebSite(Provider.of<GlobalParams>(context).webSiteList[0]);
+    }
     return WillPopScope(
       child: showPage(context),
       onWillPop: () async {
@@ -292,17 +300,18 @@ class _PassWordPageState extends State<PassWordPage> {
 
 // 网站页
 class WebSiteListPage extends StatefulWidget {
-  const WebSiteListPage({Key? key,required this.touchFunc}) : super(key: key);
+  const WebSiteListPage({Key? key, required this.touchFunc}) : super(key: key);
   final Function(WebSite) touchFunc;
+
   @override
   State<StatefulWidget> createState() => _PppPasswordPage();
 }
 
 class _PppPasswordPage extends State<WebSiteListPage> {
-
   @override
   Widget build(BuildContext context) {
     List<WebSite> webSiteList = Provider.of<GlobalParams>(context).webSiteList;
+    print('网站数量${webSiteList.length}');
     return Theme(
         data: ThemeData(
           // primaryColor: black87,
@@ -317,16 +326,16 @@ class _PppPasswordPage extends State<WebSiteListPage> {
             appBar: AppBar(
               title: const Text("主题测试 hello world"),
             ),
-            body:ListView.builder(
-                itemCount: webSiteList.length+2,
-                itemBuilder: (BuildContext context, int index){
-                  if (index==0){
+            body: ListView.builder(
+                itemCount: webSiteList.length + 2,
+                itemBuilder: (BuildContext context, int index) {
+                  if (index == 0) {
                     return const Padding(
                       padding: EdgeInsets.only(right: 15, left: 15, top: 10),
                       child: SAppBarSearch(),
                     );
                   }
-                  if (index==1){
+                  if (index == 1) {
                     return const Padding(
                       padding: EdgeInsets.all(15),
                       child: SelectGroupBy(),
@@ -335,12 +344,11 @@ class _PppPasswordPage extends State<WebSiteListPage> {
                   return Padding(
                     padding: const EdgeInsets.only(
                         left: 15, top: 15, right: 15, bottom: 0),
-                    child: WebSitePage(web: webSiteList[index-2],touchFunc: widget.touchFunc),
+                    child: WebSitePage(
+                        web: webSiteList[index - 2],
+                        touchFunc: widget.touchFunc),
                   );
-                }
-            )
-        )
-    );
+                })));
   }
 }
 
@@ -606,9 +614,11 @@ class _SelectGroupBy extends State<SelectGroupBy> {
 // https://signup.passwall.io/free
 
 class WebSitePage extends StatefulWidget {
-  const WebSitePage({required this.web,required this.touchFunc, Key? key}) : super(key: key);
+  const WebSitePage({required this.web, required this.touchFunc, Key? key})
+      : super(key: key);
   final WebSite web;
   final Function(WebSite) touchFunc;
+
   @override
   State<StatefulWidget> createState() => _WebSitePageState();
 }
@@ -618,78 +628,86 @@ class _WebSitePageState extends State<WebSitePage> {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: secundario,
-        borderRadius: BorderRadius.circular(10.0), //圆角
-      ),
-      child: SizedBox(
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            InkWell(
-              onTap:(){widget.touchFunc(widget.web);},
-              child: Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: FadeInImage.assetNetwork(
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.fill,
-                      placeholder: "assets/icons/google.ico",
-                      image: widget.web.icon!,
-                      imageErrorBuilder: (context, error, stackTrace) {
-                        return Image.asset(
-                          "assets/icons/defaultWebsite.ico",
+    return LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+      double maxWidth = constraints.maxWidth;
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          color: secundario,
+          borderRadius: BorderRadius.circular(10.0), //圆角
+        ),
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                constraints: BoxConstraints(maxWidth: maxWidth - 90),
+                child: InkWell(
+                  onTap: () {
+                    widget.touchFunc(widget.web);
+                  },
+                  child: Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: FadeInImage.assetNetwork(
                           width: 40,
                           height: 40,
                           fit: BoxFit.fill,
-                        );
-                      },
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 300),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.web.name!,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            widget.web.url!,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                          placeholder: "assets/icons/google.ico",
+                          image: widget.web.icon!,
+                          imageErrorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              "assets/icons/defaultWebsite.ico",
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.fill,
+                            );
+                          },
+                        ),
                       ),
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxWidth - 170),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.web.name!,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                widget.web.url!,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: IconButton(
-                icon: Icon(iconStatus
-                    ? Icons.favorite_outlined
-                    : Icons.favorite_border),
-                onPressed: () {
-                  setState(() {
-                    iconStatus = !iconStatus;
-                  });
-                },
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: IconButton(
+                  icon: Icon(iconStatus
+                      ? Icons.favorite_outlined
+                      : Icons.favorite_border),
+                  onPressed: () {
+                    setState(() {
+                      iconStatus = !iconStatus;
+                    });
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -703,8 +721,8 @@ class AccountListPage extends StatefulWidget {
     required this.blackPage,
   }) : super(key: key);
 
-  final List<PassWordData> accountData;
-  final Function(PassWordData, int) touchFunc;
+  final WebSiteAccountData accountData;
+  final Function(AccountData, int) touchFunc;
   final Function(String?) blackPage;
   final WebSite web;
 
@@ -716,7 +734,7 @@ class _AccountListPageState extends State<AccountListPage> {
   Widget? addIcon() {
     return FloatingActionButton(
       onPressed: () {
-        widget.blackPage("detail");
+        widget.touchFunc(AccountData('', ''), -1);
       },
       tooltip: 'Increment',
       child: const Icon(
@@ -735,56 +753,57 @@ class _AccountListPageState extends State<AccountListPage> {
         scaffoldBackgroundColor: primario,
       ),
       child: Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              onPressed: () {
-                widget.blackPage(null);
-              },
-              icon: const Icon(Icons.arrow_back),
-            ),
-            title: const Text("账号列表"),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.all(5),
-                child: FadeInImage.assetNetwork(
-                  width: 45,
-                  height: 45,
-                  fit: BoxFit.fill,
-                  placeholder: widget.web.icon!,
-                  image: widget.web.icon!,
-                  imageErrorBuilder: (context, error, stackTrace) {
-                    return Image.asset(
-                      "assets/icons/defaultWebsite.ico",
-                      width: 45,
-                      height: 45,
-                      fit: BoxFit.fill,
-                    );
-                  },
-                ),
-              )
-            ],
-          ),
-          body: ListView.builder(
-            itemCount: widget.accountData.length + 1,
-            itemBuilder: (BuildContext context, int index) {
-              if (index == 0) {
-                return const Padding(
-                  padding: EdgeInsets.only(right: 15, left: 15, top: 10),
-                  child: SAppBarSearch(),
-                );
-              }
-              return Padding(
-                padding: const EdgeInsets.only(
-                    left: 15, top: 15, right: 15, bottom: 0),
-                child: AccountPage(
-                  password: widget.accountData[index-1],
-                  touchFunc: widget.touchFunc,
-                  index: index-1,
-                ),
-              );
+        appBar: AppBar(
+          leading: IconButton(
+            onPressed: () {
+              widget.blackPage(null);
             },
+            icon: const Icon(Icons.arrow_back),
           ),
-          floatingActionButton: addIcon()),
+          title: const Text("账号列表"),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.all(5),
+              child: FadeInImage.assetNetwork(
+                width: 45,
+                height: 45,
+                fit: BoxFit.fill,
+                placeholder: widget.web.icon!,
+                image: widget.web.icon!,
+                imageErrorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    "assets/icons/defaultWebsite.ico",
+                    width: 45,
+                    height: 45,
+                    fit: BoxFit.fill,
+                  );
+                },
+              ),
+            )
+          ],
+        ),
+        body: ListView.builder(
+          itemCount: widget.accountData.decodeData.length + 1,
+          itemBuilder: (BuildContext context, int index) {
+            if (index == 0) {
+              return const Padding(
+                padding: EdgeInsets.only(right: 15, left: 15, top: 10),
+                child: SAppBarSearch(),
+              );
+            }
+            return Padding(
+              padding: const EdgeInsets.only(
+                  left: 15, top: 15, right: 15, bottom: 0),
+              child: AccountPage(
+                password: widget.accountData.decodeData[index - 1],
+                touchFunc: widget.touchFunc,
+                index: index - 1,
+              ),
+            );
+          },
+        ),
+        floatingActionButton: addIcon(),
+      ),
     );
   }
 }
@@ -792,12 +811,12 @@ class _AccountListPageState extends State<AccountListPage> {
 class AccountPage extends StatefulWidget {
   const AccountPage(
       {required this.password,
-        required this.touchFunc,
-        required this.index,
-        Key? key})
+      required this.touchFunc,
+      required this.index,
+      Key? key})
       : super(key: key);
-  final PassWordData password;
-  final Function(PassWordData, int) touchFunc;
+  final AccountData password;
+  final Function(AccountData, int) touchFunc;
   final int index;
 
   @override
@@ -872,16 +891,13 @@ class _AccountPageState extends State<AccountPage> {
 
 // 详情页
 class PasswordDetailPage extends StatefulWidget {
-  // const PasswordDetailPage(
-  //     {Key? key})
-  //     : super(key: key);
   const PasswordDetailPage(
       {Key? key,
-        required this.detailData,
-        required this.blackPage,
-        this.maxWidth})
+      required this.detailData,
+      required this.blackPage,
+      this.maxWidth})
       : super(key: key);
-  final PassWordPageDetailData detailData;
+  final WebSiteAccountData detailData;
   final Function(String? status) blackPage;
   final double? maxWidth;
 
@@ -890,6 +906,24 @@ class PasswordDetailPage extends StatefulWidget {
 }
 
 class _PasswordDetailPageState extends State<PasswordDetailPage> {
+  savePassword() async {
+    if (widget.detailData.selectIndex == -2) {
+      widget.detailData.selectIndex = widget.detailData.decodeData.length - 1;
+      widget.detailData.decodeData.add(widget.detailData.selectAccount);
+    } else if (widget.detailData.selectIndex == -1) {
+      widget.detailData.decodeData.add(widget.detailData.selectAccount);
+    } else {
+      widget.detailData.decodeData[widget.detailData.selectIndex] =
+          widget.detailData.selectAccount;
+    }
+    widget.detailData.webSiteData.isModify = true;
+    await (await encodePassword(
+            widget.detailData.webSiteData, widget.detailData.decodeData))
+        .save();
+    widget.detailData.selectIndex++;
+    uploadData("password");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -902,6 +936,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
         appBar: AppBar(
           leading: IconButton(
             onPressed: () {
+              savePassword();
               widget.blackPage(null);
             },
             icon: const Icon(Icons.arrow_back),
@@ -928,8 +963,11 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
             )
           ],
         ),
-        body:
-        PageBody(detailData: widget.detailData, maxWidth: widget.maxWidth),
+        body: PageBody(
+          detailData: widget.detailData,
+          maxWidth: widget.maxWidth,
+          savePassword: savePassword,
+        ),
       ),
     );
   }
@@ -974,10 +1012,15 @@ class MyClipper extends CustomClipper<Path> {
 }
 
 class PageBody extends StatelessWidget {
-  const PageBody({Key? key, required this.detailData, this.maxWidth})
+  const PageBody(
+      {Key? key,
+      required this.detailData,
+      this.maxWidth,
+      required this.savePassword})
       : super(key: key);
-  final PassWordPageDetailData detailData;
+  final WebSiteAccountData detailData;
   final double? maxWidth;
+  final Function() savePassword;
 
   @override
   Widget build(BuildContext context) {
@@ -988,7 +1031,11 @@ class PageBody extends StatelessWidget {
       children: [
         const BackgroundCanvas(),
         Positioned(
-          child: ViewPage(detailData: detailData, maxWidth: maxWidth),
+          child: ViewPage(
+            detailData: detailData,
+            maxWidth: maxWidth,
+            savePassword: savePassword,
+          ),
           left: 0,
         )
       ],
@@ -997,10 +1044,15 @@ class PageBody extends StatelessWidget {
 }
 
 class ViewPage extends StatefulWidget {
-  const ViewPage({Key? key, required this.detailData, this.maxWidth})
+  const ViewPage(
+      {Key? key,
+      required this.detailData,
+      this.maxWidth,
+      required this.savePassword})
       : super(key: key);
-  final PassWordPageDetailData detailData;
+  final WebSiteAccountData detailData;
   final double? maxWidth;
+  final Function() savePassword;
 
   @override
   State<StatefulWidget> createState() => _ViewPageState();
@@ -1011,9 +1063,33 @@ class _ViewPageState extends State<ViewPage> {
   int passwordLength = 8;
   String _errorText = '';
   bool isModify = false;
+  final TextEditingController passwordController = TextEditingController();
+
+  @override
+  initState() {
+    passwordController.text = widget.detailData.selectAccount.password;
+    if (widget.detailData.selectAccount.password.isNotEmpty) {
+      print(widget.detailData.selectAccount.password);
+      print(widget.detailData.selectAccount.password.length);
+      _sliderValue = widget.detailData.selectAccount.password.length.toDouble();
+      passwordLength = widget.detailData.selectAccount.password.length;
+    }
+    super.initState();
+  }
 
   _getErrorText() {
     return _errorText;
+  }
+
+  getRandomPassword(int passwordLength) {
+    final _random = Random();
+    const _availableChars =
+        'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890!@#%^&*';
+    final randomString = List.generate(passwordLength,
+            (index) => _availableChars[_random.nextInt(_availableChars.length)])
+        .join();
+    print(randomString);
+    return randomString;
   }
 
   @override
@@ -1056,13 +1132,15 @@ class _ViewPageState extends State<ViewPage> {
             children: [
               SizedBox(
                 width: windows.width * 0.8,
-                child: const TextField(
-                  style: TextStyle(
+                child: TextFormField(
+                  style: const TextStyle(
                     color: inputTextColor,
                     fontSize: 20,
                   ),
-                  decoration: InputDecoration(
-                    hintText: "407640432",
+                  // controller:TextEditingController(text: widget.detailData.data.userName),
+                  initialValue: widget.detailData.selectAccount.userName,
+                  decoration: const InputDecoration(
+                    hintText: "用户名",
                     hintStyle: TextStyle(
                       color: inputTextColor,
                       fontSize: 20,
@@ -1074,9 +1152,19 @@ class _ViewPageState extends State<ViewPage> {
                     // ),
                     border: InputBorder.none,
                   ),
+                  readOnly: !isModify,
+                  onChanged: (String value) {
+                    widget.detailData.selectAccount.userName = value;
+                  },
                 ),
               ),
-              IconButton(onPressed: () {}, icon: const Icon(Icons.content_copy))
+              IconButton(
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(
+                      text: widget.detailData.selectAccount.userName));
+                },
+                icon: const Icon(Icons.content_copy),
+              )
             ],
           ),
         ),
@@ -1106,13 +1194,15 @@ class _ViewPageState extends State<ViewPage> {
             children: [
               SizedBox(
                 width: windows.width * 0.8,
-                child: const TextField(
-                  style: TextStyle(
+                child: TextFormField(
+                  controller: passwordController,
+                  style: const TextStyle(
                     color: inputTextColor,
                     fontSize: 20,
                   ),
-                  decoration: InputDecoration(
-                    hintText: "407640432",
+                  // controller:TextEditingController(text: widget.detailData.data.password),
+                  decoration: const InputDecoration(
+                    hintText: "密码",
                     hintStyle: TextStyle(
                       color: inputTextColor,
                       fontSize: 20,
@@ -1124,11 +1214,28 @@ class _ViewPageState extends State<ViewPage> {
                     // ),
                     border: InputBorder.none,
                   ),
+                  readOnly: !isModify,
+                  onChanged: (String value) {
+                    widget.detailData.selectAccount.password = value;
+                  },
                 ),
               ),
               IconButton(
-                  onPressed: () {},
-                  icon: Icon(!isModify ? Icons.content_copy : Icons.loop))
+                onPressed: () {
+                  if (isModify) {
+                    setState(() {
+                      passwordController.text =
+                          getRandomPassword(passwordLength);
+                      widget.detailData.selectAccount.password =
+                          passwordController.text;
+                    });
+                  } else {
+                    Clipboard.setData(
+                        ClipboardData(text: passwordController.text));
+                  }
+                },
+                icon: Icon(!isModify ? Icons.content_copy : Icons.loop),
+              )
             ],
           ),
         ),
@@ -1209,6 +1316,26 @@ class _ViewPageState extends State<ViewPage> {
             ],
           ),
         ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () {
+                setState(() {
+                  if (isModify) {
+                    widget.savePassword();
+                  }
+                  isModify = !isModify;
+                });
+              },
+              icon: Icon(isModify ? Icons.save_sharp : Icons.create),
+              label: Text(isModify ? "保存" : "修改"),
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all(detailColor),
+              ),
+            ),
+          ],
+        )
       ],
     );
   }

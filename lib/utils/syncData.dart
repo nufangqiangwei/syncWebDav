@@ -62,13 +62,13 @@ syncNoteBookVersion() async {
   }
 }
 
-mergeData(List<PassWordData> oldData, List<PassWordData> newData) {
-  List<PassWordData> oldData1 = oldData;
-  List<PassWordData> newData1 = newData;
-  List<PassWordData> result = [];
+mergeData(List<AccountData> oldData, List<AccountData> newData) {
+  List<AccountData> oldData1 = oldData;
+  List<AccountData> newData1 = newData;
+  List<AccountData> result = [];
   for (var i in oldData) {
-    PassWordData xx = newData.firstWhere((e) => e.userName == i.userName,
-        orElse: () => PassWordData("", ""));
+    AccountData xx = newData.firstWhere((e) => e.userName == i.userName,
+        orElse: () => AccountData("", ""));
     if (xx.userName == "") {
       oldData1.removeWhere((e) => e.userName == i.userName);
       continue;
