@@ -42,8 +42,9 @@ class GlobalParams extends ChangeNotifier {
   }
 
   refreshWebSiteList() async {
-    _webSiteList = initWebSiteData;
-        // await WebSite().select().orderBy('id').toList();
+    _webSiteList =
+         await WebSite().select().orderBy('id').toList();
+    print("站点数${_webSiteList.length}");
   }
 
   getUserInfo() async {
@@ -67,6 +68,7 @@ class GlobalParams extends ChangeNotifier {
   }
 
   Future<bool> initAppConfig() async {
+    1/0;
     getUserInfo();
     getSyncWebInfo();
     await refreshWebSiteList();

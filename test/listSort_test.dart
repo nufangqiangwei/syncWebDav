@@ -1,20 +1,5 @@
 import 'package:sync_webdav/model/model.dart';
-
+import 'package:path/path.dart' as path;
 void main() {
-  List<WebSite> webSiteList = [
-    WebSite(webKey:"tx"),
-    WebSite(webKey:"alibaba"),
-    WebSite(webKey:"github"),
-    WebSite(webKey:"google"),
-    WebSite(webKey:"huawei"),
-  ];
-  // List<String> webSiteList = [
-  //   "tx",
-  //   "alibaba",
-  //   "github",
-  //   "google",
-  //   "huawei",
-  // ];
-  webSiteList.sort((a, b) => (a.webKey??"").compareTo(b.webKey??""));
-  print(webSiteList);
+  print(path.join('/data/user/0/com.example.sync_webdav/cache',"app.log"));
 }

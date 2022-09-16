@@ -311,7 +311,6 @@ class _PppPasswordPage extends State<WebSiteListPage> {
   @override
   Widget build(BuildContext context) {
     List<WebSite> webSiteList = Provider.of<GlobalParams>(context).webSiteList;
-    print('网站数量${webSiteList.length}');
     return Theme(
         data: ThemeData(
           // primaryColor: black87,
@@ -734,7 +733,7 @@ class _AccountListPageState extends State<AccountListPage> {
   Widget? addIcon() {
     return FloatingActionButton(
       onPressed: () {
-        widget.touchFunc(AccountData('', ''), -1);
+        widget.touchFunc(AccountData('', ''), -2);
       },
       tooltip: 'Increment',
       child: const Icon(
@@ -907,6 +906,9 @@ class PasswordDetailPage extends StatefulWidget {
 
 class _PasswordDetailPageState extends State<PasswordDetailPage> {
   savePassword() async {
+    if (widget.detailData.selectAccount.userName == ""){
+      return ;
+    }
     if (widget.detailData.selectIndex == -2) {
       widget.detailData.selectIndex = widget.detailData.decodeData.length - 1;
       widget.detailData.decodeData.add(widget.detailData.selectAccount);
@@ -916,7 +918,15 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
       widget.detailData.decodeData[widget.detailData.selectIndex] =
           widget.detailData.selectAccount;
     }
+
     widget.detailData.webSiteData.isModify = true;
+    widget.detailData.webSiteData.webKey = widget.detailData.webSite.webKey;
+    if (widget.detailData.webSiteData.version ==null){
+      widget.detailData.webSiteData.version=1;
+    }else{
+      widget.detailData.webSiteData.version = widget.detailData.webSiteData.version!+1;
+    }
+
     await (await encodePassword(
             widget.detailData.webSiteData, widget.detailData.decodeData))
         .save();
@@ -933,6 +943,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
         scaffoldBackgroundColor: detailBackgroundColor,
       ),
       child: Scaffold(
+        // resizeToAvoidBottomInset: false,
         appBar: AppBar(
           leading: IconButton(
             onPressed: () {
@@ -1067,10 +1078,11 @@ class _ViewPageState extends State<ViewPage> {
 
   @override
   initState() {
+    if (widget.detailData.selectAccount.userName==""){
+      isModify=true;
+    }
     passwordController.text = widget.detailData.selectAccount.password;
     if (widget.detailData.selectAccount.password.isNotEmpty) {
-      print(widget.detailData.selectAccount.password);
-      print(widget.detailData.selectAccount.password.length);
       _sliderValue = widget.detailData.selectAccount.password.length.toDouble();
       passwordLength = widget.detailData.selectAccount.password.length;
     }
@@ -1088,7 +1100,6 @@ class _ViewPageState extends State<ViewPage> {
     final randomString = List.generate(passwordLength,
             (index) => _availableChars[_random.nextInt(_availableChars.length)])
         .join();
-    print(randomString);
     return randomString;
   }
 
@@ -1101,7 +1112,6 @@ class _ViewPageState extends State<ViewPage> {
       windows =
           Size(widget.maxWidth ?? 700, MediaQuery.of(context).size.height);
     }
-    print("详情页面可用宽度${windows.width}");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1189,7 +1199,7 @@ class _ViewPageState extends State<ViewPage> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(left: 30, top: 10),
+          padding: EdgeInsets.only(left: 30, top: 10,bottom: MediaQuery.of(context).viewInsets.bottom),
           child: Row(
             children: [
               SizedBox(

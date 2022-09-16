@@ -252,6 +252,20 @@ class _UserSettingPageState extends State<UserSettingPage> {
     promptDialog(context, "登录成功");
   }
 
+  selectFile()async{
+    final Directory rootPath = await getTemporaryDirectory();
+    print(rootPath);
+    String? path = await FilesystemPicker.open(
+      title: 'Open file',
+      context: context,
+      rootDirectory: rootPath,
+      fsType: FilesystemType.file,
+      allowedExtensions: ['.txt'],
+      fileTileSelectMode: FileTileSelectMode.wholeTile,
+    );
+    print(path);
+  }
+
   String showUserId() {
     int userId = Provider.of<GlobalParams>(context).userId;
     if (userId == -1) {
@@ -285,7 +299,12 @@ class _UserSettingPageState extends State<UserSettingPage> {
             ],
           ),
           SettingsSection(
-            title: const Text('用户密钥-公钥'),
+            title: Row(
+              children: [
+                const Text('用户密钥-公钥'),
+                TextButton(onPressed: (){ selectFile(); }, child: const Text("选择文件"))
+              ],
+            ) ,
             tiles: [
               SettingsTile(
                 title: TextField(
@@ -298,14 +317,22 @@ class _UserSettingPageState extends State<UserSettingPage> {
             ],
           ),
           SettingsSection(
-            title: const Text('用户密钥-私钥'),
+            title: Row(
+              children: [
+                const Text('用户密钥-私钥'),
+                TextButton(onPressed: (){
+                  selectFile();
+                }, child: const Text("选择文件"))
+              ],
+            ) ,
             tiles: [
               SettingsTile(
                 title: TextField(
                     controller: priController,
                     minLines: 5,
                     maxLines: 15,
-                    readOnly: globalParams.userId != -1),
+                    readOnly: globalParams.userId != -1,
+                ),
               )
             ],
           ),
@@ -373,8 +400,7 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
     //     result.add(a);
     //   }
     // }
-
-    await WebSite.saveAll(webSiteList);
+    print(await WebSite().upsertAll(webSiteList));
     globalParams.refreshWebSiteList();
     showDialog(
         context: context,
