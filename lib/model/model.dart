@@ -7,6 +7,14 @@ import 'package:sqfentity_gen/sqfentity_gen.dart';
 
 part 'model.g.dart';
 
+class BundledDbModel extends SqfEntityModelProvider {}
+
+initDatabase()async{
+  convertDatabaseToModelBase(BundledDbModel()
+    ..databaseName = 'PasswordManage.db'
+    ..bundledDatabasePath = 'assets/database/PasswordManage.db');
+}
+
 // flutter pub run build_runner build --delete-conflicting-outputs
 const tableSysConfig = SqfEntityTable(
   tableName: 'sysConfig',
@@ -75,6 +83,7 @@ const tableSysLog = SqfEntityTable(
 const databaseModel = SqfEntityModel(
     modelName: 'MyPasswordManage',
     databaseName: 'PasswordManage.db',
+    bundledDatabasePath: 'assets/database/PasswordManage.db',
     password: null,
     databaseTables: [
       tableSysConfig,

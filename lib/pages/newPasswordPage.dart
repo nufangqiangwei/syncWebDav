@@ -1,8 +1,6 @@
-import 'dart:math';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/common/passwordUtils.dart';
@@ -1163,6 +1161,7 @@ class _ViewPageState extends State<ViewPage> {
                 onPressed: () {
                   Clipboard.setData(ClipboardData(
                       text: widget.detailData.selectAccount.userName));
+                  SmartDialog.showToast("复制成功");
                 },
                 icon: const Icon(Icons.content_copy),
               )
@@ -1233,6 +1232,7 @@ class _ViewPageState extends State<ViewPage> {
                   } else {
                     Clipboard.setData(
                         ClipboardData(text: passwordController.text));
+                    SmartDialog.showToast("复制成功");
                   }
                 },
                 icon: Icon(!isModify ? Icons.content_copy : Icons.loop),
