@@ -45,8 +45,8 @@ class RSAUtils {
       cipher.init(true, keyParameter);
       int index = 0;
       int strlength = data.length;
-      final keysize = publicKey.modulus?.bitLength ?? 0 ~/ 8 - 11;
-      final blocksize = publicKey.modulus?.bitLength ?? 0 ~/ 8;
+      final keysize = ((publicKey.modulus?.bitLength ?? 0) ~/ 8 - 11);
+      final blocksize = ((publicKey.modulus?.bitLength ?? 0) ~/ 8);
       final numBlocks =
           (strlength ~/ keysize) + ((strlength % keysize != 0) ? 1 : 0);
       Uint8List list = Uint8List(blocksize * numBlocks);
@@ -61,7 +61,7 @@ class RSAUtils {
           index += keysize;
         }
         Uint8List encryptResult = cipher.process(listtmp);
-        for (int v_i = 0; v_i < blocksize; v_i++) {
+        for (int v_i = 0; v_i < encryptResult.length; v_i++) {
           list[count * blocksize + v_i] = encryptResult[v_i];
         }
         count += 1;
@@ -147,14 +147,14 @@ class RSAUtils {
   ///RSA私钥解密
   Uint8List decryptByPrivateKey(Uint8List data) {
     try {
-      var keyParameter = () => PrivateKeyParameter<RSAPrivateKey>(privateKey);
+      var keyParameter = PrivateKeyParameter<RSAPrivateKey>(privateKey);
       AsymmetricBlockCipher cipher = AsymmetricBlockCipher("RSA/PKCS1");
       cipher.reset();
-      cipher.init(false, keyParameter());
+      cipher.init(false, keyParameter);
       int index = 0;
       int strlength = data.length;
-      final keysize = publicKey.modulus?.bitLength ?? 0 ~/ 8 - 11;
-      final blocksize = publicKey.modulus?.bitLength ?? 0 ~/ 8;
+      final keysize = ((publicKey.modulus?.bitLength ?? 0) ~/ 8 - 11);
+      final blocksize = ((publicKey.modulus?.bitLength ?? 0) ~/ 8);
       final numBlocks = strlength ~/ blocksize;
       Uint8List list = Uint8List(keysize * numBlocks);
       int count = 0;
@@ -179,7 +179,7 @@ class RSAUtils {
 
   /// 加密
   String encodeString(String content) {
-    return utf8.decode(encryptByPublicKey(base64.decode(content)));
+    return base64Encode(encryptByPublicKey(Uint8List.fromList(utf8.encode(content))));
   }
 
   /// 解密
@@ -292,8 +292,7 @@ class RSAUtils {
   }
 
   ASN1Sequence _pkcs8PublicSequence(ASN1Sequence sequence) {
-    final ASN1BitString bitString =
-        (sequence.elements as List<ASN1BitString>)[1];
+    final ASN1Object bitString = sequence.elements[1];
     final bytes = bitString.valueBytes().sublist(1);
     final parser = ASN1Parser(Uint8List.fromList(bytes));
 
@@ -301,8 +300,7 @@ class RSAUtils {
   }
 
   ASN1Sequence _pkcs8PrivateSequence(ASN1Sequence sequence) {
-    final ASN1BitString bitString =
-        (sequence.elements as List<ASN1BitString>)[2];
+    final ASN1Object bitString = sequence.elements[2];
     final bytes = bitString.valueBytes();
     final parser = ASN1Parser(bytes);
 
