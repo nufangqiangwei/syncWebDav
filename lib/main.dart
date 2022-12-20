@@ -10,7 +10,7 @@ import 'model/model.dart';
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await initLog();
-  // await  initDatabase();
+  await  initDatabase();
   await globalParams.initAppConfig();
   runApp(
     MultiProvider(
@@ -32,6 +32,9 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       initialRoute: "/index",
       routes:myRoute,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
       navigatorObservers: [FlutterSmartDialog.observer],
       builder: FlutterSmartDialog.init(),
     );

@@ -80,6 +80,7 @@ class GlobalParams extends ChangeNotifier {
   }
 
   Future<bool> initAppConfig() async {
+    1/0;
     getUserInfo();
     getSyncWebInfo();
     await refreshWebSiteList();
