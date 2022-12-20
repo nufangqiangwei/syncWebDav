@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
@@ -17,6 +18,8 @@ import 'package:sync_webdav/utils/gather.dart';
 import 'dart:io';
 
 import 'package:sync_webdav/utils/modifyData.dart';
+
+import '../utils/rsaUtils.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({Key? key}) : super(key: key);
@@ -55,21 +58,24 @@ class _SettingPageState extends State<SettingPage> {
           ],
         ),
         SettingsSection(
-          title: Text('Account'),
+          title: const Text('Account'),
           tiles: [
             SettingsTile(
-                title: Text('Phone number'), leading: Icon(Icons.phone)),
-            SettingsTile(title: Text('Email'), leading: Icon(Icons.email)),
+                title: const Text('Phone number'),
+                leading: const Icon(Icons.phone)),
             SettingsTile(
-                title: Text('Sign out'), leading: Icon(Icons.exit_to_app)),
+                title: const Text('Email'), leading: const Icon(Icons.email)),
+            SettingsTile(
+                title: const Text('Sign out'),
+                leading: const Icon(Icons.exit_to_app)),
           ],
         ),
         SettingsSection(
-          title: Text('Security'),
+          title: const Text('Security'),
           tiles: [
             SettingsTile.switchTile(
-              title: Text('Lock app in background'),
-              leading: Icon(Icons.phonelink_lock),
+              title: const Text('Lock app in background'),
+              leading: const Icon(Icons.phonelink_lock),
               onToggle: (bool value) {
                 setState(() {
                   lockInBackground = value;
@@ -79,21 +85,21 @@ class _SettingPageState extends State<SettingPage> {
               initialValue: lockInBackground,
             ),
             SettingsTile.switchTile(
-              title: Text('Use fingerprint'),
-              leading: Icon(Icons.fingerprint),
+              title: const Text('Use fingerprint'),
+              leading: const Icon(Icons.fingerprint),
               onToggle: (bool value) {},
               initialValue: false,
             ),
             SettingsTile.switchTile(
-              title: Text('Change password'),
-              leading: Icon(Icons.lock),
+              title: const Text('Change password'),
+              leading: const Icon(Icons.lock),
               initialValue: true,
               onToggle: (bool value) {},
             ),
             SettingsTile.switchTile(
-              title: Text('Enable Notifications'),
+              title: const Text('Enable Notifications'),
               enabled: notificationsEnabled,
-              leading: Icon(Icons.notifications_active),
+              leading: const Icon(Icons.notifications_active),
               initialValue: true,
               onToggle: (value) {},
             ),
@@ -107,7 +113,7 @@ class _SettingPageState extends State<SettingPage> {
                 leading: const Icon(Icons.description)),
             SettingsTile(
                 title: const Text('Open source licenses'),
-                leading: Icon(Icons.collections_bookmark)),
+                leading: const Icon(Icons.collections_bookmark)),
           ],
         ),
         CustomSettingsSection(
@@ -166,49 +172,50 @@ class _UserSettingPageState extends State<UserSettingPage> {
   bool _showPubPopupMenuView = false;
   bool _showPriPopupMenuView = false;
 
-  Map<String,BuildContext>dialogContext={};
-
+  Map<String, BuildContext> dialogContext = {};
 
   @override
   void initState() {
     _pubFocusNode.addListener(() {
       _pubFocusNode.unfocus();
       if (!_pubFocusNode.hasFocus && !_showPubPopupMenuView) {
-        RenderBox? box = _pubGlobalKey.currentContext?.findRenderObject() as RenderBox?;
+        RenderBox? box =
+            _pubGlobalKey.currentContext?.findRenderObject() as RenderBox?;
         RelativeRect popupMenuPosition;
-        if (box!=null){
+        if (box != null) {
           Offset boxInitCoordinate = box.localToGlobal(Offset.zero);
-           popupMenuPosition = RelativeRect.fromLTRB(
-              boxInitCoordinate.dx+(box.size.width/2),
-              boxInitCoordinate.dy+(box.size.height/2),
-              boxInitCoordinate.dx+(box.size.width/2)+50,
-              boxInitCoordinate.dy+(box.size.height/2)+50,
+          popupMenuPosition = RelativeRect.fromLTRB(
+            boxInitCoordinate.dx + (box.size.width / 2),
+            boxInitCoordinate.dy + (box.size.height / 2),
+            boxInitCoordinate.dx + (box.size.width / 2) + 50,
+            boxInitCoordinate.dy + (box.size.height / 2) + 50,
           );
-        }else{
-           popupMenuPosition = const RelativeRect.fromLTRB(0, 0, 0, 0);
+        } else {
+          popupMenuPosition = const RelativeRect.fromLTRB(0, 0, 0, 0);
         }
         _showPubPopupMenuView = true;
-        popupMenuView(pubController, _showPubPopupMenuView,popupMenuPosition);
+        popupMenuView(pubController, _showPubPopupMenuView, popupMenuPosition);
       }
     });
     _priFocusNode.addListener(() {
       _priFocusNode.unfocus();
       if (!_priFocusNode.hasFocus && !_showPriPopupMenuView) {
-        RenderBox? box = _priGlobalKey.currentContext?.findRenderObject() as RenderBox?;
+        RenderBox? box =
+            _priGlobalKey.currentContext?.findRenderObject() as RenderBox?;
         RelativeRect popupMenuPosition;
-        if (box!=null){
+        if (box != null) {
           Offset boxInitCoordinate = box.localToGlobal(Offset.zero);
           popupMenuPosition = RelativeRect.fromLTRB(
-            boxInitCoordinate.dx+(box.size.width/2),
-            boxInitCoordinate.dy+(box.size.height/2),
-            boxInitCoordinate.dx+(box.size.width/2)+50,
-            boxInitCoordinate.dy+(box.size.height/2)+50,
+            boxInitCoordinate.dx + (box.size.width / 2),
+            boxInitCoordinate.dy + (box.size.height / 2),
+            boxInitCoordinate.dx + (box.size.width / 2) + 50,
+            boxInitCoordinate.dy + (box.size.height / 2) + 50,
           );
-        }else{
+        } else {
           popupMenuPosition = const RelativeRect.fromLTRB(0, 0, 0, 0);
         }
         _showPriPopupMenuView = true;
-        popupMenuView(priController, _showPriPopupMenuView,popupMenuPosition);
+        popupMenuView(priController, _showPriPopupMenuView, popupMenuPosition);
       }
     });
     super.initState();
@@ -221,7 +228,29 @@ class _UserSettingPageState extends State<UserSettingPage> {
     super.dispose();
   }
 
-  popupMenuView(TextEditingController textController, bool isShow,RelativeRect popupMenuPosition) async {
+  stackDialog({
+    required AlignmentGeometry alignment,
+    required String tag,
+    required Widget view,
+    double width = double.infinity,
+    double height = double.infinity,
+  }) async {
+    SmartDialog.show(
+      tag: tag,
+      alignment: alignment,
+      builder: (_) {
+        return Container(
+          width: width,
+          height: height,
+          alignment: Alignment.center,
+          child: view,
+        );
+      },
+    );
+  }
+
+  popupMenuView(TextEditingController textController, bool isShow,
+      RelativeRect popupMenuPosition) async {
     if (!isShow) return;
     showMenu<String>(
       // color: Colors.red,
@@ -241,6 +270,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
     ).then<void>((String? selectValue) async {
       if (selectValue == "复制") {
         Clipboard.setData(ClipboardData(text: textController.text));
+        SmartDialog.showToast("复制成功");
       } else if (selectValue == "粘贴") {
         ClipboardData? a = await Clipboard.getData(Clipboard.kTextPlain);
         if (a != null && a.text != null) {
@@ -256,13 +286,14 @@ class _UserSettingPageState extends State<UserSettingPage> {
   Future<bool> examineKey() async {
     RsaEncrypt rsa = RsaEncrypt.initKey(pubController.text, priController.text);
     String baseStr = globalParams.encryptStr;
-    if(baseStr==''){
-      baseStr=getRandomPassword(10);
+    if (baseStr == '') {
+      baseStr = getRandomPassword(10);
     }
-    String str = rsa.decodeString(rsa.encodeString(baseStr));
-    print(str);
     print(baseStr);
-    return str == "baseStr";
+    String x = rsa.encodeString(baseStr);
+    print(x);
+    String str = rsa.decodeString(x);
+    return str == baseStr;
   }
 
   modifyKey() async {
@@ -293,31 +324,88 @@ class _UserSettingPageState extends State<UserSettingPage> {
       return;
     }
     // 准备替换密钥
-    showDialog<bool>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
+    SmartDialog.show(
+      tag: "modifyKeyTitle",
+      alignment: Alignment.center,
+      builder: (_) {
+        return AlertDialog(
             title: const Text("提示"),
             content: const Text("修改密钥需要等待一段时间，请不要退出app。退出app可能会导致数据库损坏无法读取数据。"),
             actions: <Widget>[
               TextButton(
-                child: const Text("确定"),
-                onPressed: () {
-                  Navigator.of(context).pop(true);
-                },
-              ),
-            ],
-          );
-        }) ;
-    // Future.delayed(const Duration(seconds: 5),(){Navigator.pop(hiltContext);});
+                  child: const Text("确定"),
+                  onPressed: () {
+                    SmartDialog.dismiss();
+                  })
+            ]);
+      },
+    );
     // 校验密钥是否正确
     if (!await examineKey()) {
       // 关闭之前的弹窗
-
+      await Future.delayed(const Duration(seconds: 5));
+      SmartDialog.dismiss(tag: "modifyKeyTitle");
+      promptDialog(context, "密钥不正确，请检查密钥是否完整填写");
       return;
     }
 
+    RSAUtils newRsaClient = RSAUtils(pubController.text, priController.text);
     // todo 替换 password 表中的数据
+    List<Password> dbData =
+        await Password().select().isDeleted.equals(false).toList();
+    for (final da in dbData) {
+      if (da.isEncryption ?? false) {
+        da.value = newRsaClient
+            .encodeString(globalParams.userRSA.decodeString(da.value!));
+      } else {
+        da.value = newRsaClient.encodeString(da.value!);
+        da.isEncryption = true;
+      }
+    }
+
+    SysConfig? publicKeyStr = await SysConfig()
+        .select()
+        .key
+        .equals('publicKeyStr').toSingle();
+    if (publicKeyStr==null){
+      await SysConfig(key:'publicKeyStr',value: pubController.text).save();
+    }else{
+      publicKeyStr.value=pubController.text;
+      await publicKeyStr.save();
+    }
+
+    SysConfig? privateKeyStr = await SysConfig()
+        .select()
+        .key
+        .equals('privateKeyStr').toSingle();
+    if (privateKeyStr==null){
+      await SysConfig(key:'privateKeyStr',value: priController.text).save();
+    }else{
+      privateKeyStr.value=priController.text;
+      await privateKeyStr.save();
+    }
+
+    await globalParams.loadRsaClient();
+    await Password().upsertAll(dbData);
+    if (ModalRoute.of(context)?.settings.name=="/userSetting"){
+      SmartDialog.show(
+        tag: "modifyKeyTitle",
+        alignment: Alignment.center,
+        builder: (_) {
+          return AlertDialog(
+              title: const Text("提示"),
+              content: const Text("修改成功"),
+              actions: <Widget>[
+                TextButton(
+                    child: const Text("确定"),
+                    onPressed: () {
+                      SmartDialog.dismiss();
+                    })
+              ]);
+        },
+      );
+    }
+
   }
 
   String butterText() {
@@ -456,15 +544,13 @@ class _UserSettingPageState extends State<UserSettingPage> {
             title: Row(
               children: [
                 const Text('用户密钥-公钥'),
-                TextButton(
-                    onPressed:loadPubKey,
-                    child: const Text("选择文件"))
+                TextButton(onPressed: loadPubKey, child: const Text("选择文件"))
               ],
             ),
             tiles: [
               SettingsTile(
                 title: TextField(
-                  key:_pubGlobalKey,
+                  key: _pubGlobalKey,
                   controller: pubController,
                   focusNode: _pubFocusNode,
                   decoration: const InputDecoration(
@@ -472,7 +558,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
                   ),
                   minLines: 5,
                   maxLines: 15,
-                  readOnly:true,
+                  readOnly: true,
                 ),
               ),
             ],
@@ -481,15 +567,13 @@ class _UserSettingPageState extends State<UserSettingPage> {
             title: Row(
               children: [
                 const Text('用户密钥-私钥'),
-                TextButton(
-                    onPressed: loadPriKey,
-                    child: const Text("选择文件"))
+                TextButton(onPressed: loadPriKey, child: const Text("选择文件"))
               ],
             ),
             tiles: [
               SettingsTile(
                 title: TextField(
-                  key:_priGlobalKey,
+                  key: _priGlobalKey,
                   controller: priController,
                   focusNode: _priFocusNode,
                   decoration: const InputDecoration(
@@ -497,7 +581,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
                   ),
                   minLines: 5,
                   maxLines: 15,
-                  readOnly:true,
+                  readOnly: true,
                 ),
               )
             ],
@@ -550,6 +634,14 @@ class DatabaseSettingPage extends StatefulWidget {
 }
 
 class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
+  modifyWebSitePath(BuildContext context) async {
+    showDialog<String>(
+        context: context,
+        builder: (context) {
+          return AlertDialog();
+        });
+  }
+
   synchronizeWebSite() async {
     List<WebSite> webSiteList = await getWebSiteList();
     // List<WebSite> saveList = globalParams.webSiteList;
@@ -566,7 +658,7 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
     //     result.add(a);
     //   }
     // }
-    print(await WebSite().upsertAll(webSiteList));
+    await WebSite().upsertAll(webSiteList);
     globalParams.refreshWebSiteList();
     showDialog(
         context: context,
@@ -660,6 +752,10 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
           SettingsSection(
             title: const Text("数据库信息"),
             tiles: [
+              SettingsTile.navigation(
+                title: const Text("配置网站地址"),
+                onPressed: modifyWebSitePath,
+              ),
               SettingsTile.navigation(
                 title: const Text("同步站点数据"),
                 onPressed: (context) {

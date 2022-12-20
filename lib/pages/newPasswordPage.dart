@@ -1,8 +1,6 @@
-import 'dart:math';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/common/passwordUtils.dart';
@@ -32,8 +30,8 @@ const fondo = Color.fromRGBO(161, 159, 159, 1);
 const acento = Color.fromRGBO(251, 251, 251, 1);
 
 // 详情页配色
-const detailColor = Color.fromRGBO(36, 40, 80, 1);
-const detailBackgroundColor = Color.fromRGBO(27, 30, 60, 1);
+const detailColor = Color.fromRGBO(67, 86, 102, 0.5);
+const detailBackgroundColor = Color.fromRGBO(34, 43, 51, 1);
 const inputTitleColor = Color.fromRGBO(130, 148, 165, 1);
 const inputTextColor = Color.fromRGBO(254, 254, 254, 1);
 
@@ -907,8 +905,8 @@ class PasswordDetailPage extends StatefulWidget {
 
 class _PasswordDetailPageState extends State<PasswordDetailPage> {
   savePassword() async {
-    if (widget.detailData.selectAccount.userName == ""){
-      return ;
+    if (widget.detailData.selectAccount.userName == "") {
+      return;
     }
     if (widget.detailData.selectIndex == -2) {
       widget.detailData.selectIndex = widget.detailData.decodeData.length - 1;
@@ -922,10 +920,11 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
 
     widget.detailData.webSiteData.isModify = true;
     widget.detailData.webSiteData.webKey = widget.detailData.webSite.webKey;
-    if (widget.detailData.webSiteData.version ==null){
-      widget.detailData.webSiteData.version=1;
-    }else{
-      widget.detailData.webSiteData.version = widget.detailData.webSiteData.version!+1;
+    if (widget.detailData.webSiteData.version == null) {
+      widget.detailData.webSiteData.version = 1;
+    } else {
+      widget.detailData.webSiteData.version =
+          widget.detailData.webSiteData.version! + 1;
     }
 
     await (await encodePassword(
@@ -1079,8 +1078,8 @@ class _ViewPageState extends State<ViewPage> {
 
   @override
   initState() {
-    if (widget.detailData.selectAccount.userName==""){
-      isModify=true;
+    if (widget.detailData.selectAccount.userName == "") {
+      isModify = true;
     }
     passwordController.text = widget.detailData.selectAccount.password;
     if (widget.detailData.selectAccount.password.isNotEmpty) {
@@ -1092,6 +1091,13 @@ class _ViewPageState extends State<ViewPage> {
 
   _getErrorText() {
     return _errorText;
+  }
+
+  randomPassword(){
+    passwordController.text =
+        getRandomPassword(passwordLength);
+    widget.detailData.selectAccount.password =
+        passwordController.text;
   }
 
   @override
@@ -1163,6 +1169,7 @@ class _ViewPageState extends State<ViewPage> {
                 onPressed: () {
                   Clipboard.setData(ClipboardData(
                       text: widget.detailData.selectAccount.userName));
+                  SmartDialog.showToast("复制成功");
                 },
                 icon: const Icon(Icons.content_copy),
               )
@@ -1190,7 +1197,10 @@ class _ViewPageState extends State<ViewPage> {
           ),
         ),
         Padding(
-          padding: EdgeInsets.only(left: 30, top: 10,bottom: MediaQuery.of(context).viewInsets.bottom),
+          padding: EdgeInsets.only(
+              left: 30,
+              top: 10,
+              bottom: MediaQuery.of(context).viewInsets.bottom),
           child: Row(
             children: [
               SizedBox(
@@ -1225,14 +1235,12 @@ class _ViewPageState extends State<ViewPage> {
                 onPressed: () {
                   if (isModify) {
                     setState(() {
-                      passwordController.text =
-                          getRandomPassword(passwordLength);
-                      widget.detailData.selectAccount.password =
-                          passwordController.text;
+                      randomPassword();
                     });
                   } else {
                     Clipboard.setData(
                         ClipboardData(text: passwordController.text));
+                    SmartDialog.showToast("复制成功");
                   }
                 },
                 icon: Icon(!isModify ? Icons.content_copy : Icons.loop),
@@ -1259,6 +1267,11 @@ class _ViewPageState extends State<ViewPage> {
                   color: inputTextColor,
                 ),
               ),
+              IconButton(
+                padding:const EdgeInsets.all(0),
+                onPressed: (){
+                setState((){passwordLength--;_sliderValue--;randomPassword();});
+              }, icon: const Icon(Icons.remove)),
               Slider(
                 value: _sliderValue,
                 onChanged: (data) {
@@ -1280,39 +1293,16 @@ class _ViewPageState extends State<ViewPage> {
                   return '${newValue.round()} dollars}';
                 },
               ),
+              IconButton(onPressed: (){
+                setState((){passwordLength++;_sliderValue++;randomPassword();});
+              }, icon: const Icon(Icons.add)),
               SizedBox(
                 width: 120,
-                child: TextField(
-                  style: const TextStyle(
-                    color: inputTextColor,
-                    fontSize: 20,
-                  ),
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: passwordLength.toString(),
-                    hintStyle: const TextStyle(
+                child: Text(passwordLength.toString(),
+                    style: const TextStyle(
                       color: inputTextColor,
                       fontSize: 20,
-                    ),
-                    border: InputBorder.none,
-                    errorText: _getErrorText(),
-                    errorStyle: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 10,
-                    ),
-                  ),
-                  onSubmitted: (String data) {
-                    int a = int.parse(data);
-                    setState(() {
-                      if (a < 8 || a > 32) {
-                        _errorText = '密码长度应在8-32之间';
-                      } else {
-                        passwordLength = int.parse(data);
-                        _errorText = '';
-                      }
-                    });
-                  },
-                ),
+                    )),
               )
             ],
           ),

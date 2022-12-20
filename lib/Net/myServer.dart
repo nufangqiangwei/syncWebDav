@@ -2,19 +2,26 @@ import 'package:dio/dio.dart';
 import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/model/model.dart';
 
+String getEncryptStr() {
+  if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
+    throw "尚未添加密钥";
+  }
+  return globalParams.userRSA.encodeString(globalParams.encryptStr);
+}
+
 // 'https://ouliguojiashengsiyi.xyz/'
-const webHost = 'http://192.168.1.21:5000';
+const webHost = 'http://127.0.0.1:5000';
 const webPathPrefix = '';
 
 register(String userPubKey, String encryptStr) async {
   var response = await Dio().post<Map<String, dynamic>>(
       webHost + webPathPrefix + '/register',
-      queryParameters: {"UserPubKey": userPubKey, "EncryptStr": encryptStr});
-
+      data: {"UserPubKey": userPubKey, "EncryptStr": encryptStr});
+  print(response);
   globalParams.setUserConfig(
-      response.data?['UserId'] as int,
-      response.data?['WebPubKey'] as String,
-      response.data?['EncryptStr'] as String);
+      response.data?['userId'] as int,
+      response.data?['webPubKey'] as String,
+      response.data?['encryptStr'] as String);
 }
 
 Future<List<WebSite>> getWebSiteList() async {
@@ -28,13 +35,7 @@ Future<List<WebSite>> getWebSiteList() async {
   return result;
 }
 
-String getEncryptStr() {
-  if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
-    throw "尚未添加密钥";
-  }
-  return globalParams.userRSA.encodeString(globalParams.encryptStr);
-}
-
+//  需要登录的接口
 pushDataToServer(String data, String dataType) async {
   Map<String, dynamic> requestData = {"EncryptStr": getEncryptStr()};
   requestData["UserData"] = globalParams.userRSA.encodeString(data);
@@ -63,8 +64,8 @@ Future<List<Map<String, String>>> getPasswordData(int version) async {
   if (response.statusCode != 200) {
     throw response.statusMessage ?? "获取备份失败";
   }
-  if (response.data!['version']!= version){
-    throw  "获取备份失败,返回的不是指定的版本";
+  if (response.data!['version'] != version) {
+    throw "获取备份失败,返回的不是指定的版本";
   }
   List<Map<String, String>> data =
       response.data!['data'] as List<Map<String, String>>;

@@ -12,7 +12,7 @@ initLog() async {
   try {
     Directory cachePath = await getTemporaryDirectory();
     log = Logger(
-      output: FileOutput(file: File(path.join(cachePath.path, "app.log"))),
+      output: FileOutput(file: File(path.join(cachePath.path, "qiangWei.log"))),
     );
     developer.log('log me', name: 'my.app.category');
   } catch (e) {

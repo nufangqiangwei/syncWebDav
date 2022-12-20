@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:sync_webdav/common/utils.dart';
-import 'package:sync_webdav/utils/initData.dart';
 import '../model/model.dart';
-import 'encryption.dart';
+import '../utils/rsaUtils.dart';
 
 class GlobalParams extends ChangeNotifier {
   String _appBarText = 'Flutter Demo Home Page';
@@ -15,7 +14,7 @@ class GlobalParams extends ChangeNotifier {
   late String encryptStr = ''; // 加密字符串
   late String publicKeyStr = '';
   late String privateKeyStr = '';
-  late RsaEncrypt userRSA = RsaEncrypt.initKey("", "");
+  late RSAUtils userRSA;
   late int lastPushTime = 0;
   late int _webInfoId = 0;
   late int passwordVersion = 0;
@@ -67,11 +66,7 @@ class GlobalParams extends ChangeNotifier {
     passwordVersion = webInfo['passwordVersion'];
   }
 
-  Future<bool> initAppConfig() async {
-    1/0;
-    getUserInfo();
-    getSyncWebInfo();
-    await refreshWebSiteList();
+  loadRsaClient()async{
     if (publicKeyStr == '') {
       publicKeyStr = await getSysConfig('publicKeyStr');
     }
@@ -81,7 +76,14 @@ class GlobalParams extends ChangeNotifier {
     if (publicKeyStr == '' || privateKeyStr == '') {
       return false;
     }
-    userRSA = RsaEncrypt.initKey(publicKeyStr, privateKeyStr);
+    userRSA = RSAUtils(publicKeyStr, privateKeyStr);
+  }
+
+  Future<bool> initAppConfig() async {
+    getUserInfo();
+    getSyncWebInfo();
+    await refreshWebSiteList();
+    await loadRsaClient();
     return true;
   }
 

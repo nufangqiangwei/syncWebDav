@@ -1,9 +1,14 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:encrypt/encrypt.dart';
+import 'package:pointycastle/export.dart';
+
 
 class RsaEncrypt {
   late Encrypter _encrypter;
+  late RSAPublicKey publicKey;
+  late RSAPrivateKey privateKey;
+  late int pubKeyLength;
 
   RsaEncrypt();
 
@@ -12,15 +17,30 @@ class RsaEncrypt {
     //     await File('assets/data/rsa_public_key.pem').readAsString();
     // var privateKeyStr =
     //     await File('assets/data/rsa_private_key.pem').readAsString();
-    dynamic publicKey = RSAKeyParser().parse(publicKeyStr);
-    dynamic privateKey = RSAKeyParser().parse(privateKeyStr);
+    publicKey = RSAKeyParser().parse(publicKeyStr) as RSAPublicKey;
+    privateKey = RSAKeyParser().parse(privateKeyStr) as RSAPrivateKey;
     _encrypter = Encrypter(RSA(publicKey: publicKey, privateKey: privateKey));
   }
 
+  int getEncodeBlockSize(){
+    final modulus = publicKey.modulus;
+    if (modulus!=null) {
+      return modulus.bitLength ~/8-11;
+    }
+    return 0;
+  }
+  int getDecodeBlockSize(){
+    final modulus = publicKey.modulus;
+    if (modulus!=null) {
+      return modulus.bitLength ~/8;
+    }
+    return 0;
+  }
+  // 加密
   String encodeString(String content) {
     List<int> sourceBytes = utf8.encode(content);
     int inputLen = sourceBytes.length;
-    int maxLen = 117;
+    int maxLen = getEncodeBlockSize();
     List<int> totalBytes = <int>[];
     for (var i = 0; i < inputLen; i += maxLen) {
       int endLen = inputLen - i;
@@ -36,10 +56,11 @@ class RsaEncrypt {
     // return encrypter.encrypt(content).base64.toUpperCase();
   }
 
+  // 解密
   String decodeString(String content) {
     Uint8List sourceBytes = base64.decode(content);
     int inputLen = sourceBytes.length;
-    int maxLen = 128;
+    int maxLen = getDecodeBlockSize();
     List<int> totalBytes = <int>[];
     for (var i = 0; i < inputLen; i += maxLen) {
       int endLen = inputLen - i;
