@@ -10,7 +10,8 @@ import 'model/model.dart';
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await initLog();
-  await  initDatabase();
+  // await  initDatabase();
+
   await globalParams.initAppConfig();
   runApp(
     MultiProvider(

@@ -20,7 +20,7 @@ Future<List<AccountData>> decodePassword(Password data) async {
     s = data.value ?? "[]";
   }
   List<AccountData> result = [];
-  print("decodePassword: $s");
+  // print("decodePassword: $s");
   for (var i in json.decode(s)) {
     result.add(AccountData.fromJson(i as Map<String, dynamic>));
   }

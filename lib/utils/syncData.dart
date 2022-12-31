@@ -5,12 +5,8 @@ import 'package:sync_webdav/model/model.dart';
 
 // 同步到最新版本的数据
 Future<bool> syncPasswordVersion() async {
-  var response = await getDataVersion();
-  if (!response.containsKey("data")) {
-    return false;
-  }
-  List<int> version = response["data"] ?? [];
-  if (globalParams.passwordVersion == version.last) return true;
+  List<int> version = await getDataVersion();
+  if (version.isEmpty || globalParams.passwordVersion == version.last) return true;
   if (globalParams.passwordVersion < version.last) {
     List<Map<String, String>> data = [];
     try {
@@ -38,12 +34,8 @@ Future<bool> syncPasswordVersion() async {
 
 // 同步到最新版本的数据
 syncNoteBookVersion() async {
-  var response = await getDataVersion();
-  if (!response.containsKey("data")) {
-    return;
-  }
-  List<int> version = response["data"] ?? [];
-  if (globalParams.passwordVersion == version.last) return;
+  List<int> version = await getDataVersion();
+  if (version.isEmpty || globalParams.passwordVersion == version.last) return;
   if (globalParams.passwordVersion < version.last) {
     List<Map<String, String>> data = await getPasswordData(version.last);
     for (var i in data) {

@@ -1,23 +1,32 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/model/model.dart';
+
+import '../utils/rsaUtils.dart';
 
 String getEncryptStr() {
   if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
     throw "尚未添加密钥";
   }
-  return globalParams.userRSA.encodeString(globalParams.encryptStr);
+  var webRsa = RSAUtils(globalParams.webPubKey,"");
+  return webRsa.encodeString('''{
+    "UserId":${globalParams.userId},
+    "EncryptStr":"${globalParams.encryptStr}",
+    "Timestamp":${DateTime.now().millisecondsSinceEpoch}
+  }''');
 }
 
 // 'https://ouliguojiashengsiyi.xyz/'
-const webHost = 'http://127.0.0.1:5000';
+const webHost = 'http://192.168.1.87:5000';
 const webPathPrefix = '';
 
 register(String userPubKey, String encryptStr) async {
   var response = await Dio().post<Map<String, dynamic>>(
       webHost + webPathPrefix + '/register',
       data: {"UserPubKey": userPubKey, "EncryptStr": encryptStr});
-  print(response);
   globalParams.setUserConfig(
       response.data?['userId'] as int,
       response.data?['webPubKey'] as String,
@@ -36,9 +45,11 @@ Future<List<WebSite>> getWebSiteList() async {
 }
 
 //  需要登录的接口
-pushDataToServer(String data, String dataType) async {
-  Map<String, dynamic> requestData = {"EncryptStr": getEncryptStr()};
-  requestData["UserData"] = globalParams.userRSA.encodeString(data);
+pushDataToServer(data, String dataType) async {
+  Map<String, dynamic> requestData = {
+    "EncryptStr": getEncryptStr(),
+    "UserData":data,
+  };
   String webPath;
   if (dataType == "password") {
     webPath = '/SaveUserData';
@@ -51,6 +62,16 @@ pushDataToServer(String data, String dataType) async {
   if (response.statusCode != 200) {
     throw response.statusMessage ?? "备份数据失败";
   }
+}
+
+uploadPasswordData(List<Map<String,String>> data) async{
+  Map<String, dynamic> requestData = {
+    "EncryptStr": getEncryptStr(),
+    "UserData":data,
+  };
+  Response<Map<String, dynamic>> response = await Dio()
+      .post<Map<String, dynamic>>(webHost + webPathPrefix + '/SaveUserData',
+      data: requestData);
 }
 
 Future<List<Map<String, String>>> getPasswordData(int version) async {
@@ -72,7 +93,7 @@ Future<List<Map<String, String>>> getPasswordData(int version) async {
   return data;
 }
 
-Future<Map<String, List<int>>> getDataVersion() async {
+Future<List<int>> getDataVersion() async {
   Map<String, dynamic> requestData = {
     "EncryptStr": getEncryptStr(),
     "dataType": "password",
@@ -83,7 +104,11 @@ Future<Map<String, List<int>>> getDataVersion() async {
   if (response.statusCode != 200) {
     throw response.statusMessage ?? "获取版本号失败";
   }
-  Map<String, List<int>> data =
-      response.data!['data'] as Map<String, List<int>>;
+  print(response.data);
+  List<dynamic> message = response.data!['data'];
+  if (message.isEmpty){
+    return [];
+  }
+  List<int> data =message as List<int>;
   return data;
 }

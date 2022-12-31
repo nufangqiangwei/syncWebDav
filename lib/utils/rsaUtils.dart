@@ -8,11 +8,13 @@ import 'package:pointycastle/export.dart';
 class RSAUtils {
   late RSAPublicKey publicKey;
 
-  late RSAPrivateKey privateKey;
+  late RSAPrivateKey? privateKey;
 
   RSAUtils(String pubKey, String priKey) {
     publicKey = parse(pubKey) as RSAPublicKey;
-    privateKey = parse(priKey) as RSAPrivateKey;
+    if (priKey != ""){
+      privateKey = parse(priKey) as RSAPrivateKey;
+    }
   }
 
   //生成公匙 和 私匙，默认1024。
@@ -76,7 +78,7 @@ class RSAUtils {
   ///RSA私钥加密
   Uint8List encryptByPrivateKey(Uint8List data) {
     try {
-      var keyParameter = () => PrivateKeyParameter<RSAPrivateKey>(privateKey);
+      var keyParameter = () => PrivateKeyParameter<RSAPrivateKey>(privateKey!);
       AsymmetricBlockCipher cipher = AsymmetricBlockCipher("RSA/PKCS1");
       cipher.reset();
       cipher.init(true, keyParameter());
@@ -147,7 +149,7 @@ class RSAUtils {
   ///RSA私钥解密
   Uint8List decryptByPrivateKey(Uint8List data) {
     try {
-      var keyParameter = PrivateKeyParameter<RSAPrivateKey>(privateKey);
+      var keyParameter = PrivateKeyParameter<RSAPrivateKey>(privateKey!);
       AsymmetricBlockCipher cipher = AsymmetricBlockCipher("RSA/PKCS1");
       cipher.reset();
       cipher.init(false, keyParameter);

@@ -14,12 +14,13 @@ import 'package:sync_webdav/model/model.dart';
 import 'package:sync_webdav/utils/components.dart';
 import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:group_button/group_button.dart';
-import 'package:sync_webdav/utils/gather.dart';
+import 'package:sync_webdav/utils/utils.dart';
 import 'dart:io';
 
 import 'package:sync_webdav/utils/modifyData.dart';
 
 import '../utils/rsaUtils.dart';
+import '../utils/syncData.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({Key? key}) : super(key: key);
@@ -40,19 +41,19 @@ class _SettingPageState extends State<SettingPage> {
           title: const Text('站点配置'),
           tiles: [
             SettingsTile(
-              leading: const Icon(Icons.language),
-              title: const Text('用户信息'),
-              trailing: const Icon(Icons.chevron_right),
-              onPressed: (context) {
-                Navigator.pushNamed(context, "/userSetting");
-              },
-            ),
-            SettingsTile(
               leading: const Icon(Icons.cloud_queue),
               title: const Text('网站配置'),
               trailing: const Icon(Icons.chevron_right),
               onPressed: (context) {
                 Navigator.pushNamed(context, "/webSetting");
+              },
+            ),
+            SettingsTile(
+              leading: const Icon(Icons.language),
+              title: const Text('用户信息'),
+              trailing: const Icon(Icons.chevron_right),
+              onPressed: (context) {
+                Navigator.pushNamed(context, "/userSetting");
               },
             ),
           ],
@@ -409,6 +410,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
   }
 
   String butterText() {
+    print('GlobalParams 用户id：${Provider.of<GlobalParams>(context).userId}');
     if (Provider.of<GlobalParams>(context).userId == -1) {
       return "登录";
     }
@@ -416,7 +418,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
   }
 
   Function() getLoginCallback() {
-    if (Provider.of<GlobalParams>(context).userId == -1) {
+    if (Provider.of<GlobalParams>(context).userId != -1) {
       return logoutServer;
     }
     return loginDatabaseWebSite;
@@ -424,6 +426,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
 
   logoutServer() async {
     globalParams.clearUserInfo();
+    setState(() {});
   }
 
   loginDatabaseWebSite() async {
@@ -434,7 +437,11 @@ class _UserSettingPageState extends State<UserSettingPage> {
       promptDialog(context, "请先添加密钥，并保存。");
       return;
     }
+    if (globalParams.encryptStr =="") {
+      globalParams.encryptStr = getRandomPassword(10);
+    }
     await register(globalParams.publicKeyStr, globalParams.encryptStr);
+    setState(() {});
     promptDialog(context, "登录成功");
   }
 
@@ -638,28 +645,60 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
     showDialog<String>(
         context: context,
         builder: (context) {
-          return AlertDialog();
+          return  AlertDialog(
+            title: const Text("修改后端地址网址"),
+            content: TextField(
+
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text("确定"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                child: const Text("取消"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
         });
   }
 
   synchronizeWebSite() async {
-    List<WebSite> webSiteList = await getWebSiteList();
-    // List<WebSite> saveList = globalParams.webSiteList;
-    // webSiteList.sort((a,b)=>(a.id??0) - (b.id??0));
-    //
-    // List<WebSite> result =[];
-    // for (var i=0;i<webSiteList.length;i++){
-    //   var a = webSiteList[i];
-    //   var b=WebSite();
-    //   if (i<saveList.length) {
-    //     WebSite b = saveList[i];
-    //   }
-    //   if (a.name != b.name || a.webKey != b.webKey||a.icon!=b.icon) {
-    //     result.add(a);
-    //   }
-    // }
-    await WebSite().upsertAll(webSiteList);
-    globalParams.refreshWebSiteList();
+    List<WebSite> remoteWebSiteList = [];
+    try{
+      remoteWebSiteList = await getWebSiteList();
+    }catch (e, s){
+      showDialog(
+        context: context,
+        builder: (context) {
+            return AlertDialog(
+              title: const Text("错误"),
+              content:  const Text("网站请求失败"),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text("确定"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          }
+      );
+      return ;
+    }
+    List<WebSite> localWebSiteList = await WebSite().select().isDeleted.equals(false).toList();
+    var result = differenceList<WebSite>(remoteWebSiteList,localWebSiteList,func: (WebSite data){return data.name!;});
+    if (result.right.isNotEmpty){
+      await WebSite().upsertAll(result.right);
+      globalParams.refreshWebSiteList();
+    }
+
     showDialog(
         context: context,
         builder: (context) {
@@ -675,7 +714,8 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
               ),
             ],
           );
-        });
+        },
+    );
   }
 
   selectFolder(BuildContext context) async {
@@ -712,7 +752,7 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
   }
 
   uploadDataToServer(BuildContext context) async {
-    List<String> uploadList = ["password", "notebook"];
+    List<String> uploadList = ["password"];
     aa(String type) async {
       String? err = await uploadData(type);
       if (err != null) {
@@ -752,25 +792,23 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
           SettingsSection(
             title: const Text("数据库信息"),
             tiles: [
+              // SettingsTile.navigation(
+              //   title: const Text("配置网站地址"),
+              //   onPressed: modifyWebSitePath,
+              // ),
               SettingsTile.navigation(
-                title: const Text("配置网站地址"),
-                onPressed: modifyWebSitePath,
-              ),
-              SettingsTile.navigation(
-                title: const Text("同步站点数据"),
+                title: const Text("下载站点数据"),
                 onPressed: (context) {
                   synchronizeWebSite();
                 },
               ),
-              // SettingsTile(
-              //   title: const UserUploadSetting(),
-              // ),
               SettingsTile.navigation(
                 title: const Text("备份到服务器"),
                 onPressed: uploadDataToServer,
               ),
               SettingsTile.navigation(
-                title: const Text("同步服务器数据"),
+                title: const Text("下载服务器数据"),
+                onPressed: (context){syncPasswordVersion();},
               ),
               SettingsTile.navigation(
                 title: const Text("导出到"),

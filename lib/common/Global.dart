@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:sync_webdav/common/utils.dart';
@@ -25,20 +27,18 @@ class GlobalParams extends ChangeNotifier {
   late double windowsHeight = 0;
 
   String get appBarText => _appBarText;
-
-  // ignore: non_constant_identifier_names
-  ModifyAppBarText(String value) {
-    _appBarText = value;
-    notifyListeners();
-  }
-
   List<WebSite> get webSiteList => _webSiteList;
 
-  // ignore: non_constant_identifier_names
-  ModifyWebSiteList(List<WebSite> value) {
-    _webSiteList = value;
-    notifyListeners();
+  Future<bool> initAppConfig() async {
+    sleep(Duration(seconds:1));
+    print("初始化数据");
+    getUserInfo();
+    getSyncWebInfo();
+    await refreshWebSiteList();
+    await loadRsaClient();
+    return true;
   }
+
 
   refreshWebSiteList() async {
     _webSiteList =
@@ -77,15 +77,6 @@ class GlobalParams extends ChangeNotifier {
       return false;
     }
     userRSA = RSAUtils(publicKeyStr, privateKeyStr);
-  }
-
-  Future<bool> initAppConfig() async {
-    1/0;
-    getUserInfo();
-    getSyncWebInfo();
-    await refreshWebSiteList();
-    await loadRsaClient();
-    return true;
   }
 
   setUserConfig(int userId, String webPubKey, String encryptStr) async {

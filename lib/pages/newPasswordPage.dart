@@ -7,7 +7,7 @@ import 'package:sync_webdav/common/passwordUtils.dart';
 import 'package:sync_webdav/model/JsonModel.dart';
 import 'package:sync_webdav/model/class.dart';
 import 'package:sync_webdav/model/model.dart';
-import 'package:sync_webdav/utils/gather.dart';
+import 'package:sync_webdav/utils/utils.dart';
 import 'package:sync_webdav/utils/modifyData.dart';
 
 const double webSiteMaxWidth = 600;

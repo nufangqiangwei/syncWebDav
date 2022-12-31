@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:logger/src/outputs/file_output.dart';
 import 'package:path_provider/path_provider.dart';
@@ -18,6 +17,5 @@ initLog() async {
   } catch (e) {
     Map<String, dynamic> map = {};
     map['msg'] = e.toString();
-    Dio().post('http://192.168.1.21:5000/error', data: map);
   }
 }

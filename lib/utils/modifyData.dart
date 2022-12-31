@@ -11,15 +11,14 @@ Future<String?> uploadData(String tableName) async {
 
   List<dynamic> data;
   if (tableName == "password") {
-    data = await Password().select().isModify.equals(true).toList();
+    data = await uploadPasswordData();
   } else if (tableName == "notebook") {
     data = await Notebook().select().isModify.equals(true).toList();
   } else {
     throw "错误的表名 $tableName";
   }
   try {
-    await pushDataToServer(
-        jsonEncode({"saveType": tableName, "data": data}), tableName);
+    await pushDataToServer(data, tableName);
   } catch (e) {
     await SysLog(content: e.toString()).save();
     return "网络请求错误";
@@ -31,6 +30,19 @@ Future<String?> uploadData(String tableName) async {
   }
   return null;
 }
+
+Future<List<Map<String,String>>> uploadPasswordData() async{
+  var query = await Password().select().isModify.equals(true).toList();
+  List<Map<String,String>> data=[];
+  for (final i in query) {
+    data.add({
+      "webKey":i.webKey!,
+      "fromData":i.value!,
+    });
+  }
+  return data;
+}
+
 
 downloadData(){
   if (globalParams.userId == -1) {
