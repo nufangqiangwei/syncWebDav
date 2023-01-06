@@ -52,17 +52,14 @@ class DB {
   late bool _isSave =false;
   late String filePath="";
   late String saveType="";
-  static init(){
-
-  }
-
-  DB._(){
+  init() async {
     if(kIsWeb ) {
       saveType = "cookies";
       throw("未知的web平台");
     }else if (Platform.isAndroid||Platform.isIOS||Platform.isWindows||Platform.isLinux||Platform.isMacOS) {
       saveType = "file";
-      getApplicationDocumentsDirectory().then((value) => filePath=path.join(value.path,"data"));
+      var value = await getApplicationDocumentsDirectory();
+      filePath=path.join(value.path,"data");
     }else if (Platform.isFuchsia){
       throw("未知的平台");
     }
@@ -70,6 +67,8 @@ class DB {
     File f = File(filePath);
     data = jsonDecode(f.readAsStringSync());
   }
+
+  DB._();
 
   static DB getInstance() {
 
@@ -85,6 +84,9 @@ class DB {
     _isSave = false;
   }
   getBucket(String key){
+    if (saveType==""){
+      throw("尚未初始化");
+    }
     if(_isSave){
       return ;
     }
