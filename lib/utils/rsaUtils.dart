@@ -84,8 +84,8 @@ class RSAUtils {
       cipher.init(true, keyParameter());
       int index = 0;
       int strlength = data.length;
-      final keysize = publicKey.modulus?.bitLength ?? 0 ~/ 8 - 11;
-      final blocksize = publicKey.modulus?.bitLength ?? 0 ~/ 8;
+      final keysize = ((publicKey.modulus?.bitLength ?? 0 )~/ 8 - 11);
+      final blocksize = ((publicKey.modulus?.bitLength ?? 0) ~/ 8);
       final numBlocks =
           (strlength ~/ keysize) + ((strlength % keysize != 0) ? 1 : 0);
       Uint8List list = Uint8List(blocksize * numBlocks);
@@ -100,7 +100,7 @@ class RSAUtils {
           index += keysize;
         }
         Uint8List encryptResult = cipher.process(listtmp);
-        for (int v_i = 0; v_i < blocksize; v_i++) {
+        for (int v_i = 0; v_i < encryptResult.length; v_i++) {
           list[count * blocksize + v_i] = encryptResult[v_i];
         }
         count += 1;
@@ -122,8 +122,8 @@ class RSAUtils {
       cipher.init(false, keyParameter());
       int index = 0;
       int strlength = data.length;
-      final keysize = publicKey.modulus?.bitLength ?? 0 ~/ 8 - 11;
-      final blocksize = publicKey.modulus?.bitLength ?? 0 ~/ 8;
+      final keysize = ((publicKey.modulus?.bitLength ?? 0) ~/ 8 - 11);
+      final blocksize = ((publicKey.modulus?.bitLength ?? 0) ~/ 8);
       final numBlocks = strlength ~/ blocksize;
       Uint8List list = Uint8List(keysize * numBlocks);
       int count = 0;

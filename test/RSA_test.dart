@@ -1,7 +1,7 @@
 import 'package:encrypt/encrypt.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sync_webdav/common/encryption.dart';
 import 'package:pointycastle/export.dart';
+import 'package:sync_webdav/utils/rsaUtils.dart';
 
 String pub_1024 = """-----BEGIN RSA PUBLIC KEY-----
 MIGJAoGBAKOXRuEquzfnfC0SV/hymeg31ICCqcUsY7YMrgtsQwnYkVei+1OG747X
@@ -155,8 +155,8 @@ String text =
 一般采取排除法来锁定核心重难点。把所有的页面可见功能点和隐含功能点列上，以排除法排除独立的关联少的模块。留下的就是重难点的核心要素
 针对每个核心要素搞清楚联系关系，得到最终的功能关系图（业务架构图）""";
 
-RsaEncrypt initRSA() {
-  return RsaEncrypt.initKey(pub_4096, pri_4096);
+RSAUtils initRSA() {
+  return RSAUtils(pub_4096, pri_4096);
 }
 
 Future<void> main() async {
