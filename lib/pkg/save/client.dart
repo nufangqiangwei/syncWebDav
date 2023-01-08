@@ -143,12 +143,6 @@ class DB {
   }
 }
 
-class UserModel {
-  static bool isOnly = true;
-  static DbString userId =
-  DbString(table: "User", field: "userId", defaultValue: "11");
-}
-
 class Method {
   final String table;
   final String field;
@@ -220,9 +214,17 @@ class DbString {
 class DbInt {
   final String table;
   final String field;
-  final String defaultValue;
+  final int defaultValue;
 
-  DbInt({required this.table, required this.field, this.defaultValue = ''});
+  DbInt({required this.table, required this.field, this.defaultValue = 0});
+}
+
+class DbBool {
+  final String table;
+  final String field;
+  final bool defaultValue;
+
+  DbBool({required this.table, required this.field, this.defaultValue = false});
 }
 
 

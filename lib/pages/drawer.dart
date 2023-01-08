@@ -57,14 +57,14 @@ class MyDrawer extends StatelessWidget{
               Navigator.pushNamed(context, "/password")
             },
           ),
-          ListTile(
-            leading: const Icon(
-              Icons.note_alt,
-            ),
-            title: const Text('笔记'),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () => Navigator.pushNamed(context, "/notebook"),
-          ),
+          // ListTile(
+          //   leading: const Icon(
+          //     Icons.note_alt,
+          //   ),
+          //   title: const Text('笔记'),
+          //   trailing: const Icon(Icons.arrow_forward_ios),
+          //   onTap: () => Navigator.pushNamed(context, "/notebook"),
+          // ),
           ListTile(
             leading: const Icon(
               Icons.settings_suggest,
