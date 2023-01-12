@@ -4,10 +4,15 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 
+import 'model.dart';
+
 class Store {
-  late String _fromTable = '';
   final List<Method> _whereArgs = [];
-  Store(){getDb();}
+  late DbModel model;
+
+  Store() {
+    getDb();
+  }
 
   // 构建表达式
   Store select(List<Method>? args) {
@@ -17,7 +22,8 @@ class Store {
     return this;
   }
 
-  Store from(String table) {
+  Store from(DbModel table) {
+    model = table;
     return this;
   }
 
@@ -26,33 +32,133 @@ class Store {
   }
 
   // 查询结果
-  Future<List<Map<String, dynamic>>> all<T>() async {
-    if (_fromTable == "") {
-      _fromTable = T.toString();
+  Future<List<DbValue>> all() async {
+    if (_whereArgs.isNotEmpty) {
+      model = _whereArgs[0].table;
     }
-    return getDb().selectData(_fromTable, _whereArgs);
+    List<Map<String, dynamic>> queryData =
+    (await getDb()).selectData(model.tableName, _whereArgs);
+    List<DbValue> result = [];
+
+    for (var i = 0; i < queryData.length; i++) {
+      result.add(model.fromMap(queryData[i]));
+    }
+
+    return result;
   }
 
-  Future<T> getModel<T>() async {
-    if (_fromTable == "") {
-      _fromTable = T.toString();
+  Future<DbValue> getModel() async {
+    if (_whereArgs.isNotEmpty) {
+      model = _whereArgs[0].table;
     }
-
-    return null as T;
+    DbValue result;
+    if (model.isOnly) {
+      result = model.fromMap((await getDb()).getBucket(model.toString())[0]);
+    } else {
+      result = model
+          .fromMap((await getDb()).selectData(model.tableName, _whereArgs)[0]);
+    }
+    return result;
   }
 
-  save() async {}
-
-  DB getDb() {
+  Future<DB> getDb() async {
     DB db = DB.getInstance();
-    db.init();
+    await db.init();
     return db;
+  }
+
+  update({DbValue? modelData, Map<String, dynamic>? jsonData}) async {
+    Map<String, dynamic> mapData = {};
+    String indexField;
+    if (modelData != null) {
+      mapData = modelData.toMap();
+      model = modelData.getModel();
+    } else if (jsonData != null) {
+      mapData = jsonData;
+    }
+
+    try {
+      indexField = model.indexField;
+    } catch (e) {
+      throw ("请先指定model");
+    }
+    _whereArgs.add(Method(
+        table: model,
+        field: indexField,
+        method: "equal",
+        value: mapData[indexField]));
+
+    (await getDb()).update(model.tableName, _whereArgs, mapData);
+  }
+
+  insert({DbValue? modelData, Map<String, dynamic>? jsonData}) async {
+    Map<String, dynamic> mapData = {};
+    String indexField;
+    if (modelData != null) {
+      mapData = modelData.toMap();
+      model = modelData.getModel();
+    } else if (jsonData != null) {
+      mapData = jsonData;
+    }
+
+    indexField = model.indexField;
+    // try{
+    //   indexField = model.indexField;
+    // }catch (e){
+    //   throw Exception("请先指定model");
+    // }
+
+    if (mapData[indexField] == null) {
+      throw "索引健不能为空";
+    }
+
+    if (model.isOnly) {
+      (await getDb()).update(
+          model.tableName,
+          [
+            Method(
+                table: model,
+                field: indexField,
+                method: "equal",
+                value: mapData[indexField])
+          ],
+          mapData);
+      return;
+    }
+    (await getDb()).insertInto(model.tableName, [mapData]);
+  }
+
+  insertAll(
+      {List<DbValue>? modelData, List<Map<String, dynamic>>? jsonData}) async {
+    List<Map<String, dynamic>> insertData = [];
+    if (modelData != null) {
+      insertData = modelData.map<Map<String, dynamic>>((e) => e.toMap())
+      as List<Map<String, dynamic>>;
+      model = modelData[0].getModel();
+    } else if (jsonData != null) {
+      insertData = jsonData;
+    }
+    if (model.isOnly) {
+      throw ("唯一数据无法执行批量插入");
+    }
+    (await getDb()).insertInto(model.tableName, insertData);
+  }
+
+  updateAll(List<DbValue> modelDatas)async{
+    for(var index=0;index<modelDatas.length;index++) {
+      DbValue data = modelDatas[index];
+      (await getDb()).update(data.getModel().tableName, [Method(
+          table: data.getModel(),
+          field: data.getModel().indexField,
+          method: "equal",
+          value: data.toMap()[data.getModel().indexField])], data.toMap());
+    }
   }
 }
 
 class DB {
   static DB? _instance;
-  Map<String, dynamic> data = {};
+  Map<String, List<Map<String, dynamic>>> data = {};
   late bool _isSave = false;
   late String filePath = "";
   late String saveType = "";
@@ -75,15 +181,24 @@ class DB {
     } else if (Platform.isFuchsia) {
       throw ("未知的平台");
     }
-    print(filePath);
     File f = File(filePath);
-    if (!await f.exists()){
+    if (!await f.exists()) {
       await f.create();
       await f.writeAsString("{}");
     }
     String i = await f.readAsString();
-    print("文本内容是$i");
-    data = jsonDecode(i);
+    Map<String, dynamic> cache = jsonDecode(i) as Map<String, dynamic>;
+    for (var key in cache.keys) {
+      List<dynamic> va = cache[key] as List<dynamic>;
+      List<Map<String, dynamic>> ca = [];
+
+      for (var index = 0; index < va.length; index++) {
+        va[index] as Map<String, dynamic>;
+        ca.add(va[index]);
+      }
+
+      data[key] = ca;
+    }
   }
 
   DB._();
@@ -104,25 +219,42 @@ class DB {
     _isSave = false;
   }
 
-  getBucket(String key) {
+  insertInto(String key, List<Map<String, dynamic>> data) {
+    getBucket(key).addAll(data);
+    save();
+  }
+
+  update(String key, List<Method> methods, Map<String, dynamic> data) {
+    var bucket = getBucket(key);
+    for (var i = 0; i < bucket.length; i++) {
+      if (!checkData(bucket[i], methods)) {
+        continue;
+      }
+      for (var key in data.keys) {
+        bucket[i][key] = data[key];
+      }
+    }
+    save();
+  }
+
+  List<Map<String, dynamic>> getBucket(String key) {
+    List<Map<String, dynamic>> x = [];
     if (saveType == "") {
       throw ("尚未初始化");
     }
     if (_isSave) {
-      return;
+      return x;
     }
     dynamic i = data[key];
     if (i == null) {
-      List<Map<String, dynamic>> x=[];
-      i = x;
+      data[key] = x;
+      i = data[key];
     }
-    //
-    // i ??= x;
     return i;
   }
 
   List<Map<String, dynamic>> selectData(String key, List<Method> methods) {
-    var bucket = getBucket(key) as List<Map<String, dynamic>>;
+    var bucket = getBucket(key);
     List<Map<String, dynamic>> result = [];
     for (var i = 0; i < bucket.length; i++) {
       if (!checkData(bucket[i], methods)) {
@@ -144,7 +276,7 @@ class DB {
 }
 
 class Method {
-  final String table;
+  final DbModel table;
   final String field;
   final String method;
   final dynamic value;
@@ -199,32 +331,49 @@ class Method {
 }
 
 class DbString {
-  final String table;
+  final DbModel table;
   final String field;
   final String defaultValue;
-  late String value = '';
 
   DbString({required this.table, required this.field, this.defaultValue = ''});
 
-  Method equal(value) {
+  Method equal(String value) {
     return Method(table: table, field: field, method: "equal", value: value);
   }
 }
 
 class DbInt {
-  final String table;
+  final DbModel table;
   final String field;
   final int defaultValue;
 
   DbInt({required this.table, required this.field, this.defaultValue = 0});
+
+  Method equal(int value) {
+    return Method(table: table, field: field, method: "equal", value: value);
+  }
 }
 
 class DbBool {
-  final String table;
+  final DbModel table;
   final String field;
   final bool defaultValue;
 
   DbBool({required this.table, required this.field, this.defaultValue = false});
+
+  Method equal(bool value) {
+    return Method(table: table, field: field, method: "equal", value: value);
+  }
 }
 
 
+
+/*
+
+每月固定支出：
+  房租：1600
+  房贷：1800
+购买大件：
+  自行车：4300
+
+*/

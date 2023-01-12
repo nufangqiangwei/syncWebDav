@@ -1,8 +1,7 @@
-import 'dart:convert';
-
 import 'package:sync_webdav/Net/myServer.dart';
 import 'package:sync_webdav/common/Global.dart';
-import 'package:sync_webdav/model/model.dart';
+import '../pkg/save/client.dart';
+import '../pkg/save/model.dart';
 
 Future<String?> uploadData(String tableName) async {
   if (globalParams.userId == -1) {
@@ -13,31 +12,30 @@ Future<String?> uploadData(String tableName) async {
   if (tableName == "password") {
     data = await uploadPasswordData();
   } else if (tableName == "notebook") {
-    data = await Notebook().select().isModify.equals(true).toList();
+    data = await Store().select([NoteBookModel.isModify.equal(true)]).all();
   } else {
     throw "错误的表名 $tableName";
   }
   try {
     await pushDataToServer(data, tableName);
   } catch (e) {
-    await SysLog(content: e.toString()).save();
     return "网络请求错误";
   }
   if (tableName == "password") {
-    await Password().select().isModify.equals(true).update({"isModify": false});
+    await Store().select([PassWordModel.isModify.equal(true)]).update(jsonData: {"isModify": false});
   } else {
-    await Notebook().select().isModify.equals(true).update({"isModify": false});
+    await Store().select([NoteBookModel.isModify.equal(true)]).update(jsonData: {"isModify": false});
   }
   return null;
 }
 
 Future<List<Map<String,String>>> uploadPasswordData() async{
-  var query = await Password().select().isModify.equals(true).toList();
+  List<PassWord> query = await Store().select([PassWordModel.isModify.equal(true)]).all() as List<PassWord>;
   List<Map<String,String>> data=[];
   for (final i in query) {
     data.add({
-      "webKey":i.webKey!,
-      "fromData":i.value!,
+      "webKey":i.webKey,
+      "fromData":i.value,
     });
   }
   return data;

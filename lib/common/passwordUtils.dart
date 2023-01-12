@@ -1,23 +1,23 @@
 import 'dart:convert';
 
 import 'package:sync_webdav/model/JsonModel.dart';
-import 'package:sync_webdav/model/model.dart';
+import '../pkg/save/model.dart';
 
 import 'Global.dart';
 
-Future<List<AccountData>> decodePassword(Password data) async {
+Future<List<AccountData>> decodePassword(PassWord data) async {
   String s = "";
   print("解密密码：${data.value}");
   if (data.value == null) {
     return [];
   }
-  if (data.isEncryption ?? false) {
+  if (data.isEncryption) {
     if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
       throw "缺少密钥";
     }
-    s = globalParams.userRSA.decodeString(data.value!);
+    s = globalParams.userRSA.decodeString(data.value);
   } else {
-    s = data.value ?? "[]";
+    s = data.value;
   }
   List<AccountData> result = [];
   // print("decodePassword: $s");
@@ -27,7 +27,7 @@ Future<List<AccountData>> decodePassword(Password data) async {
   return result;
 }
 
-Future<Password> encodePassword(Password data, List<AccountData> detail) async {
+Future<PassWord> encodePassword(PassWord data, List<AccountData> detail) async {
   String encodeStr = json.encode(detail);
   if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
     data.value = encodeStr;

@@ -6,7 +6,8 @@ import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/common/passwordUtils.dart';
 import 'package:sync_webdav/model/JsonModel.dart';
 import 'package:sync_webdav/model/class.dart';
-import 'package:sync_webdav/model/model.dart';
+import 'package:sync_webdav/pkg/save/model.dart';
+import 'package:sync_webdav/pkg/save/client.dart';
 import 'package:sync_webdav/utils/utils.dart';
 import 'package:sync_webdav/utils/modifyData.dart';
 
@@ -278,13 +279,15 @@ class _PassWordPageState extends State<PassWordPage> {
   selectWebSite(WebSite web) async {
     detailData.webSite = web;
     detailData.webSiteData =
-        await Password().select().webKey.equals(web.webKey).toSingleOrDefault();
+        // await Password().select().webKey.equals(web.webKey).toSingleOrDefault();
+    await Store().select([PassWordModel.webKey.equal(web.webKey)]).from(PassWordModel()).getModel() as PassWord;
     detailData.decodeData = await decodePassword(detailData.webSiteData);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (detailData.webSite.id == null &&
+    // 当一次需要展示多个页面的时候，自动选择第一个站点展示。
+    if (detailData.webSite.webKey == "" &&
         Provider.of<GlobalParams>(context).webSiteList.isNotEmpty) {
       selectWebSite(Provider.of<GlobalParams>(context).webSiteList[0]);
     }
@@ -448,12 +451,12 @@ class _SAppBarSearchState extends State<SAppBarSearch> {
   }
 
   // 取消输入框编辑
-  void _onCancelInput() {
-    _controller.clear();
-    _focusNode.unfocus();
-    setState(() {});
-    widget.onCancel?.call();
-  }
+  // void _onCancelInput() {
+  //   _controller.clear();
+  //   _focusNode.unfocus();
+  //   setState(() {});
+  //   widget.onCancel?.call();
+  // }
 
   Widget _suffix() {
     if (!isTextEmpty) {
@@ -469,25 +472,25 @@ class _SAppBarSearchState extends State<SAppBarSearch> {
     return widget.suffix ?? SizedBox();
   }
 
-  List<Widget> _actions() {
-    List<Widget> list = [];
-    if (isFocus || !isTextEmpty) {
-      list.add(GestureDetector(
-        onTap: _onCancelInput,
-        child: Container(
-          constraints: BoxConstraints(minWidth: 48),
-          alignment: Alignment.center,
-          child: Text(
-            '取消',
-            style: TextStyle(color: Color(0xFF666666), fontSize: 15),
-          ),
-        ),
-      ));
-    } else if (!isActionEmpty) {
-      list.addAll(widget.actions);
-    }
-    return list;
-  }
+  // List<Widget> _actions() {
+  //   List<Widget> list = [];
+  //   if (isFocus || !isTextEmpty) {
+  //     list.add(GestureDetector(
+  //       onTap: _onCancelInput,
+  //       child: Container(
+  //         constraints: BoxConstraints(minWidth: 48),
+  //         alignment: Alignment.center,
+  //         child: Text(
+  //           '取消',
+  //           style: TextStyle(color: Color(0xFF666666), fontSize: 15),
+  //         ),
+  //       ),
+  //     ));
+  //   } else if (!isActionEmpty) {
+  //     list.addAll(widget.actions);
+  //   }
+  //   return list;
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -654,7 +657,7 @@ class _WebSitePageState extends State<WebSitePage> {
                           height: 40,
                           fit: BoxFit.fill,
                           placeholder: "assets/icons/google.ico",
-                          image: widget.web.icon!,
+                          image: widget.web.icon,
                           imageErrorBuilder: (context, error, stackTrace) {
                             return Image.asset(
                               "assets/icons/defaultWebsite.ico",
@@ -673,11 +676,11 @@ class _WebSitePageState extends State<WebSitePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.web.name!,
+                                widget.web.name,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Text(
-                                widget.web.url!,
+                                widget.web.url,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ],
@@ -766,8 +769,8 @@ class _AccountListPageState extends State<AccountListPage> {
                 width: 45,
                 height: 45,
                 fit: BoxFit.fill,
-                placeholder: widget.web.icon!,
-                image: widget.web.icon!,
+                placeholder: widget.web.icon,
+                image: widget.web.icon,
                 imageErrorBuilder: (context, error, stackTrace) {
                   return Image.asset(
                     "assets/icons/defaultWebsite.ico",
@@ -908,11 +911,14 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
     if (widget.detailData.selectAccount.userName == "") {
       return;
     }
+    bool isNewData=false;
     if (widget.detailData.selectIndex == -2) {
       widget.detailData.selectIndex = widget.detailData.decodeData.length - 1;
       widget.detailData.decodeData.add(widget.detailData.selectAccount);
+      isNewData = true;
     } else if (widget.detailData.selectIndex == -1) {
       widget.detailData.decodeData.add(widget.detailData.selectAccount);
+      isNewData = true;
     } else {
       widget.detailData.decodeData[widget.detailData.selectIndex] =
           widget.detailData.selectAccount;
@@ -920,16 +926,16 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
 
     widget.detailData.webSiteData.isModify = true;
     widget.detailData.webSiteData.webKey = widget.detailData.webSite.webKey;
-    if (widget.detailData.webSiteData.version == null) {
-      widget.detailData.webSiteData.version = 1;
-    } else {
-      widget.detailData.webSiteData.version =
-          widget.detailData.webSiteData.version! + 1;
+    widget.detailData.webSiteData.version = widget.detailData.webSiteData.version + 1;
+
+    if (isNewData) {
+      Store().insert(modelData:await encodePassword(
+          widget.detailData.webSiteData, widget.detailData.decodeData));
+    }else{
+      Store().update(modelData:await encodePassword(
+          widget.detailData.webSiteData, widget.detailData.decodeData));
     }
 
-    await (await encodePassword(
-            widget.detailData.webSiteData, widget.detailData.decodeData))
-        .save();
     widget.detailData.selectIndex++;
     uploadData("password");
   }
@@ -1115,7 +1121,7 @@ class _ViewPageState extends State<ViewPage> {
         Padding(
           padding: EdgeInsets.only(top: windows.height * 0.2, left: 10),
           child: Text(
-            widget.detailData.webSite.name!,
+            widget.detailData.webSite.name,
             style: const TextStyle(
               color: Colors.cyanAccent,
               fontSize: 45,

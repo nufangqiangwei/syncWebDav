@@ -5,7 +5,6 @@ import 'package:sync_webdav/utils/log.dart';
 import 'package:sync_webdav/utils/route.dart';
 
 import 'common/Global.dart';
-import 'model/model.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,10 +1,7 @@
-import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:sync_webdav/common/Global.dart';
-import 'package:sync_webdav/model/model.dart';
-
+import '../pkg/save/model.dart';
 import '../utils/rsaUtils.dart';
 
 String getEncryptStr() {
@@ -69,7 +66,7 @@ uploadPasswordData(List<Map<String,String>> data) async{
     "EncryptStr": getEncryptStr(),
     "UserData":data,
   };
-  Response<Map<String, dynamic>> response = await Dio()
+  await Dio()
       .post<Map<String, dynamic>>(webHost + webPathPrefix + '/SaveUserData',
       data: requestData);
 }

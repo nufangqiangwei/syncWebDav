@@ -10,7 +10,7 @@ import 'package:settings_ui/settings_ui.dart';
 import 'package:sync_webdav/Net/myServer.dart';
 import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/common/encryption.dart';
-import 'package:sync_webdav/model/model.dart';
+import 'package:sync_webdav/pkg/save/model.dart';
 import 'package:sync_webdav/utils/components.dart';
 import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:group_button/group_button.dart';
@@ -19,6 +19,7 @@ import 'dart:io';
 
 import 'package:sync_webdav/utils/modifyData.dart';
 
+import '../pkg/save/client.dart';
 import '../utils/rsaUtils.dart';
 import '../utils/syncData.dart';
 
@@ -290,9 +291,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
     if (baseStr == '') {
       baseStr = getRandomPassword(10);
     }
-    print(baseStr);
     String x = rsa.encodeString(baseStr);
-    print(x);
     String str = rsa.decodeString(x);
     return str == baseStr;
   }
@@ -352,42 +351,21 @@ class _UserSettingPageState extends State<UserSettingPage> {
 
     RSAUtils newRsaClient = RSAUtils(pubController.text, priController.text);
     // todo 替换 password 表中的数据
-    List<Password> dbData =
-        await Password().select().isDeleted.equals(false).toList();
+    List<PassWord> dbData =await Store().from(PassWordModel()).all() as List<PassWord>;
+
     for (final da in dbData) {
-      if (da.isEncryption ?? false) {
+      if (da.isEncryption) {
         da.value = newRsaClient
-            .encodeString(globalParams.userRSA.decodeString(da.value!));
+            .encodeString(globalParams.userRSA.decodeString(da.value));
       } else {
-        da.value = newRsaClient.encodeString(da.value!);
+        da.value = newRsaClient.encodeString(da.value);
         da.isEncryption = true;
       }
     }
-
-    SysConfig? publicKeyStr = await SysConfig()
-        .select()
-        .key
-        .equals('publicKeyStr').toSingle();
-    if (publicKeyStr==null){
-      await SysConfig(key:'publicKeyStr',value: pubController.text).save();
-    }else{
-      publicKeyStr.value=pubController.text;
-      await publicKeyStr.save();
-    }
-
-    SysConfig? privateKeyStr = await SysConfig()
-        .select()
-        .key
-        .equals('privateKeyStr').toSingle();
-    if (privateKeyStr==null){
-      await SysConfig(key:'privateKeyStr',value: priController.text).save();
-    }else{
-      privateKeyStr.value=priController.text;
-      await privateKeyStr.save();
-    }
+    globalParams.setUserRsaKey(pubController.text,priController.text);
 
     await globalParams.loadRsaClient();
-    await Password().upsertAll(dbData);
+    await Store().updateAll(dbData);
     if (ModalRoute.of(context)?.settings.name=="/userSetting"){
       SmartDialog.show(
         tag: "modifyKeyTitle",
@@ -410,7 +388,6 @@ class _UserSettingPageState extends State<UserSettingPage> {
   }
 
   String butterText() {
-    print('GlobalParams 用户id：${Provider.of<GlobalParams>(context).userId}');
     if (Provider.of<GlobalParams>(context).userId == -1) {
       return "登录";
     }
@@ -672,7 +649,7 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
     List<WebSite> remoteWebSiteList = [];
     try{
       remoteWebSiteList = await getWebSiteList();
-    }catch (e, s){
+    }catch (e){
       showDialog(
         context: context,
         builder: (context) {
@@ -692,10 +669,11 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
       );
       return ;
     }
-    List<WebSite> localWebSiteList = await WebSite().select().isDeleted.equals(false).toList();
-    var result = differenceList<WebSite>(remoteWebSiteList,localWebSiteList,func: (WebSite data){return data.name!;});
+
+    List<WebSite> localWebSiteList = await Store().from(WebSiteModel()).all() as List<WebSite>;
+    var result = differenceList<WebSite>(remoteWebSiteList,localWebSiteList,func: (WebSite data){return data.name;});
     if (result.right.isNotEmpty){
-      await WebSite().upsertAll(result.right);
+      Store().insertAll(modelData:result.right);
       globalParams.refreshWebSiteList();
     }
 
@@ -737,11 +715,10 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
 
   outPassWordData(BuildContext context) async {
     String path = selectFolder(context);
-    List<Password> localData =
-        await Password().select(getIsDeleted: false).toList();
+    List<PassWord> localData = await Store().from(PassWordModel()).all() as List<PassWord>;
     Map<String, String> jsonData = {};
     for (var i = 0; i < localData.length; i++) {
-      jsonData[localData[i].webKey ?? ''] = localData[i].value ?? '';
+      jsonData[localData[i].webKey] = localData[i].value;
     }
     String strJson = json.encode(jsonData);
     File file = File("$path/PasswordData.json");
@@ -845,8 +822,7 @@ class _UserUploadSettingView extends State<UserUploadSetting> {
       const Divider(height: 0, thickness: 0.7, color: Color(0xffeeeeee)),
       GroupButton(
         isRadio: true,
-        onSelected: (value, index, isSelected) =>
-            print('$index button is selected,$value'),
+        onSelected: (value, index, isSelected) => {},
         controller: controller,
         buttons: const ["手动", "每次修改"],
       )
