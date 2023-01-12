@@ -351,8 +351,10 @@ class _UserSettingPageState extends State<UserSettingPage> {
 
     RSAUtils newRsaClient = RSAUtils(pubController.text, priController.text);
     // todo 替换 password 表中的数据
-    List<PassWord> dbData =await Store().from(PassWordModel()).all() as List<PassWord>;
-
+    List<DbValue> dbData =await Store().from(PassWordModel()).all();
+    if (dbData is! List<PassWord>){
+      return ;
+    }
     for (final da in dbData) {
       if (da.isEncryption) {
         da.value = newRsaClient
@@ -669,8 +671,9 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
       );
       return ;
     }
+    List<DbValue> localWebSiteList = await Store().from(WebSiteModel()).all();
+    if(localWebSiteList is! List<WebSite>) return ;
 
-    List<WebSite> localWebSiteList = await Store().from(WebSiteModel()).all() as List<WebSite>;
     var result = differenceList<WebSite>(remoteWebSiteList,localWebSiteList,func: (WebSite data){return data.name;});
     if (result.right.isNotEmpty){
       Store().insertAll(modelData:result.right);
@@ -716,6 +719,7 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
   outPassWordData(BuildContext context) async {
     String path = selectFolder(context);
     List<PassWord> localData = await Store().from(PassWordModel()).all() as List<PassWord>;
+
     Map<String, String> jsonData = {};
     for (var i = 0; i < localData.length; i++) {
       jsonData[localData[i].webKey] = localData[i].value;

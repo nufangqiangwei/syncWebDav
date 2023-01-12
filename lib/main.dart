@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      initialRoute: "/index",
+      initialRoute: "/home",
       routes:myRoute,
       theme: ThemeData(
         primarySwatch: Colors.blue,

@@ -38,7 +38,11 @@ class GlobalParams extends ChangeNotifier {
   }
 
   refreshWebSiteList() async {
-    _webSiteList = await Store().from(WebSiteModel()).all() as List<WebSite>;
+    List<DbValue> queryData = await Store().from(WebSiteModel()).all();
+    if(queryData is List<WebSite>){
+      _webSiteList = queryData;
+    }
+
     print("站点数${_webSiteList.length}");
   }
 

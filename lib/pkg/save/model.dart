@@ -11,7 +11,7 @@ abstract class DbModel {
   String indexField = '';
   String tableName = "";
 
-  DbValue fromMap(Map<String, dynamic> mapData);
+  DbValue fromMap(Map<String, dynamic>? mapData);
 }
 
 class SysConfig implements DbValue {
@@ -74,7 +74,8 @@ class SysConfigModel implements DbModel {
   @override
   String tableName = "SysConfig";
   @override
-  SysConfig fromMap(Map<String, dynamic> mapData) {
+  SysConfig fromMap(Map<String, dynamic>? mapData) {
+    mapData ??= <String,dynamic>{};
     return SysConfig.fromMap(mapData);
   }
 
@@ -124,7 +125,8 @@ class WebSiteModel implements DbModel {
   @override
   String tableName = "WebSite";
   @override
-  WebSite fromMap(Map<String, dynamic> mapData) {
+  WebSite fromMap(Map<String, dynamic>? mapData) {
+    mapData ??= <String,dynamic>{};
     return WebSite.fromMap(mapData);
   }
 
@@ -179,7 +181,8 @@ class PassWordModel implements DbModel {
   @override
   String tableName = "PassWord";
   @override
-  PassWord fromMap(Map<String, dynamic> mapData) {
+  PassWord fromMap(Map<String, dynamic>? mapData) {
+    mapData ??= <String,dynamic>{};
     return PassWord.fromMap(mapData);
   }
 }
@@ -248,7 +251,8 @@ class NoteBookModel implements DbModel {
   @override
   String tableName = "NoteBook";
   @override
-  NoteBook fromMap(Map<String, dynamic> mapData) {
+  NoteBook fromMap(Map<String, dynamic>? mapData) {
+    mapData ??= <String,dynamic>{};
     return NoteBook.fromMap(mapData);
   }
 }

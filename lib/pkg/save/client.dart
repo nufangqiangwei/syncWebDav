@@ -53,7 +53,12 @@ class Store {
     }
     DbValue result;
     if (model.isOnly) {
-      result = model.fromMap((await getDb()).getBucket(model.toString())[0]);
+      List<dynamic> data = (await getDb()).getBucket(model.toString());
+      if (data.isEmpty) {
+        result = model.fromMap(null);
+      }else{
+        result = model.fromMap(data[0]);
+      }
     } else {
       result = model
           .fromMap((await getDb()).selectData(model.tableName, _whereArgs)[0]);

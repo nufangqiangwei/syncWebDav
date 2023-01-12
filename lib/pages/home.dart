@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:sync_webdav/common/Global.dart';
 
 import 'drawer.dart';
-import 'index.dart';
+// import 'index.dart';
+import 'newPasswordPage.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -19,7 +20,7 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(Provider.of<GlobalParams>(context).appBarText),
       ),
-      body: const IndexPage(),
+      body: const PassWordPage(),
       drawer: const MyDrawer(),
     );
   }
