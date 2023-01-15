@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
+import '../common/cacheNetImage.dart';
 import 'drawer.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -16,7 +17,7 @@ class IndexPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text("主页"),
       ),
-      drawer: const MyDrawer(),
+      // drawer: const MyDrawer(),
       body: const IndexBody(),
     );
   }
@@ -96,62 +97,11 @@ class _IndexBodyState extends State<IndexBody> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextButton(onPressed: selectPath, child: const Text("获取路径")),
-        Text(
-          "getTemporaryDirectory",
-          style: titleStyle(),
-        ),
-        Text(getTemporaryDirectoryPath),
-        const Padding(padding: EdgeInsets.symmetric(horizontal: 20)),
-        Text(
-          "getApplicationSupportDirectory",
-          style: titleStyle(),
-        ),
-        Text(getApplicationSupportDirectoryPath),
-        const Padding(padding: EdgeInsets.symmetric(horizontal: 20)),
-        Text(
-          "getApplicationDocumentsDirectory",
-          style: titleStyle(),
-        ),
-        Text(getApplicationDocumentsDirectoryPath),
-        const Padding(padding: EdgeInsets.symmetric(horizontal: 20)),
-        Text(
-          "getExternalStorageDirectory",
-          style: titleStyle(),
-        ),
-        Text(getExternalStorageDirectoryPath),
-        const Padding(padding: EdgeInsets.symmetric(horizontal: 20)),
-        Text(
-          "getExternalCacheDirectories",
-          style: titleStyle(),
-        ),
-        SizedBox(
-          height: (getExternalCacheDirectoriesPath.length + 1) * 20,
-          child: ListView.builder(
-              itemCount: getExternalCacheDirectoriesPath.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Text(getExternalCacheDirectoriesPath[index]);
-              }),
-        ),
-        const Padding(padding: EdgeInsets.symmetric(horizontal: 20)),
-        Text(
-          "getExternalStorageDirectories",
-          style: titleStyle(),
-        ),
-        SizedBox(
-          height: (getExternalStorageDirectoriesPath.length + 1) * 20,
-          child: ListView.builder(
-              itemCount: getExternalStorageDirectoriesPath.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Text(getExternalStorageDirectoriesPath[index]);
-              }),
-        ),
-
-
-      ],
+    return const Image(image: MyLocalCacheNetworkImage(
+      "http://5b0988e595225.cdn.sohucs.com/images/20180927/6bdf291f885846ef8b110eba21b24d5d.jpeg",
+      isLocalCache: true,
+    ),
+      fit: BoxFit.fill,
     );
   }
 }
