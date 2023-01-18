@@ -1,18 +1,10 @@
 
-
+import 'package:path/path.dart' as path;
 
 void main() {
-  List<dynamic> data=[1,2,3,4,5];
-  data is List<int>;
-  for(var index=0 ; index<data.length;index++) {
-    peintData(data[index]);
-  }
-
-  print("转换成功");
+  var newPath = path.join('/Users/shailen', '/dart/projects');
+  print(newPath);
 }
 
 
 
-peintData(int data){
-  print(data);
-}

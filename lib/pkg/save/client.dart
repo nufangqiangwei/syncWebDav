@@ -33,6 +33,7 @@ class Store {
 
   // 查询结果
   Future<List<DbValue>> all() async {
+    await getDb();
     if (_whereArgs.isNotEmpty) {
       model = _whereArgs[0].table;
     }
@@ -48,6 +49,7 @@ class Store {
   }
 
   Future<DbValue> getModel() async {
+    await getDb();
     if (_whereArgs.isNotEmpty) {
       model = _whereArgs[0].table;
     }
@@ -73,6 +75,7 @@ class Store {
   }
 
   update({DbValue? modelData, Map<String, dynamic>? jsonData}) async {
+    await getDb();
     Map<String, dynamic> mapData = {};
     String indexField;
     if (modelData != null) {
@@ -97,6 +100,7 @@ class Store {
   }
 
   insert({DbValue? modelData, Map<String, dynamic>? jsonData}) async {
+    await getDb();
     Map<String, dynamic> mapData = {};
     String indexField;
     if (modelData != null) {
@@ -135,6 +139,7 @@ class Store {
 
   insertAll(
       {List<DbValue>? modelData, List<Map<String, dynamic>>? jsonData}) async {
+    await getDb();
     List<Map<String, dynamic>> insertData = [];
     if (modelData != null) {
       insertData = modelData.map<Map<String, dynamic>>((e) => e.toMap())
@@ -150,6 +155,7 @@ class Store {
   }
 
   updateAll(List<DbValue> modelDatas)async{
+    await getDb();
     for(var index=0;index<modelDatas.length;index++) {
       DbValue data = modelDatas[index];
       (await getDb()).update(data.getModel().tableName, [Method(
@@ -172,20 +178,22 @@ class DB {
     if (saveType != "") {
       return;
     }
+    Directory value ;
     if (kIsWeb) {
       saveType = "cookies";
       throw ("未知的web平台");
-    } else if (Platform.isAndroid ||
-        Platform.isIOS ||
-        Platform.isWindows ||
-        Platform.isLinux ||
-        Platform.isMacOS) {
+    } else if (Platform.isAndroid){
       saveType = "file";
-      var value = await getApplicationDocumentsDirectory();
+       value = await getApplicationSupportDirectory();
+       filePath = path.join(value.path, "data");
+    }else if (Platform.isIOS || Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      saveType = "file";
+      value = await getLibraryDirectory();
       filePath = path.join(value.path, "data");
     } else if (Platform.isFuchsia) {
       throw ("未知的平台");
     }
+
     File f = File(filePath);
     if (!await f.exists()) {
       await f.create();

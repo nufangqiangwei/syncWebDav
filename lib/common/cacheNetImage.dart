@@ -1,13 +1,13 @@
 import 'dart:async';
-import 'dart:convert' as convert;
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:sync_webdav/common/Global.dart';
+
+import '../utils/cacheFile.dart';
 
 /// The dart:io implementation of [image_provider.NetworkImage].
 @immutable
@@ -83,8 +83,8 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
       assert(key == this);
 
       /// 如果本地缓存过图片，直接返回图片
-      if (isLocalCache == true) {
-        final Uint8List? bytes = await _getImageFromLocal(key.url);
+      if (isLocalCache == true && globalParams.cachePath != "") {
+        final Uint8List? bytes = await CacheFile.getImageFromLocal(key.url);
         if (bytes != null && bytes.lengthInBytes != 0) {
           return await PaintingBinding.instance.instantiateImageCodec(bytes);
         }
@@ -116,8 +116,8 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
       );
 
       /// 网络请求结束后，将图片缓存到本地
-      if (isLocalCache == true && bytes.lengthInBytes != 0) {
-        _saveImageToLocal(bytes, key.url);
+      if (isLocalCache == true && bytes.lengthInBytes != 0 && globalParams.cachePath != "") {
+        CacheFile.saveImageToLocal(bytes, key.url);
       }
 
       if (bytes.lengthInBytes == 0) throw Exception('NetworkImage is an empty file: $resolved');
@@ -136,48 +136,7 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
     }
   }
 
-  /// 图片路径通过MD5处理，然后缓存到本地
-  void _saveImageToLocal(Uint8List mUInt8List, String name) async {
-    String path = await _getCachePathString(name);
-    var file = File(path);
-    bool exist = await file.exists();
-    if (!exist) {
-      File(path).writeAsBytesSync(mUInt8List);
-    }
-  }
 
-  /// 从本地拿图片
-  Future<Uint8List?> _getImageFromLocal(String name) async {
-    String path = await _getCachePathString(name);
-    var file = File(path);
-    bool exist = await file.exists();
-    if (exist) {
-      final Uint8List bytes = await file.readAsBytes();
-      return bytes;
-    }
-    return null;
-  }
-
-  /// 获取图片的缓存路径并创建
-  Future<String> _getCachePathString(String name) async {
-    // 获取图片的名称
-    String filePathFileName = md5.convert(convert.utf8.encode(name)).toString();
-    String extensionName = name.split('/').last.split('.').last;
-
-    // print('图片url:$name');
-    // print('filePathFileName:$filePathFileName');
-    // print('extensionName:$extensionName');
-
-    // 生成、获取结果存储路径
-    final tempDic = await getTemporaryDirectory();
-    print(tempDic.path);
-    Directory directory = Directory(tempDic.path + '/CacheImage/');
-    bool isFoldExist = await directory.exists();
-    if (!isFoldExist) {
-      await directory.create();
-    }
-    return directory.path + filePathFileName + '.$extensionName';
-  }
 
   @override
   bool operator ==(Object other) {

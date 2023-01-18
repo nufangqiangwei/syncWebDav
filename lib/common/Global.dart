@@ -1,13 +1,13 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import '../utils/rsaUtils.dart';
 import '../pkg/save/client.dart';
 import '../pkg/save/model.dart';
 
 class GlobalParams extends ChangeNotifier {
-  String _appBarText = 'Flutter Demo Home Page';
-
   // web Setting params
   late int userId = -1;
   late String webPubKey = '';
@@ -18,23 +18,38 @@ class GlobalParams extends ChangeNotifier {
   late int lastPushTime = 0;
   late int passwordVersion = 0;
   late SysConfig sysConfig = SysConfig.fromMap({});
+  late String cachePath = '';
 
   // webSite params
   late List<WebSite> _webSiteList = [];
   late double windowsWith = 0;
   late double windowsHeight = 0;
 
-  String get appBarText => _appBarText;
   List<WebSite> get webSiteList => _webSiteList;
 
   Future<bool> initAppConfig() async {
     Store();
     sleep(const Duration(seconds:1));
     print("初始化数据");
-    getUserInfo();
+    await getCachePath();
+    await getUserInfo();
     await refreshWebSiteList();
     await loadRsaClient();
     return true;
+  }
+
+  getCachePath()async{
+    if (kIsWeb) {
+      throw ("未知的web平台");
+    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+       cachePath = (await getApplicationDocumentsDirectory()).path;
+       print("pc平台缓存地址$cachePath");
+    }else if(Platform.isAndroid || Platform.isIOS){
+       cachePath = (await  getTemporaryDirectory()).path;
+       print("移动平台缓存地址$cachePath");
+    } else if (Platform.isFuchsia) {
+      throw ("未知的平台");
+    }
   }
 
   refreshWebSiteList() async {

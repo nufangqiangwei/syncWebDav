@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sync_webdav/common/Global.dart';
 
 import 'drawer.dart';
 import 'index.dart';
@@ -18,9 +16,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(Provider.of<GlobalParams>(context).appBarText),
+        title: const Text("首页"),
       ),
-      body: const IndexBody(),
+      body: const ShowRandomImagePage(),
       drawer: const MyDrawer(),
     );
   }
