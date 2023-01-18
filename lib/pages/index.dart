@@ -125,6 +125,7 @@ class _ShowRandomImagePage extends State<ShowRandomImagePage> {
   late bool _first = true;
   late List<String> imageUrlList = [];
   late int showImageIndex = 0;
+  bool isRequest = false;
 
   @override
   initState() {
@@ -159,16 +160,26 @@ class _ShowRandomImagePage extends State<ShowRandomImagePage> {
     if (showImageIndex >= imageUrlList.length) {
       showImageIndex = 0;
     }
-    if (showImageIndex + 4 >= imageUrlList.length) {
+    if (showImageIndex + 4 >= imageUrlList.length && !isRequest) {
       getImage();
     }
     if (imageUrlList.isNotEmpty) {
       if (_first) {
-        secondImage =
-            Image(image: MyLocalCacheNetworkImage(imageUrlList[showImageIndex]));
+        try {
+          secondImage = Image(
+              image: MyLocalCacheNetworkImage(imageUrlList[showImageIndex]));
+        } catch (e) {
+          secondImage = Image(
+              image: MyLocalCacheNetworkImage(imageUrlList[0]));
+        }
       } else {
-        firstImage =
-            Image(image: MyLocalCacheNetworkImage(imageUrlList[showImageIndex]));
+        try {
+          firstImage = Image(
+              image: MyLocalCacheNetworkImage(imageUrlList[showImageIndex]));
+        } catch (e) {
+          firstImage = Image(
+              image: MyLocalCacheNetworkImage(imageUrlList[0]));
+        }
       }
     }
 
@@ -194,7 +205,8 @@ class _ShowRandomImagePage extends State<ShowRandomImagePage> {
 
   Future<List<String>?> getImageList() async {
     HttpClient client = HttpClient()..autoUncompress = false;
-    final Uri resolved = Uri.base.resolve("http://192.168.111.45:5000/password/api/getRandImageList");
+    final Uri resolved = Uri.base
+        .resolve("http://192.168.111.45:5000/password/api/getRandImageList");
     final HttpClientRequest request = await client.getUrl(resolved);
     final HttpClientResponse response = await request.close();
     final stringData = await response.transform(utf8.decoder).join();
@@ -204,6 +216,7 @@ class _ShowRandomImagePage extends State<ShowRandomImagePage> {
   }
 
   getImage() async {
+    isRequest = true;
     List<String>? urls = await getImageList();
     if (urls == null) {
       return;
@@ -211,6 +224,7 @@ class _ShowRandomImagePage extends State<ShowRandomImagePage> {
 
     HttpClient client = HttpClient()..autoUncompress = false;
     for (var i = 0; i < urls.length; i++) {
+      if (!imageUrlList.contains(urls[i])) continue;
       final Uri resolved = Uri.base.resolve(urls[i]);
       final HttpClientRequest request = await client.getUrl(resolved);
       final HttpClientResponse response = await request.close();
@@ -226,9 +240,33 @@ class _ShowRandomImagePage extends State<ShowRandomImagePage> {
       CacheFile.saveImageToLocal(bytes, urls[i]);
       imageUrlList.add(urls[i]);
     }
-    String imageUrlFile = path.join(globalParams.cachePath, 'imageUrl');
+    String imageUrlFile =
+        path.join(globalParams.cachePath, 'CacheImage/imageUrl');
     File file = File(imageUrlFile);
+
+    if (imageUrlList.length >= 50) {
+      await clearCacheImage(30);
+    }
     await file.writeAsString(jsonEncode(imageUrlList));
+    isRequest = false;
+  }
+
+  clearCacheImage(int number)async{
+    List<String> a=[];
+    List<String> b=[];
+    for(var i=0;i<=imageUrlList.length;i++){
+      if (i<=number){
+        a.add(imageUrlList[i]);
+      }else{
+        b.add(imageUrlList[i]);
+      }
+    }
+    showImageIndex= 0;
+    imageUrlList = b;
+    for(var i=0;i<=number;i++){
+      await CacheFile.removeFile(a[i]);
+    }
+
   }
 
   @override
@@ -247,7 +285,6 @@ class _ShowRandomImagePage extends State<ShowRandomImagePage> {
     //   ),
     // )
 
-
     return RefreshIndicator(
       //圆圈进度颜色
       // color: Colors.blue,
@@ -258,12 +295,13 @@ class _ShowRandomImagePage extends State<ShowRandomImagePage> {
       onRefresh: switchImage,
       child: SingleChildScrollView(
         child: Container(
-          constraints: BoxConstraints(minHeight: windowsSize.height + 50,maxWidth:windowsSize.width),
+          constraints: BoxConstraints(
+              minHeight: windowsSize.height + 50, maxWidth: windowsSize.width),
           child: AnimatedCrossFade(
             firstChild: firstImage,
             secondChild: secondImage,
             crossFadeState:
-            _first ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                _first ? CrossFadeState.showFirst : CrossFadeState.showSecond,
             duration: const Duration(seconds: 2),
           ),
         ),

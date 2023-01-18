@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:sync_webdav/common/Global.dart';
+
 class CacheFile{
 
   /// 图片路径通过MD5处理，然后缓存到本地
@@ -29,6 +30,13 @@ class CacheFile{
     return null;
   }
 
+
+  /// 删除文件
+  static removeFile(String name) async{
+    String path = await _getCachePathString(name);
+    File file = File(path);
+    await file.delete();
+  }
   /// 获取图片的缓存路径并创建
   static Future<String> _getCachePathString(String name) async {
     // 获取图片的名称
