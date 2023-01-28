@@ -32,9 +32,9 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       initialRoute: "/home",
       routes:myRoute,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      // theme: ThemeData(
+      //   primarySwatch: Colors.blue,
+      // ),
       navigatorObservers: [FlutterSmartDialog.observer],
       builder: FlutterSmartDialog.init(),
     );

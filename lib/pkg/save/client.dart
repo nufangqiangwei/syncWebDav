@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -170,7 +171,6 @@ class Store {
 class DB {
   static DB? _instance;
   Map<String, List<Map<String, dynamic>>> data = {};
-  late bool _isSave = false;
   late String filePath = "";
   late String saveType = "";
 
@@ -225,11 +225,8 @@ class DB {
     if (saveType == "") {
       throw ("尚未初始化");
     }
-    _isSave = true;
     File f = File(filePath);
-    f.writeAsString(jsonEncode(data));
-
-    _isSave = false;
+    f.writeAsStringSync(jsonEncode(data));
   }
 
   insertInto(String key, List<Map<String, dynamic>> data) {
@@ -251,12 +248,10 @@ class DB {
   }
 
   List<Map<String, dynamic>> getBucket(String key) {
+    // await g_dbInit.future;
     List<Map<String, dynamic>> x = [];
     if (saveType == "") {
       throw ("尚未初始化");
-    }
-    if (_isSave) {
-      return x;
     }
     dynamic i = data[key];
     if (i == null) {
@@ -378,15 +373,3 @@ class DbBool {
     return Method(table: table, field: field, method: "equal", value: value);
   }
 }
-
-
-
-/*
-
-每月固定支出：
-  房租：1600
-  房贷：1800
-购买大件：
-  自行车：4300
-
-*/
