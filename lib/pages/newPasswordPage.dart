@@ -280,7 +280,10 @@ class _PassWordPageState extends State<PassWordPage> {
     detailData.webSite = web;
     detailData.webSiteData =
         // await Password().select().webKey.equals(web.webKey).toSingleOrDefault();
-    await Store().select([PassWordModel.webKey.equal(web.webKey)]).from(PassWordModel()).getModel() as PassWord;
+        await Store()
+            .select([PassWordModel.webKey.equal(web.webKey)])
+            .from(PassWordModel())
+            .getModel() as PassWord;
     detailData.decodeData = await decodePassword(detailData.webSiteData);
   }
 
@@ -314,42 +317,40 @@ class _PppPasswordPage extends State<WebSiteListPage> {
   Widget build(BuildContext context) {
     List<WebSite> webSiteList = Provider.of<GlobalParams>(context).webSiteList;
     return Theme(
-        data: ThemeData(
-          // primaryColor: black87,
-          //用于导航栏、FloatingActionButton的背景色等
-          // iconTheme: const IconThemeData(color: black87),
-          //用于Icon颜色
-          appBarTheme: const AppBarTheme(backgroundColor: primario),
-          fontFamily: 'LXGWWenKai',
-          scaffoldBackgroundColor: primario,
-        ),
-        child: Scaffold(
-            appBar: AppBar(
-              title: const Text("主题测试 hello world"),
-            ),
-            body: ListView.builder(
-                itemCount: webSiteList.length + 2,
-                itemBuilder: (BuildContext context, int index) {
-                  if (index == 0) {
-                    return const Padding(
-                      padding: EdgeInsets.only(right: 15, left: 15, top: 10),
-                      child: SAppBarSearch(),
-                    );
-                  }
-                  if (index == 1) {
-                    return const Padding(
-                      padding: EdgeInsets.all(15),
-                      child: SelectGroupBy(),
-                    );
-                  }
-                  return Padding(
-                    padding: const EdgeInsets.only(
-                        left: 15, top: 15, right: 15, bottom: 0),
-                    child: WebSitePage(
-                        web: webSiteList[index - 2],
-                        touchFunc: widget.touchFunc),
-                  );
-                })));
+      data: ThemeData(
+        // primaryColor: black87,
+        //用于导航栏、FloatingActionButton的背景色等
+        // iconTheme: const IconThemeData(color: black87),
+        //用于Icon颜色
+        appBarTheme: const AppBarTheme(backgroundColor: primario),
+        fontFamily: 'LXGWWenKai',
+        scaffoldBackgroundColor: primario,
+      ),
+      child: Scaffold(
+        body: ListView.builder(
+            itemCount: webSiteList.length + 2,
+            itemBuilder: (BuildContext context, int index) {
+              if (index == 0) {
+                return const Padding(
+                  padding: EdgeInsets.only(right: 15, left: 15, top: 10),
+                  child: SAppBarSearch(),
+                );
+              }
+              if (index == 1) {
+                return const Padding(
+                  padding: EdgeInsets.all(15),
+                  child: SelectGroupBy(),
+                );
+              }
+              return Padding(
+                padding: const EdgeInsets.only(
+                    left: 15, top: 15, right: 15, bottom: 0),
+                child: WebSitePage(
+                    web: webSiteList[index - 2], touchFunc: widget.touchFunc),
+              );
+            }),
+      ),
+    );
   }
 }
 
@@ -630,85 +631,87 @@ class _WebSitePageState extends State<WebSitePage> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-      double maxWidth = constraints.maxWidth;
-      return DecoratedBox(
-        decoration: BoxDecoration(
-          color: secundario,
-          borderRadius: BorderRadius.circular(10.0), //圆角
-        ),
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                constraints: BoxConstraints(maxWidth: maxWidth - 90),
-                child: InkWell(
-                  onTap: () {
-                    widget.touchFunc(widget.web);
-                  },
-                  child: Row(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: FadeInImage.assetNetwork(
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.fill,
-                          placeholder: "assets/icons/google.ico",
-                          image: widget.web.icon,
-                          imageErrorBuilder: (context, error, stackTrace) {
-                            return Image.asset(
-                              "assets/icons/defaultWebsite.ico",
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.fill,
-                            );
-                          },
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(maxWidth: maxWidth - 170),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.web.name,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                widget.web.url,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+      builder: (BuildContext context, BoxConstraints constraints) {
+        double maxWidth = constraints.maxWidth;
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            color: secundario,
+            borderRadius: BorderRadius.circular(10.0), //圆角
+          ),
+          child: SizedBox(
+            height: 60,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  constraints: BoxConstraints(maxWidth: maxWidth - 90),
+                  child: InkWell(
+                    onTap: () {
+                      widget.touchFunc(widget.web);
+                    },
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: FadeInImage.assetNetwork(
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.fill,
+                            placeholder: "assets/icons/google.ico",
+                            image: widget.web.icon,
+                            imageErrorBuilder: (context, error, stackTrace) {
+                              return Image.asset(
+                                "assets/icons/defaultWebsite.ico",
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.fill,
+                              );
+                            },
                           ),
                         ),
-                      ),
-                    ],
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: ConstrainedBox(
+                            constraints:
+                                BoxConstraints(maxWidth: maxWidth - 170),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.web.name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  widget.web.url,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: IconButton(
-                  icon: Icon(iconStatus
-                      ? Icons.favorite_outlined
-                      : Icons.favorite_border),
-                  onPressed: () {
-                    setState(() {
-                      iconStatus = !iconStatus;
-                    });
-                  },
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: IconButton(
+                    icon: Icon(iconStatus
+                        ? Icons.favorite_outlined
+                        : Icons.favorite_border),
+                    onPressed: () {
+                      setState(() {
+                        iconStatus = !iconStatus;
+                      });
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }
 
@@ -911,7 +914,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
     if (widget.detailData.selectAccount.userName == "") {
       return;
     }
-    bool isNewData=false;
+    bool isNewData = false;
     if (widget.detailData.selectIndex == -2) {
       widget.detailData.selectIndex = widget.detailData.decodeData.length - 1;
       widget.detailData.decodeData.add(widget.detailData.selectAccount);
@@ -926,14 +929,17 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
 
     widget.detailData.webSiteData.isModify = true;
     widget.detailData.webSiteData.webKey = widget.detailData.webSite.webKey;
-    widget.detailData.webSiteData.version = widget.detailData.webSiteData.version + 1;
+    widget.detailData.webSiteData.version =
+        widget.detailData.webSiteData.version + 1;
 
     if (isNewData) {
-      Store().insert(modelData:await encodePassword(
-          widget.detailData.webSiteData, widget.detailData.decodeData));
-    }else{
-      Store().update(modelData:await encodePassword(
-          widget.detailData.webSiteData, widget.detailData.decodeData));
+      Store().insert(
+          modelData: await encodePassword(
+              widget.detailData.webSiteData, widget.detailData.decodeData));
+    } else {
+      Store().update(
+          modelData: await encodePassword(
+              widget.detailData.webSiteData, widget.detailData.decodeData));
     }
 
     widget.detailData.selectIndex++;
@@ -1099,11 +1105,9 @@ class _ViewPageState extends State<ViewPage> {
     return _errorText;
   }
 
-  randomPassword(){
-    passwordController.text =
-        getRandomPassword(passwordLength);
-    widget.detailData.selectAccount.password =
-        passwordController.text;
+  randomPassword() {
+    passwordController.text = getRandomPassword(passwordLength);
+    widget.detailData.selectAccount.password = passwordController.text;
   }
 
   @override
@@ -1274,10 +1278,15 @@ class _ViewPageState extends State<ViewPage> {
                 ),
               ),
               IconButton(
-                padding:const EdgeInsets.all(0),
-                onPressed: (){
-                setState((){passwordLength--;_sliderValue--;randomPassword();});
-              }, icon: const Icon(Icons.remove)),
+                  padding: const EdgeInsets.all(0),
+                  onPressed: () {
+                    setState(() {
+                      passwordLength--;
+                      _sliderValue--;
+                      randomPassword();
+                    });
+                  },
+                  icon: const Icon(Icons.remove)),
               Slider(
                 value: _sliderValue,
                 onChanged: (data) {
@@ -1299,9 +1308,15 @@ class _ViewPageState extends State<ViewPage> {
                   return '${newValue.round()} dollars}';
                 },
               ),
-              IconButton(onPressed: (){
-                setState((){passwordLength++;_sliderValue++;randomPassword();});
-              }, icon: const Icon(Icons.add)),
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      passwordLength++;
+                      _sliderValue++;
+                      randomPassword();
+                    });
+                  },
+                  icon: const Icon(Icons.add)),
               SizedBox(
                 width: 120,
                 child: Text(passwordLength.toString(),

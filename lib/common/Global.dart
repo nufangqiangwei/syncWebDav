@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:sync_webdav/common/staticVariable.dart';
 import '../utils/rsaUtils.dart';
 import '../pkg/save/client.dart';
 import '../pkg/save/model.dart';
@@ -57,7 +58,9 @@ class GlobalParams extends ChangeNotifier {
     if(queryData is List<WebSite>){
       _webSiteList = queryData;
     }
-
+    if (_webSiteList.isEmpty) {
+      _webSiteList = InitWebData;
+    }
     print("站点数${_webSiteList.length}");
   }
 

@@ -15,8 +15,11 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar:true,
       appBar: AppBar(
         title: const Text("首页"),
+        backgroundColor: const Color(0x44000000),
+        elevation: 0,
       ),
       body: const ShowRandomImagePage(),
       drawer: const MyDrawer(),

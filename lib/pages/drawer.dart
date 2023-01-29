@@ -45,7 +45,7 @@ class MyDrawer extends StatelessWidget{
             ),
             title: const Text('首页'),
             trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () => Navigator.pushNamed(context, "/index"),
+            onTap: () => Navigator.pushNamed(context, "/home"),
           ),
           ListTile(
             leading: const Icon(

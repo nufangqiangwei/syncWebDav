@@ -63,8 +63,14 @@ class Store {
         result = model.fromMap(data[0]);
       }
     } else {
-      result = model
-          .fromMap((await getDb()).selectData(model.tableName, _whereArgs)[0]);
+      List<Map<String, dynamic>> query = (await getDb()).selectData(model.tableName, _whereArgs);
+
+      if (query.isNotEmpty){
+        result = model.fromMap(query[0]);
+      }else{
+        result = model.fromMap({});
+      }
+
     }
     return result;
   }
