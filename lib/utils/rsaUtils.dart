@@ -244,7 +244,7 @@ class RSAUtils {
   ///解析PEM证书生成RSA密钥
   RSAAsymmetricKey parse(String key) {
     final rows = key.split('\n'); // LF-only, this could be a problem
-    final header = rows.first;
+    final header = rows.first.trim();
     if (header == '-----BEGIN RSA PUBLIC KEY-----') {
       return _parsePublic(_parseSequence(rows));
     }

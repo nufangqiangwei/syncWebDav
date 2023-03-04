@@ -352,18 +352,19 @@ class _UserSettingPageState extends State<UserSettingPage> {
     RSAUtils newRsaClient = RSAUtils(pubController.text, priController.text);
     // todo 替换 password 表中的数据
     List<DbValue> dbData =await Store().from(PassWordModel()).all();
-    if (dbData is! List<PassWord>){
+    if (dbData is List<PassWord>){
+      for (final da in dbData) {
+        if (da.isEncryption) {
+          da.value = newRsaClient
+              .encodeString(globalParams.userRSA.decodeString(da.value));
+        } else {
+          da.value = newRsaClient.encodeString(da.value);
+          da.isEncryption = true;
+        }
+      }
       return ;
     }
-    for (final da in dbData) {
-      if (da.isEncryption) {
-        da.value = newRsaClient
-            .encodeString(globalParams.userRSA.decodeString(da.value));
-      } else {
-        da.value = newRsaClient.encodeString(da.value);
-        da.isEncryption = true;
-      }
-    }
+
     globalParams.setUserRsaKey(pubController.text,priController.text);
 
     await globalParams.loadRsaClient();

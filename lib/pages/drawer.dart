@@ -37,16 +37,16 @@ class MyDrawer extends StatelessWidget{
             //  BoxDecoration 用于制作背景
           ),
           // ListTile是下方的几个可点按List
-          ListTile(
-            leading: const Icon(
-              Icons.maps_home_work_outlined, // Icon种类
-              // color: Colors.black12, // Icon颜色
-              // size: 22.0, // Icon大小
-            ),
-            title: const Text('首页'),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () => Navigator.pushNamed(context, "/home"),
-          ),
+          // ListTile(
+          //   leading: const Icon(
+          //     Icons.maps_home_work_outlined, // Icon种类
+          //     // color: Colors.black12, // Icon颜色
+          //     // size: 22.0, // Icon大小
+          //   ),
+          //   title: const Text('首页'),
+          //   trailing: const Icon(Icons.arrow_forward_ios),
+          //   onTap: () => Navigator.pushNamed(context, "/home"),
+          // ),
           ListTile(
             leading: const Icon(
               Icons.vpn_key_outlined, // Icon种类
