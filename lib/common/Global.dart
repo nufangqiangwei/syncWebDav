@@ -9,16 +9,25 @@ import '../pkg/save/client.dart';
 import '../pkg/save/model.dart';
 
 class GlobalParams extends ChangeNotifier {
+  final Map<String, List<VoidCallback>> _fieldCallback = {};
+  late SysConfig _sysConfig = SysConfig.fromMap({"userId": -1});
+
   // web Setting params
-  late int userId = -1;
-  late String webPubKey = '';
-  late String encryptStr = ''; // 加密字符串
-  late String publicKeyStr = '';
-  late String privateKeyStr = '';
+  int get userId => _sysConfig.userId;
+
+  String get webPubKey => _sysConfig.webRsaPub;
+
+  String get encryptStr => _sysConfig.encryptStr; // 加密字符串
+  set encryptStr(String data) =>
+      setUserConfig(_sysConfig.userId, _sysConfig.webRsaPub, data);
+
+  String get publicKeyStr => _sysConfig.userRsaPub;
+
+  String get privateKeyStr => _sysConfig.userRsaPri;
+
   late RSAUtils userRSA;
   late int lastPushTime = 0;
   late int passwordVersion = 0;
-  late SysConfig sysConfig = SysConfig.fromMap({});
   late String cachePath = '';
 
   // webSite params
@@ -29,8 +38,8 @@ class GlobalParams extends ChangeNotifier {
   List<WebSite> get webSiteList => _webSiteList;
 
   Future<bool> initAppConfig() async {
-    Store();
-    sleep(const Duration(seconds:1));
+    // Store();
+    sleep(const Duration(seconds: 1));
     print("初始化数据");
     await getCachePath();
     await getUserInfo();
@@ -39,15 +48,15 @@ class GlobalParams extends ChangeNotifier {
     return true;
   }
 
-  getCachePath()async{
+  getCachePath() async {
     if (kIsWeb) {
       throw ("未知的web平台");
     } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-       cachePath = (await getApplicationDocumentsDirectory()).path;
-       print("pc平台缓存地址$cachePath");
-    }else if(Platform.isAndroid || Platform.isIOS){
-       cachePath = (await  getTemporaryDirectory()).path;
-       print("移动平台缓存地址$cachePath");
+      cachePath = (await getApplicationDocumentsDirectory()).path;
+      print("pc平台缓存地址$cachePath");
+    } else if (Platform.isAndroid || Platform.isIOS) {
+      cachePath = (await getTemporaryDirectory()).path;
+      print("移动平台缓存地址$cachePath");
     } else if (Platform.isFuchsia) {
       throw ("未知的平台");
     }
@@ -55,7 +64,7 @@ class GlobalParams extends ChangeNotifier {
 
   refreshWebSiteList() async {
     List<DbValue> queryData = await Store().from(WebSiteModel()).all();
-    if(queryData is List<WebSite>){
+    if (queryData is List<WebSite>) {
       _webSiteList = queryData;
     }
     if (_webSiteList.isEmpty) {
@@ -65,17 +74,12 @@ class GlobalParams extends ChangeNotifier {
   }
 
   getUserInfo() async {
-    SysConfig config = await Store().from(SysConfigModel()).getModel() as SysConfig;
-    sysConfig = config;
-    userId = config.userId;
-    webPubKey = config.webRsaPub;
-    encryptStr = config.encryptStr;
-    publicKeyStr = config.userRsaPub;
-    privateKeyStr = config.userRsaPri;
-    passwordVersion = config.passwordVersion;
+    SysConfig config =
+        await Store().from(SysConfigModel()).getModel() as SysConfig;
+    _sysConfig = config;
   }
 
-  loadRsaClient()async{
+  loadRsaClient() async {
     if (publicKeyStr == '' || privateKeyStr == '') {
       return false;
     }
@@ -83,34 +87,32 @@ class GlobalParams extends ChangeNotifier {
   }
 
   setUserConfig(int userId, String webPubKey, String encryptStr) async {
-    sysConfig.userId=userId;
-    sysConfig.webRsaPub=webPubKey;
-    sysConfig.encryptStr=encryptStr;
-    Store().update(modelData:sysConfig);
-    //////////////////////////////
-    this.userId = userId;
-    this.webPubKey = webPubKey;
-    this.encryptStr = encryptStr;
+    _sysConfig.userId = userId;
+    _sysConfig.webRsaPub = webPubKey;
+    _sysConfig.encryptStr = encryptStr;
+    await Store().update(modelData: _sysConfig);
   }
 
   setWebInfo(int passwordVersion) async {
-    sysConfig.passwordVersion=passwordVersion;
-    Store().update(modelData:sysConfig);
+    _sysConfig.passwordVersion = passwordVersion;
+    await Store().update(modelData: _sysConfig);
     //////////////////////////////
     this.passwordVersion = passwordVersion;
   }
 
-  setUserRsaKey(String pubKey,String priKey){
-    publicKeyStr = pubKey;
-    privateKeyStr = priKey;
-    sysConfig.userRsaPub=pubKey;
-    sysConfig.userRsaPri=priKey;
-    Store().update(modelData:sysConfig);
+  setUserRsaKey(String pubKey, String priKey)async {
+    _sysConfig.userRsaPub = pubKey;
+    _sysConfig.userRsaPri = priKey;
+    await Store().update(modelData: _sysConfig);
   }
 
-  clearUserInfo() {
-    userId = -1;
-    encryptStr = '';
+  clearUserInfo() {}
+
+  listingFieldModify(String fieldName, VoidCallback callback) {
+    if (!_fieldCallback.containsKey(fieldName)) {
+      _fieldCallback[fieldName] = [];
+    }
+    _fieldCallback[fieldName]?.add(callback);
   }
 }
 

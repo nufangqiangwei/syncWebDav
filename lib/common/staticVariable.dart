@@ -2,7 +2,7 @@
 import '../pkg/save/model.dart';
 
 List<WebSite> InitWebData = [
-  WebSite(name:'google', webKey: 'google',icon: 'https://101.32.15.231/icon/google.ico',url:''),
+  WebSite(name:'google', webKey: 'google',icon: 'http://mat1.gtimg.com/www/icon/favicon2.ico',url:''),
   WebSite(
       name:'腾讯',
       webKey: 'tx',
@@ -13,11 +13,11 @@ List<WebSite> InitWebData = [
       webKey: 'steam',
       icon: 'https://store.steampowered.com/favicon.ico',url:''
   ),
-  WebSite(name:'github', webKey: 'github',icon: 'https://101.32.15.231/icon/github.ico',url:''),
+  WebSite(name:'github', webKey: 'github',icon: 'http://mat1.gtimg.com/www/icon/favicon2.ico',url:''),
   WebSite(
       name:'bilibili',
       webKey: 'bilibili',
-      icon: 'https://www.bilibili.com/favicon.ico',url:''
+      icon: 'http://mat1.gtimg.com/www/icon/favicon2.ico',url:''
   ),
   WebSite(
       name:'豆瓣',
@@ -27,7 +27,7 @@ List<WebSite> InitWebData = [
   WebSite(
       name:'煎蛋',
       webKey: 'jiandan',
-      icon: '//cdn.jandan.net/static/img/favicon.ico',url:''
+      icon: 'http://mat1.gtimg.com/www/icon/favicon2.ico',url:''
   ),
   WebSite(
       name:'12306',
@@ -42,7 +42,7 @@ List<WebSite> InitWebData = [
   WebSite(
       name:'百度网盘',
       webKey: 'baiduPan',
-      icon: 'https://pan.baidu.com/sns/ppres/static/images/favicon.ico',url:''
+      icon: 'http://mat1.gtimg.com/www/icon/favicon2.ico',url:''
   ),
   WebSite(
       name:'百度贴吧',

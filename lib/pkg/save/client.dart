@@ -56,7 +56,7 @@ class Store {
     }
     DbValue result;
     if (model.isOnly) {
-      List<dynamic> data = (await getDb()).getBucket(model.toString());
+      List<dynamic> data = (await getDb()).getBucket(model.tableName);
       if (data.isEmpty) {
         result = model.fromMap(null);
       }else{
@@ -96,6 +96,10 @@ class Store {
       indexField = model.indexField;
     } catch (e) {
       throw ("请先指定model");
+    }
+    if(model.isOnly){
+      (await getDb()).updateOnlyRowTable(model.tableName,  mapData);
+      return ;
     }
     _whereArgs.add(Method(
         table: model,
@@ -176,7 +180,7 @@ class Store {
 
 class DB {
   static DB? _instance;
-  Map<String, List<Map<String, dynamic>>> data = {};
+  Map<String, List<Map<String, dynamic>>> _databaseData = {};
   late String filePath = "";
   late String saveType = "";
 
@@ -192,20 +196,29 @@ class DB {
       saveType = "file";
        value = await getApplicationSupportDirectory();
        filePath = path.join(value.path, "data");
-    }else if (Platform.isIOS || Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    }else if (Platform.isIOS || Platform.isMacOS) {
       saveType = "file";
       value = await getLibraryDirectory();
       filePath = path.join(value.path, "data");
-    } else if (Platform.isFuchsia) {
+    } else if (Platform.isWindows || Platform.isLinux){
+      saveType = "file";
+      value =await getApplicationSupportDirectory();
+      filePath = path.join(value.path, "data");
+    }else if (Platform.isFuchsia) {
       throw ("未知的平台");
     }
-
+    print("本地文件路径：$filePath");
     File f = File(filePath);
     if (!await f.exists()) {
       await f.create();
-      await f.writeAsString("{}");
+      await f.writeAsString("{}",flush:true);
+      return ;
     }
     String i = await f.readAsString();
+    if(i == "") {
+      await f.writeAsString("{}",flush:true);
+      return ;
+    }
     Map<String, dynamic> cache = jsonDecode(i) as Map<String, dynamic>;
     for (var key in cache.keys) {
       List<dynamic> va = cache[key] as List<dynamic>;
@@ -215,9 +228,11 @@ class DB {
         va[index] as Map<String, dynamic>;
         ca.add(va[index]);
       }
-
-      data[key] = ca;
+      _databaseData[key] = ca;
     }
+    // if(databaseData["Instance of 'SysConfigModel'"]!=null){
+    //   throw("错误的表名");
+    // }
   }
 
   DB._();
@@ -232,7 +247,7 @@ class DB {
       throw ("尚未初始化");
     }
     File f = File(filePath);
-    f.writeAsStringSync(jsonEncode(data));
+    f.writeAsStringSync(jsonEncode(_databaseData));
   }
 
   insertInto(String key, List<Map<String, dynamic>> data) {
@@ -253,16 +268,32 @@ class DB {
     save();
   }
 
+  updateOnlyRowTable(String key,Map<String, dynamic> data){
+    var bucket = getBucket(key);
+    if (bucket.isEmpty) {
+      bucket.add(data);
+    }else{
+      for(String mapKey in data.keys) {
+        bucket[0][mapKey]=data[mapKey];
+      }
+    }
+    save();
+  }
+
   List<Map<String, dynamic>> getBucket(String key) {
     // await g_dbInit.future;
+    if(key=="Instance of 'SysConfigModel'"){
+      throw("错误");
+    }
     List<Map<String, dynamic>> x = [];
     if (saveType == "") {
       throw ("尚未初始化");
     }
-    dynamic i = data[key];
+    dynamic i = _databaseData[key];
     if (i == null) {
-      data[key] = x;
-      i = data[key];
+      print("不存在的表$key");
+      _databaseData[key] = x;
+      i = _databaseData[key];
     }
     return i;
   }

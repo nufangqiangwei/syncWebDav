@@ -362,10 +362,9 @@ class _UserSettingPageState extends State<UserSettingPage> {
           da.isEncryption = true;
         }
       }
-      return ;
     }
 
-    globalParams.setUserRsaKey(pubController.text,priController.text);
+    await globalParams.setUserRsaKey(pubController.text,priController.text);
 
     await globalParams.loadRsaClient();
     await Store().updateAll(dbData);
@@ -417,7 +416,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
       promptDialog(context, "请先添加密钥，并保存。");
       return;
     }
-    if (globalParams.encryptStr =="") {
+    if (globalParams.encryptStr == "") {
       globalParams.encryptStr = getRandomPassword(10);
     }
     await register(globalParams.publicKeyStr, globalParams.encryptStr);
@@ -496,11 +495,10 @@ class _UserSettingPageState extends State<UserSettingPage> {
   }
 
   String showUserId() {
-    int userId = Provider.of<GlobalParams>(context).userId;
-    if (userId == -1) {
+    if (globalParams.userId == -1) {
       return '';
     }
-    return userId.toString();
+    return globalParams.userId.toString();
   }
 
   @override
@@ -523,7 +521,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
               SettingsTile(
                 leading: const Icon(Icons.vpn_key),
                 title: const Text('加密字符串'),
-                trailing: Text(Provider.of<GlobalParams>(context).encryptStr),
+                trailing: Text(globalParams.encryptStr),
               ),
             ],
           ),
