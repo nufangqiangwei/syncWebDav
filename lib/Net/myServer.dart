@@ -8,7 +8,6 @@ String getEncryptStr() {
   if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
     throw "尚未添加密钥";
   }
-  print(globalParams.webPubKey);
   var webRsa = RSAUtils(globalParams.webPubKey,"");
   print("获取token'");
   return webRsa.encodeString('''{

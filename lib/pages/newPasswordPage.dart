@@ -266,7 +266,7 @@ class _PassWordPageState extends State<PassWordPage> {
         await Store()
             .select([PassWordModel.webKey.equal(web.webKey)])
             .from(PassWordModel())
-            .getModel() as PassWord;
+            .lastModel() as PassWord;
     detailData.decodeData = await decodePassword(detailData.webSiteData);
   }
 

@@ -35,9 +35,7 @@ class Store {
   // 查询结果
   Future<List<DbValue>> all() async {
     await getDb();
-    if (_whereArgs.isNotEmpty) {
-      model = _whereArgs[0].table;
-    }
+    _getWhereBaseModel();
     List<Map<String, dynamic>> queryData =
         (await getDb()).selectData(model.tableName, _whereArgs);
     List<DbValue> result = [];
@@ -90,17 +88,8 @@ class Store {
       model = modelData.getModel();
     } else if (jsonData != null) {
       mapData = jsonData;
-      if (model == null && _whereArgs.isEmpty) {
-        throw ("请先指定主表");
-      }
-      DbModel cache = _whereArgs[0].table;
-      for (var i in _whereArgs) {
-        if (cache != i.table) {
-          throw ("筛选条件里包含多个表，无法找到查询的主表");
-        }
-      }
-      model = cache;
     }
+    _getWhereBaseModel();
 
     try {
       indexField = model.indexField;
@@ -195,7 +184,50 @@ class Store {
     }
   }
 
-  _getWhereBaseModel() {}
+  _getWhereBaseModel() {
+    try{
+      if(model != null){
+        return ;
+      }
+    }catch(e){
+      if (_whereArgs.isEmpty) {
+        throw ("请先指定主表");
+      }
+      DbModel cache = _whereArgs[0].table;
+      for (var i in _whereArgs) {
+        if (cache != i.table) {
+          throw ("筛选条件里包含多个表，无法找到查询的主表");
+        }
+      }
+      model = cache;
+    }
+  }
+
+  lastModel()async{
+    await getDb();
+    if (_whereArgs.isNotEmpty) {
+      model = _whereArgs[0].table;
+    }
+    DbValue result;
+    if (model.isOnly) {
+      List<dynamic> data = (await getDb()).getBucket(model.tableName);
+      if (data.isEmpty) {
+        result = model.fromMap(null);
+      } else {
+        result = model.fromMap(data[0]);
+      }
+    } else {
+      List<Map<String, dynamic>> query =
+          (await getDb()).selectData(model.tableName, _whereArgs);
+
+      if (query.isNotEmpty) {
+        result = model.fromMap(query[query.length-1]);
+      } else {
+        result = model.fromMap({});
+      }
+    }
+    return result;
+  }
 }
 
 class DB {
@@ -374,6 +406,10 @@ class Method {
     if (data is double) {
       value as double;
       return data == value;
+    }
+    if(data is bool) {
+      value as bool;
+      return data==value;
     }
     return false;
   }

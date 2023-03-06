@@ -33,14 +33,26 @@ Future<String?> uploadData(String tableName) async {
 Future<List<Map<String,String>>> uploadPasswordData() async{
   List<DbValue> query = await Store().select([PassWordModel.isModify.equal(true)]).all();
   List<Map<String,String>> data=[];
-  if (query is List<PassWord>) {
-    for (final i in query) {
-      data.add({
-        "webKey":i.webKey,
-        "fromData":i.value,
-      });
+  Map<String,int> cache={};
+  Map<String,String> result= {};
+  for (final i in query) {
+    if (i is PassWord){
+      if(cache[i.webKey]==null){
+        result[i.webKey]=i.value;
+        cache[i.webKey]=i.version;
+      }else if(cache[i.webKey]!<i.version){
+        result[i.webKey]=i.value;
+      }
     }
   }
+  for(final webKey in result.keys){
+    data.add({
+      "webKey":webKey,
+      "fromData":result[webKey]??''
+    });
+  }
+
+
   return data;
 }
 
