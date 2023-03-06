@@ -97,7 +97,7 @@ class _WebSitePageState extends State<WebSitePage> {
                             height: 40,
                             fit: BoxFit.fill,
                             placeholder: "assets/icons/google.ico",
-                            image: widget.web.icon,
+                            image: "assets/icons/defaultWebsite.ico",
                             imageErrorBuilder: (context, error, stackTrace) {
                               return Image.asset(
                                 "assets/icons/defaultWebsite.ico",

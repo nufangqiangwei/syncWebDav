@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:sync_webdav/pages/passwordCommon/passwordUtils.dart';
 
 import '../../model/JsonModel.dart';
-import '../../model/class.dart';
 import '../../pkg/save/model.dart';
 import './searchPage.dart';
+import 'data.dart';
 
 class AccountListPage extends StatefulWidget {
   const AccountListPage({
@@ -58,8 +58,8 @@ class _AccountListPageState extends State<AccountListPage> {
                 width: 45,
                 height: 45,
                 fit: BoxFit.fill,
-                placeholder: widget.web.icon,
-                image: widget.web.icon,
+                placeholder: "assets/icons/defaultWebsite.ico",
+                image: "assets/icons/defaultWebsite.ico",
                 imageErrorBuilder: (context, error, stackTrace) {
                   return Image.asset(
                     "assets/icons/defaultWebsite.ico",

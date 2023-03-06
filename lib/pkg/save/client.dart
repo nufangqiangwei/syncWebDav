@@ -39,7 +39,7 @@ class Store {
       model = _whereArgs[0].table;
     }
     List<Map<String, dynamic>> queryData =
-    (await getDb()).selectData(model.tableName, _whereArgs);
+        (await getDb()).selectData(model.tableName, _whereArgs);
     List<DbValue> result = [];
 
     for (var i = 0; i < queryData.length; i++) {
@@ -59,18 +59,18 @@ class Store {
       List<dynamic> data = (await getDb()).getBucket(model.tableName);
       if (data.isEmpty) {
         result = model.fromMap(null);
-      }else{
+      } else {
         result = model.fromMap(data[0]);
       }
     } else {
-      List<Map<String, dynamic>> query = (await getDb()).selectData(model.tableName, _whereArgs);
+      List<Map<String, dynamic>> query =
+          (await getDb()).selectData(model.tableName, _whereArgs);
 
-      if (query.isNotEmpty){
+      if (query.isNotEmpty) {
         result = model.fromMap(query[0]);
-      }else{
+      } else {
         result = model.fromMap({});
       }
-
     }
     return result;
   }
@@ -90,6 +90,16 @@ class Store {
       model = modelData.getModel();
     } else if (jsonData != null) {
       mapData = jsonData;
+      if (model == null && _whereArgs.isEmpty) {
+        throw ("请先指定主表");
+      }
+      DbModel cache = _whereArgs[0].table;
+      for (var i in _whereArgs) {
+        if (cache != i.table) {
+          throw ("筛选条件里包含多个表，无法找到查询的主表");
+        }
+      }
+      model = cache;
     }
 
     try {
@@ -97,15 +107,18 @@ class Store {
     } catch (e) {
       throw ("请先指定model");
     }
-    if(model.isOnly){
-      (await getDb()).updateOnlyRowTable(model.tableName,  mapData);
-      return ;
+    if (model.isOnly) {
+      (await getDb()).updateOnlyRowTable(model.tableName, mapData);
+      return;
     }
-    _whereArgs.add(Method(
-        table: model,
-        field: indexField,
-        method: "equal",
-        value: mapData[indexField]));
+    if(mapData[indexField]!=null){
+      _whereArgs.add(Method(
+          table: model,
+          field: indexField,
+          method: "equal",
+          value: mapData[indexField]));
+    }
+
 
     (await getDb()).update(model.tableName, _whereArgs, mapData);
   }
@@ -154,7 +167,7 @@ class Store {
     List<Map<String, dynamic>> insertData = [];
     if (modelData != null) {
       insertData = modelData.map<Map<String, dynamic>>((e) => e.toMap())
-      as List<Map<String, dynamic>>;
+          as List<Map<String, dynamic>>;
       model = modelData[0].getModel();
     } else if (jsonData != null) {
       insertData = jsonData;
@@ -165,17 +178,24 @@ class Store {
     (await getDb()).insertInto(model.tableName, insertData);
   }
 
-  updateAll(List<DbValue> modelDatas)async{
+  updateAll(List<DbValue> modelDatas) async {
     await getDb();
-    for(var index=0;index<modelDatas.length;index++) {
+    for (var index = 0; index < modelDatas.length; index++) {
       DbValue data = modelDatas[index];
-      (await getDb()).update(data.getModel().tableName, [Method(
-          table: data.getModel(),
-          field: data.getModel().indexField,
-          method: "equal",
-          value: data.toMap()[data.getModel().indexField])], data.toMap());
+      (await getDb()).update(
+          data.getModel().tableName,
+          [
+            Method(
+                table: data.getModel(),
+                field: data.getModel().indexField,
+                method: "equal",
+                value: data.toMap()[data.getModel().indexField])
+          ],
+          data.toMap());
     }
   }
+
+  _getWhereBaseModel() {}
 }
 
 class DB {
@@ -188,36 +208,36 @@ class DB {
     if (saveType != "") {
       return;
     }
-    Directory value ;
+    Directory value;
     if (kIsWeb) {
       saveType = "cookies";
       throw ("未知的web平台");
-    } else if (Platform.isAndroid){
+    } else if (Platform.isAndroid) {
       saveType = "file";
-       value = await getApplicationSupportDirectory();
-       filePath = path.join(value.path, "data");
-    }else if (Platform.isIOS || Platform.isMacOS) {
+      value = await getApplicationSupportDirectory();
+      filePath = path.join(value.path, "data");
+    } else if (Platform.isIOS || Platform.isMacOS) {
       saveType = "file";
       value = await getLibraryDirectory();
       filePath = path.join(value.path, "data");
-    } else if (Platform.isWindows || Platform.isLinux){
+    } else if (Platform.isWindows || Platform.isLinux) {
       saveType = "file";
-      value =await getApplicationSupportDirectory();
+      value = await getApplicationSupportDirectory();
       filePath = path.join(value.path, "data");
-    }else if (Platform.isFuchsia) {
+    } else if (Platform.isFuchsia) {
       throw ("未知的平台");
     }
     print("本地文件路径：$filePath");
     File f = File(filePath);
     if (!await f.exists()) {
       await f.create();
-      await f.writeAsString("{}",flush:true);
-      return ;
+      await f.writeAsString("{}", flush: true);
+      return;
     }
     String i = await f.readAsString();
-    if(i == "") {
-      await f.writeAsString("{}",flush:true);
-      return ;
+    if (i == "") {
+      await f.writeAsString("{}", flush: true);
+      return;
     }
     Map<String, dynamic> cache = jsonDecode(i) as Map<String, dynamic>;
     for (var key in cache.keys) {
@@ -268,13 +288,13 @@ class DB {
     save();
   }
 
-  updateOnlyRowTable(String key,Map<String, dynamic> data){
+  updateOnlyRowTable(String key, Map<String, dynamic> data) {
     var bucket = getBucket(key);
     if (bucket.isEmpty) {
       bucket.add(data);
-    }else{
-      for(String mapKey in data.keys) {
-        bucket[0][mapKey]=data[mapKey];
+    } else {
+      for (String mapKey in data.keys) {
+        bucket[0][mapKey] = data[mapKey];
       }
     }
     save();
@@ -282,8 +302,8 @@ class DB {
 
   List<Map<String, dynamic>> getBucket(String key) {
     // await g_dbInit.future;
-    if(key=="Instance of 'SysConfigModel'"){
-      throw("错误");
+    if (key == "Instance of 'SysConfigModel'") {
+      throw ("错误");
     }
     List<Map<String, dynamic>> x = [];
     if (saveType == "") {
@@ -328,9 +348,9 @@ class Method {
 
   Method(
       {required this.table,
-        required this.field,
-        required this.method,
-        required this.value});
+      required this.field,
+      required this.method,
+      required this.value});
 
   check(Map<String, dynamic> data) {
     var value = data[field];

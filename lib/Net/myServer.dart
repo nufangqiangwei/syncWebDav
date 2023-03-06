@@ -8,7 +8,9 @@ String getEncryptStr() {
   if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
     throw "尚未添加密钥";
   }
+  print(globalParams.webPubKey);
   var webRsa = RSAUtils(globalParams.webPubKey,"");
+  print("获取token'");
   return webRsa.encodeString('''{
     "UserId":${globalParams.userId},
     "EncryptStr":"${globalParams.encryptStr}",
@@ -101,7 +103,6 @@ Future<List<int>> getDataVersion() async {
   if (response.statusCode != 200) {
     throw response.statusMessage ?? "获取版本号失败";
   }
-  print(response.data);
   List<dynamic> message = response.data!['data'];
   if (message.isEmpty){
     return [];

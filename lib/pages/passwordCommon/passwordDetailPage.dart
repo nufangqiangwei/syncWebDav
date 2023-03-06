@@ -4,11 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 import '../../common/passwordUtils.dart';
-import '../../model/class.dart';
 import '../../pkg/save/client.dart';
 import '../../utils/modifyData.dart';
 import '../../utils/utils.dart';
 import './passwordUtils.dart';
+import 'data.dart';
 class PasswordDetailPage extends StatefulWidget {
   const PasswordDetailPage(
       {Key? key,
@@ -88,7 +88,7 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
                 height: 45,
                 fit: BoxFit.fill,
                 placeholder: "assets/icons/google.ico",
-                image: 'assets/icons/github.ico',
+                image: "assets/icons/defaultWebsite.ico",
                 imageErrorBuilder: (context, error, stackTrace) {
                   return Image.asset(
                     "assets/icons/defaultWebsite.ico",

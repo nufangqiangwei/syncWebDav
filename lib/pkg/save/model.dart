@@ -41,6 +41,7 @@ class SysConfig implements DbValue {
       "userId": userId,
       "userRsaPri": userRsaPri,
       "userRsaPub": userRsaPub,
+      "webRsaPub":webRsaPub,
       "encryptStr": encryptStr,
       "passwordVersion": passwordVersion,
     };

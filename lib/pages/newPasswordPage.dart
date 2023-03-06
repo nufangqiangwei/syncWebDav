@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/common/passwordUtils.dart';
 import 'package:sync_webdav/model/JsonModel.dart';
-import 'package:sync_webdav/model/class.dart';
+import 'package:sync_webdav/pages/passwordCommon/data.dart';
 import 'package:sync_webdav/pages/passwordCommon/passwordWebListPage.dart';
 import 'package:sync_webdav/pages/passwordCommon/passwordAccountListPage.dart';
 import 'package:sync_webdav/pages/passwordCommon/passwordDetailPage.dart';

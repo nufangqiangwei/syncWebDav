@@ -7,7 +7,6 @@ import 'Global.dart';
 
 Future<List<AccountData>> decodePassword(PassWord data) async {
   String s = "";
-  print("解密密码：${data.value}");
   if (data.value == '') {
     return [];
   }

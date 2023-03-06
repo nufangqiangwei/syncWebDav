@@ -18,7 +18,8 @@ Future<String?> uploadData(String tableName) async {
   }
   try {
     await pushDataToServer(data, tableName);
-  } catch (e) {
+  } catch (e,tr) {
+    print(tr);
     return "网络请求错误";
   }
   if (tableName == "password") {
@@ -30,13 +31,15 @@ Future<String?> uploadData(String tableName) async {
 }
 
 Future<List<Map<String,String>>> uploadPasswordData() async{
-  List<PassWord> query = await Store().select([PassWordModel.isModify.equal(true)]).all() as List<PassWord>;
+  List<DbValue> query = await Store().select([PassWordModel.isModify.equal(true)]).all();
   List<Map<String,String>> data=[];
-  for (final i in query) {
-    data.add({
-      "webKey":i.webKey,
-      "fromData":i.value,
-    });
+  if (query is List<PassWord>) {
+    for (final i in query) {
+      data.add({
+        "webKey":i.webKey,
+        "fromData":i.value,
+      });
+    }
   }
   return data;
 }
