@@ -5,7 +5,6 @@ import 'package:sync_webdav/model/JsonModel.dart';
 import '../../common/passwordUtils.dart';
 import '../../pkg/save/client.dart';
 import '../../pkg/save/model.dart';
-import '../../utils/log.dart';
 import '../../utils/modifyData.dart';
 
 class _WebSiteAccountData {
@@ -15,7 +14,7 @@ class _WebSiteAccountData {
   late PassWord webSiteData= PassWord.fromMap({});
   late int selectIndex = -1;
   late List<AccountData> decodeData=[];
-
+  late AccountData accountData = AccountData('', '');
 }
 
 class PassWordDataController{
@@ -56,13 +55,13 @@ class PassWordDataController{
   static List<WebSite>  get webSiteList => globalParams.webSiteList;
   static WebSite get selectWebSite => _data.selectWebSite;
   static List<AccountData> get webSiteAccount => _data.decodeData;
-  static AccountData get selectAccountData =>_data.decodeData[_data.selectIndex];
+  static AccountData get selectAccountData =>_data.accountData;
 
   static set setSelectAccountUserName(String userName){
-    _data.decodeData[_data.selectIndex].userName = userName;
+    _data.accountData.userName = userName;
   }
   static set setSelectAccountPassword(String password){
-    _data.decodeData[_data.selectIndex].password = password;
+    _data.accountData.password = password;
   }
   // 选择站点触发的事件
   static listenerWebSiteChange(VoidCallback callback){
@@ -80,6 +79,7 @@ class PassWordDataController{
   }
 
   static switchToWebSite(WebSite webSite) async{
+    _data.accountData = AccountData('','');
     _data.webSiteData = await Store()
         .select([PassWordModel.webKey.equal(webSite.webKey)])
         .from(PassWordModel())
@@ -95,39 +95,47 @@ class PassWordDataController{
 
   static selectAccount(int index){
     if (index < 0){
-      _data.decodeData.add(AccountData('',''));
-      index = _data.decodeData.length-1;
+      _data.accountData=AccountData('','');
+      index = -1;
     }
     // index 等于0的时候，列表还是空的时候添加个默认值
-    if (index == 0 && _data.decodeData.isEmpty) {
-      _data.decodeData.add(AccountData('', ''));
-    }
+    // if (index == 0 && _data.decodeData.isEmpty) {
+    //   _data.decodeData.add(AccountData('', ''));
+    // }
     if(_data.decodeData.length < index){
       throw ("错误的序号");
+    }
+    if(_data.decodeData.isNotEmpty && index >= 0){
+      _data.accountData = _data.decodeData[index];
     }
     _data.selectIndex = index;
     _accountModifyCallback.value =!_accountModifyCallback.value;
   }
 
   static saveAccount()async{
-    if(_data.decodeData[_data.selectIndex].userName == ''){
+    if(_data.accountData.userName == ''){
       return;
     }
     _data.webSiteData.version = _data.webSiteData.version + 1;
+    _data.decodeData.add(_data.accountData);
+    bool isNewData = _data.webSiteData.value == '';
+    _data.webSiteData.isModify = true;
     PassWord encodeData = await encodePassword(_data.webSiteData, _data.decodeData);
-    if (_data.webSiteData.value == '') {
+    if (isNewData) {
       await Store().insert(modelData: encodeData);
+      print("新增");
     } else {
+      print("更新");
       await Store().update(modelData: encodeData);
     }
     _data.webSiteData = encodeData;
     // 上传到服务器
-    try{
-      await uploadData("password");
-    }catch(e,tr){
-      log!.e("上传备份到服务器出错: ",tr);
-    }
+    uploadData("password");
+
+    print("保存事件");
+    _webSiteModifyCallback.value = !_webSiteModifyCallback.value;
     _accountModifyCallback.value =!_accountModifyCallback.value;
+
   }
 
 

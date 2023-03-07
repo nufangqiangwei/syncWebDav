@@ -144,24 +144,47 @@ class _ViewPageState extends State<ViewPage> {
   int passwordLength = 8;
   String _errorText = '';
   bool isModify = false;
+  bool modifyPassword = false;
   final TextEditingController passwordController = TextEditingController();
-  // final TextEditingController userNameController = TextEditingController();
+  final TextEditingController userNameController = TextEditingController();
 
   @override
   initState() {
     super.initState();
-    PassWordDataController.listenerAccountChange(() {setState((){});});
+    PassWordDataController.listenerAccountChange(() {
+      if(mounted){
+        setState((){
+          modifyPassword=false;
+        });
+      }
+    });
+  }
+
+  @override
+  dispose(){
+    super.dispose();
+    PassWordDataController.removeListenerAccountChange((){
+      if(mounted){
+        setState((){});
+      }
+    });
+    passwordController.dispose();
+    userNameController.dispose();
   }
 
   setUserPasswordData(){
     if (PassWordDataController.selectAccountData.userName == "") {
       isModify = true;
     }
-    passwordController.text = PassWordDataController.selectAccountData.password;
-    if (PassWordDataController.selectAccountData.password.isNotEmpty) {
-      _sliderValue = PassWordDataController.selectAccountData.password.length.toDouble();
-      passwordLength = PassWordDataController.selectAccountData.password.length;
+    if(!modifyPassword){
+      userNameController.text = PassWordDataController.selectAccountData.userName;
+      passwordController.text = PassWordDataController.selectAccountData.password;
+      if (PassWordDataController.selectAccountData.password.isNotEmpty) {
+        _sliderValue = PassWordDataController.selectAccountData.password.length.toDouble();
+        passwordLength = PassWordDataController.selectAccountData.password.length;
+      }
     }
+
   }
 
   _getErrorText() {
@@ -169,7 +192,10 @@ class _ViewPageState extends State<ViewPage> {
   }
 
   randomPassword() {
-    passwordController.text = getRandomPassword(passwordLength);
+    modifyPassword = true;
+    var pa = getRandomPassword(passwordLength);
+    passwordController.text = pa;
+    PassWordDataController.setSelectAccountPassword = pa;
   }
 
   @override
@@ -217,19 +243,13 @@ class _ViewPageState extends State<ViewPage> {
                     color: inputTextColor,
                     fontSize: 20,
                   ),
-                  // controller:userNameController,
-                  initialValue: PassWordDataController.selectAccountData.userName,
+                  controller:userNameController,
                   decoration: const InputDecoration(
                     hintText: "用户名",
                     hintStyle: TextStyle(
                       color: inputTextColor,
                       fontSize: 20,
                     ),
-                    // prefixText: "407640432",
-                    // prefixStyle: TextStyle(
-                    //   color: textColor,
-                    //   fontSize: 20,
-                    // ),
                     border: InputBorder.none,
                   ),
                   readOnly: !isModify,
@@ -294,9 +314,7 @@ class _ViewPageState extends State<ViewPage> {
                     border: InputBorder.none,
                   ),
                   readOnly: !isModify,
-                  onChanged: (String value) {
-                    PassWordDataController.setSelectAccountPassword = value;
-                  },
+                  onChanged: (String value) {},
                 ),
               ),
               IconButton(

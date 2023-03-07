@@ -21,13 +21,27 @@ class _AccountListPageState extends State<AccountListPage> {
   @override
   initState(){
     super.initState();
-    PassWordDataController.listenerWebSiteChange((){setState((){});});
+    PassWordDataController.listenerWebSiteChange((){
+      if(mounted){
+        setState((){});
+      }
+      });
   }
 
+  @override
+  dispose(){
+    super.dispose();
+    PassWordDataController.removeListenerWebSiteChange((){
+      if(mounted){
+        setState((){});
+      }
+    });
+  }
 
   Widget? addIcon() {
     return FloatingActionButton(
       onPressed: () {
+        PassWordDataController.blackPage("detail");
         PassWordDataController.selectAccount(-1);
       },
       tooltip: 'Increment',
@@ -104,21 +118,22 @@ class AccountPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: secundario,
-        borderRadius: BorderRadius.circular(10.0), //圆角
-      ),
-      child: SizedBox(
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            InkWell(
-              onTap: () {
-                PassWordDataController.selectAccount(index);
-              },
-              child: Row(
+    return InkWell(
+      onTap: () {
+        PassWordDataController.blackPage("detail");
+        PassWordDataController.selectAccount(index);
+      },
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: secundario,
+          borderRadius: BorderRadius.circular(10.0), //圆角
+        ),
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -159,8 +174,8 @@ class AccountPage extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

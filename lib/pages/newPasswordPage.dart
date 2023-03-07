@@ -32,7 +32,11 @@ class _PassWordPageState extends State<PassWordPage> {
   @override
   initState(){
     super.initState();
-    PassWordDataController.pageChange.addListener((){setState((){});});
+    PassWordDataController.pageChange.addListener((){
+      if(mounted){
+        setState((){});
+      }
+    });
   }
 
   List<double> showWidth(BuildContext context) {
@@ -192,5 +196,15 @@ class _PassWordPageState extends State<PassWordPage> {
         return PassWordDataController.blackPage();
       },
     );
+  }
+
+  @override
+  dispose(){
+    super.dispose();
+    PassWordDataController.pageChange.removeListener((){
+      if(mounted){
+        setState((){});
+      }
+    });
   }
 }
