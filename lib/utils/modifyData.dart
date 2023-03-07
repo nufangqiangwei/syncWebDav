@@ -32,17 +32,18 @@ Future<String?> uploadData(String tableName) async {
 
 Future<List<Map<String,String>>> uploadPasswordData() async{
   List<DbValue> query = await Store().select([PassWordModel.isModify.equal(true)]).all();
+  // 显示转换列表数据类型
+  List<PassWord> queryData = List<PassWord>.from(query);
+
   List<Map<String,String>> data=[];
   Map<String,int> cache={};
   Map<String,String> result= {};
-  for (final i in query) {
-    if (i is PassWord){
-      if(cache[i.webKey]==null){
-        result[i.webKey]=i.value;
-        cache[i.webKey]=i.version;
-      }else if(cache[i.webKey]!<i.version){
-        result[i.webKey]=i.value;
-      }
+  for (final i in queryData) {
+    if(cache[i.webKey]==null){
+      result[i.webKey]=i.value;
+      cache[i.webKey]=i.version;
+    }else if(cache[i.webKey]!<i.version){
+      result[i.webKey]=i.value;
     }
   }
   for(final webKey in result.keys){

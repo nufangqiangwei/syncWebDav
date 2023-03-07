@@ -1,17 +1,14 @@
 // 网站页
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sync_webdav/pages/passwordCommon/passwordUtils.dart';
 
-import '../../common/Global.dart';
 import '../../pkg/save/model.dart';
 import '../drawer.dart';
 import './searchPage.dart';
+import 'data.dart';
 
 class WebSiteListPage extends StatefulWidget {
-  const WebSiteListPage({Key? key, required this.touchFunc, required this.blackPage}) : super(key: key);
-  final Function(WebSite) touchFunc;
-  final Function(String?) blackPage;
+  const WebSiteListPage({Key? key}) : super(key: key);
   @override
   State<StatefulWidget> createState() => _PppPasswordPage();
 }
@@ -19,7 +16,7 @@ class WebSiteListPage extends StatefulWidget {
 class _PppPasswordPage extends State<WebSiteListPage> {
   @override
   Widget build(BuildContext context) {
-    List<WebSite> webSiteList = Provider.of<GlobalParams>(context).webSiteList;
+    List<WebSite> webSiteList = PassWordDataController.webSiteList;
     return Theme(
       data: pageThem,
       child: Scaffold(
@@ -45,7 +42,7 @@ class _PppPasswordPage extends State<WebSiteListPage> {
                 padding: const EdgeInsets.only(
                     left: 15, top: 15, right: 15, bottom: 0),
                 child: WebSitePage(
-                    web: webSiteList[index - 2], touchFunc: widget.touchFunc),
+                    web: webSiteList[index - 2]),
               );
             }),
         drawer: const MyDrawer(),
@@ -55,10 +52,9 @@ class _PppPasswordPage extends State<WebSiteListPage> {
 }
 
 class WebSitePage extends StatefulWidget {
-  const WebSitePage({required this.web, required this.touchFunc, Key? key})
+  const WebSitePage({required this.web,  Key? key})
       : super(key: key);
   final WebSite web;
-  final Function(WebSite) touchFunc;
 
   @override
   State<StatefulWidget> createState() => _WebSitePageState();
@@ -86,7 +82,7 @@ class _WebSitePageState extends State<WebSitePage> {
                   constraints: BoxConstraints(maxWidth: maxWidth - 90),
                   child: InkWell(
                     onTap: () {
-                      widget.touchFunc(widget.web);
+                      PassWordDataController.switchToWebSite(widget.web);
                     },
                     child: Row(
                       children: [

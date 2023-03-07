@@ -9,57 +9,12 @@ import '../../utils/modifyData.dart';
 import '../../utils/utils.dart';
 import './passwordUtils.dart';
 import 'data.dart';
-class PasswordDetailPage extends StatefulWidget {
+class PasswordDetailPage extends StatelessWidget {
   const PasswordDetailPage(
       {Key? key,
-        required this.detailData,
-        required this.blackPage,
         this.maxWidth})
       : super(key: key);
-  final WebSiteAccountData detailData;
-  final Function(String? status) blackPage;
   final double? maxWidth;
-
-  @override
-  State<StatefulWidget> createState() => _PasswordDetailPageState();
-}
-
-class _PasswordDetailPageState extends State<PasswordDetailPage> {
-  savePassword() async {
-    if (widget.detailData.selectAccount.userName == "") {
-      return;
-    }
-    bool isNewData = false;
-    if (widget.detailData.selectIndex == -2) {
-      widget.detailData.selectIndex = widget.detailData.decodeData.length - 1;
-      widget.detailData.decodeData.add(widget.detailData.selectAccount);
-      isNewData = true;
-    } else if (widget.detailData.selectIndex == -1) {
-      widget.detailData.decodeData.add(widget.detailData.selectAccount);
-      isNewData = true;
-    } else {
-      widget.detailData.decodeData[widget.detailData.selectIndex] =
-          widget.detailData.selectAccount;
-    }
-
-    widget.detailData.webSiteData.isModify = true;
-    widget.detailData.webSiteData.webKey = widget.detailData.webSite.webKey;
-    widget.detailData.webSiteData.version =
-        widget.detailData.webSiteData.version + 1;
-
-    if (isNewData) {
-      Store().insert(
-          modelData: await encodePassword(
-              widget.detailData.webSiteData, widget.detailData.decodeData));
-    } else {
-      Store().update(
-          modelData: await encodePassword(
-              widget.detailData.webSiteData, widget.detailData.decodeData));
-    }
-
-    widget.detailData.selectIndex++;
-    uploadData("password");
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,8 +29,8 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
         appBar: AppBar(
           leading: IconButton(
             onPressed: () {
-              savePassword();
-              widget.blackPage(null);
+              PassWordDataController.saveAccount();
+              PassWordDataController.blackPage();
             },
             icon: const Icon(Icons.arrow_back),
           ),
@@ -102,13 +57,11 @@ class _PasswordDetailPageState extends State<PasswordDetailPage> {
           ],
         ),
         body: PageBody(
-          detailData: widget.detailData,
-          maxWidth: widget.maxWidth,
-          savePassword: savePassword,
+            maxWidth: maxWidth
         ),
       ),
     );
-  }
+}
 }
 
 class BackgroundCanvas extends StatelessWidget {
@@ -152,13 +105,9 @@ class MyClipper extends CustomClipper<Path> {
 class PageBody extends StatelessWidget {
   const PageBody(
       {Key? key,
-        required this.detailData,
-        this.maxWidth,
-        required this.savePassword})
+        this.maxWidth})
       : super(key: key);
-  final WebSiteAccountData detailData;
   final double? maxWidth;
-  final Function() savePassword;
 
   @override
   Widget build(BuildContext context) {
@@ -170,9 +119,7 @@ class PageBody extends StatelessWidget {
         const BackgroundCanvas(),
         Positioned(
           child: ViewPage(
-            detailData: detailData,
             maxWidth: maxWidth,
-            savePassword: savePassword,
           ),
           left: 0,
         )
@@ -184,13 +131,9 @@ class PageBody extends StatelessWidget {
 class ViewPage extends StatefulWidget {
   const ViewPage(
       {Key? key,
-        required this.detailData,
-        this.maxWidth,
-        required this.savePassword})
+        this.maxWidth})
       : super(key: key);
-  final WebSiteAccountData detailData;
   final double? maxWidth;
-  final Function() savePassword;
 
   @override
   State<StatefulWidget> createState() => _ViewPageState();
@@ -202,18 +145,23 @@ class _ViewPageState extends State<ViewPage> {
   String _errorText = '';
   bool isModify = false;
   final TextEditingController passwordController = TextEditingController();
+  // final TextEditingController userNameController = TextEditingController();
 
   @override
   initState() {
-    if (widget.detailData.selectAccount.userName == "") {
+    super.initState();
+    PassWordDataController.listenerAccountChange(() {setState((){});});
+  }
+
+  setUserPasswordData(){
+    if (PassWordDataController.selectAccountData.userName == "") {
       isModify = true;
     }
-    passwordController.text = widget.detailData.selectAccount.password;
-    if (widget.detailData.selectAccount.password.isNotEmpty) {
-      _sliderValue = widget.detailData.selectAccount.password.length.toDouble();
-      passwordLength = widget.detailData.selectAccount.password.length;
+    passwordController.text = PassWordDataController.selectAccountData.password;
+    if (PassWordDataController.selectAccountData.password.isNotEmpty) {
+      _sliderValue = PassWordDataController.selectAccountData.password.length.toDouble();
+      passwordLength = PassWordDataController.selectAccountData.password.length;
     }
-    super.initState();
   }
 
   _getErrorText() {
@@ -222,11 +170,11 @@ class _ViewPageState extends State<ViewPage> {
 
   randomPassword() {
     passwordController.text = getRandomPassword(passwordLength);
-    widget.detailData.selectAccount.password = passwordController.text;
   }
 
   @override
   Widget build(BuildContext context) {
+    setUserPasswordData();
     Size windows;
     if (widget.maxWidth == null) {
       windows = MediaQuery.of(context).size;
@@ -240,7 +188,7 @@ class _ViewPageState extends State<ViewPage> {
         Padding(
           padding: EdgeInsets.only(top: windows.height * 0.2, left: 10),
           child: Text(
-            widget.detailData.webSite.name,
+            PassWordDataController.selectWebSite.name,
             style: const TextStyle(
               color: Colors.cyanAccent,
               fontSize: 45,
@@ -269,8 +217,8 @@ class _ViewPageState extends State<ViewPage> {
                     color: inputTextColor,
                     fontSize: 20,
                   ),
-                  // controller:TextEditingController(text: widget.detailData.data.userName),
-                  initialValue: widget.detailData.selectAccount.userName,
+                  // controller:userNameController,
+                  initialValue: PassWordDataController.selectAccountData.userName,
                   decoration: const InputDecoration(
                     hintText: "用户名",
                     hintStyle: TextStyle(
@@ -286,14 +234,15 @@ class _ViewPageState extends State<ViewPage> {
                   ),
                   readOnly: !isModify,
                   onChanged: (String value) {
-                    widget.detailData.selectAccount.userName = value;
+                    PassWordDataController.setSelectAccountUserName = value;
                   },
                 ),
               ),
               IconButton(
                 onPressed: () {
                   Clipboard.setData(ClipboardData(
-                      text: widget.detailData.selectAccount.userName));
+                      text: PassWordDataController.selectAccountData.userName
+                  ));
                   SmartDialog.showToast("复制成功");
                 },
                 icon: const Icon(Icons.content_copy),
@@ -352,7 +301,7 @@ class _ViewPageState extends State<ViewPage> {
                   ),
                   readOnly: !isModify,
                   onChanged: (String value) {
-                    widget.detailData.selectAccount.password = value;
+                    PassWordDataController.setSelectAccountPassword = value;
                   },
                 ),
               ),
@@ -450,7 +399,7 @@ class _ViewPageState extends State<ViewPage> {
               onPressed: () {
                 setState(() {
                   if (isModify) {
-                    widget.savePassword();
+                    PassWordDataController.saveAccount();
                   }
                   isModify = !isModify;
                 });

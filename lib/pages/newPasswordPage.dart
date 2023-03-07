@@ -18,6 +18,7 @@ const double accountMinWidth = 300;
 
 const double detailMaxWidth = 3000;
 const double detailMinWidth = 700;
+
 class PassWordPage extends StatefulWidget {
   const PassWordPage({Key? key}) : super(key: key);
 
@@ -27,7 +28,12 @@ class PassWordPage extends StatefulWidget {
 
 class _PassWordPageState extends State<PassWordPage> {
   late String page = 'webSite';
-  WebSiteAccountData detailData = WebSiteAccountData();
+
+  @override
+  initState(){
+    super.initState();
+    PassWordDataController.pageChange.addListener((){setState((){});});
+  }
 
   List<double> showWidth(BuildContext context) {
     double windowWidth = MediaQuery.of(context).size.width;
@@ -90,22 +96,15 @@ class _PassWordPageState extends State<PassWordPage> {
         children: [
           SizedBox(
             width: showPageNumber[0],
-            child: WebSiteListPage(touchFunc: onTouchWebSite,blackPage:blackPage),
+            child: const WebSiteListPage(),
           ),
           SizedBox(
             width: showPageNumber[1],
-            child: AccountListPage(
-              web: detailData.webSite,
-              accountData: detailData,
-              touchFunc: onTouchAccount,
-              blackPage: blackPage,
-            ),
+            child:const AccountListPage(),
           ),
           SizedBox(
             width: showPageNumber[2],
             child: PasswordDetailPage(
-              blackPage: blackPage,
-              detailData: detailData,
               maxWidth: showPageNumber[2],
             ),
           ),
@@ -113,7 +112,7 @@ class _PassWordPageState extends State<PassWordPage> {
       );
     }
 
-    switch (page) {
+    switch (PassWordDataController.pageName) {
       case 'webSite':
         {
           if (showPageNumber.length == 2) {
@@ -122,21 +121,16 @@ class _PassWordPageState extends State<PassWordPage> {
               children: [
                 SizedBox(
                   width: showPageNumber[0],
-                  child: WebSiteListPage(touchFunc: onTouchWebSite,blackPage:blackPage),
+                  child: const WebSiteListPage(),
                 ),
                 SizedBox(
                   width: showPageNumber[1],
-                  child: AccountListPage(
-                    web: detailData.webSite,
-                    accountData: detailData,
-                    touchFunc: onTouchAccount,
-                    blackPage: blackPage,
-                  ),
+                  child:const  AccountListPage(),
                 )
               ],
             );
           }
-          return WebSiteListPage(touchFunc: onTouchWebSite,blackPage:blackPage);
+          return const WebSiteListPage();
         }
       case 'account':
         {
@@ -146,26 +140,16 @@ class _PassWordPageState extends State<PassWordPage> {
               children: [
                 SizedBox(
                   width: showPageNumber[0],
-                  child: WebSiteListPage(touchFunc: onTouchWebSite,blackPage:blackPage),
+                  child:const  WebSiteListPage(),
                 ),
                 SizedBox(
                   width: showPageNumber[1],
-                  child: AccountListPage(
-                    web: detailData.webSite,
-                    accountData: detailData,
-                    touchFunc: onTouchAccount,
-                    blackPage: blackPage,
-                  ),
+                  child: const AccountListPage(),
                 )
               ],
             );
           }
-          return AccountListPage(
-            web: detailData.webSite,
-            accountData: detailData,
-            touchFunc: onTouchAccount,
-            blackPage: blackPage,
-          );
+          return const  AccountListPage();
         }
       case 'detail':
         {
@@ -175,112 +159,37 @@ class _PassWordPageState extends State<PassWordPage> {
               children: [
                 SizedBox(
                   width: showPageNumber[0],
-                  child: AccountListPage(
-                    web: detailData.webSite,
-                    accountData: detailData,
-                    touchFunc: onTouchAccount,
-                    blackPage: blackPage,
-                  ),
+                  child: const AccountListPage(),
                 ),
-                // PasswordDetailPage(
-                //   blackPage: blackPage,
-                //   detailData: detailData,
-                //   maxWidth: showPageNumber[1],
-                // )
                 SizedBox(
                   width: showPageNumber[1],
                   child: PasswordDetailPage(
-                    blackPage: blackPage,
-                    detailData: detailData,
                     maxWidth: showPageNumber[1],
                   ),
                 )
               ],
             );
           }
-          return PasswordDetailPage(
-            blackPage: blackPage,
-            detailData: detailData,
-          );
+          return const PasswordDetailPage();
         }
       default:
         {
-          return WebSiteListPage(touchFunc: onTouchWebSite,blackPage:blackPage);
+          return const WebSiteListPage();
         }
     }
-  }
-
-  blackPage(String? status) {
-    if (status != null) {
-      setState(() {
-        page = status;
-      });
-      return false;
-    }
-    print("推出$page");
-    switch (page) {
-      case 'webSite':
-        {
-          return true;
-        }
-      case 'account':
-        {
-          setState(() {
-            page = 'webSite';
-          });
-          return false;
-        }
-      case 'detail':
-        {
-          setState(() {
-            page = 'account';
-          });
-          return false;
-        }
-      default:
-        {
-          return false;
-        }
-    }
-  }
-
-  onTouchWebSite(WebSite web) async {
-    await selectWebSite(web);
-    setState(() {
-      page = 'account';
-    });
-  }
-
-  onTouchAccount(AccountData account, int index) {
-    detailData.selectAccount = account;
-    detailData.selectIndex = index;
-    setState(() {
-      page = 'detail';
-    });
-  }
-
-  selectWebSite(WebSite web) async {
-    detailData.webSite = web;
-    detailData.webSiteData =
-        // await Password().select().webKey.equals(web.webKey).toSingleOrDefault();
-        await Store()
-            .select([PassWordModel.webKey.equal(web.webKey)])
-            .from(PassWordModel())
-            .lastModel() as PassWord;
-    detailData.decodeData = await decodePassword(detailData.webSiteData);
   }
 
   @override
   Widget build(BuildContext context) {
-    // 当一次需要展示多个页面的时候，自动选择第一个站点展示。
-    if (detailData.webSite.webKey == "" &&
-        Provider.of<GlobalParams>(context).webSiteList.isNotEmpty) {
-      selectWebSite(Provider.of<GlobalParams>(context).webSiteList[0]);
-    }
+    // todo 当一次需要展示多个页面的时候，自动选择第一个站点展示。
+    // if (detailData.webSite.webKey == "" &&
+    //     Provider.of<GlobalParams>(context).webSiteList.isNotEmpty) {
+    //   selectWebSite(Provider.of<GlobalParams>(context).webSiteList[0]);
+    // }
     return WillPopScope(
       child: showPage(context),
       onWillPop: () async {
-        return blackPage(null);
+        return PassWordDataController.blackPage();
       },
     );
   }

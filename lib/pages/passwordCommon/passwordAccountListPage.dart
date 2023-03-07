@@ -9,26 +9,26 @@ import 'data.dart';
 class AccountListPage extends StatefulWidget {
   const AccountListPage({
     Key? key,
-    required this.web,
-    required this.accountData,
-    required this.touchFunc,
-    required this.blackPage,
   }) : super(key: key);
 
-  final WebSiteAccountData accountData;
-  final Function(AccountData, int) touchFunc;
-  final Function(String?) blackPage;
-  final WebSite web;
 
   @override
   State<StatefulWidget> createState() => _AccountListPageState();
 }
 
 class _AccountListPageState extends State<AccountListPage> {
+
+  @override
+  initState(){
+    super.initState();
+    PassWordDataController.listenerWebSiteChange((){setState((){});});
+  }
+
+
   Widget? addIcon() {
     return FloatingActionButton(
       onPressed: () {
-        widget.touchFunc(AccountData('', ''), -2);
+        PassWordDataController.selectAccount(-1);
       },
       tooltip: 'Increment',
       child: const Icon(
@@ -44,11 +44,9 @@ class _AccountListPageState extends State<AccountListPage> {
       data: pageThem,
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            onPressed: () {
-              widget.blackPage(null);
-            },
-            icon: const Icon(Icons.arrow_back),
+          leading: const IconButton(
+            onPressed: PassWordDataController.blackPage,
+            icon: Icon(Icons.arrow_back),
           ),
           title: const Text("账号列表"),
           actions: [
@@ -73,7 +71,7 @@ class _AccountListPageState extends State<AccountListPage> {
           ],
         ),
         body: ListView.builder(
-          itemCount: widget.accountData.decodeData.length + 1,
+          itemCount: PassWordDataController.webSiteAccount.length + 1,
           itemBuilder: (BuildContext context, int index) {
             if (index == 0) {
               return const Padding(
@@ -85,8 +83,7 @@ class _AccountListPageState extends State<AccountListPage> {
               padding: const EdgeInsets.only(
                   left: 15, top: 15, right: 15, bottom: 0),
               child: AccountPage(
-                password: widget.accountData.decodeData[index - 1],
-                touchFunc: widget.touchFunc,
+                password: PassWordDataController.webSiteAccount[index - 1],
                 index: index - 1,
               ),
             );
@@ -101,12 +98,10 @@ class _AccountListPageState extends State<AccountListPage> {
 class AccountPage extends StatefulWidget {
   const AccountPage(
       {required this.password,
-        required this.touchFunc,
         required this.index,
         Key? key})
       : super(key: key);
   final AccountData password;
-  final Function(AccountData, int) touchFunc;
   final int index;
 
   @override
@@ -128,7 +123,7 @@ class _AccountPageState extends State<AccountPage> {
           children: [
             InkWell(
               onTap: () {
-                widget.touchFunc(widget.password, widget.index);
+                PassWordDataController.selectAccount(widget.index);
               },
               child: Row(
                 children: [

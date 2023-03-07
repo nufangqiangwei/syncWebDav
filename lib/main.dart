@@ -34,9 +34,6 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       initialRoute: "/password",
       routes:myRoute,
-      // theme: ThemeData(
-      //   primarySwatch: Colors.blue,
-      // ),
       navigatorObservers: [FlutterSmartDialog.observer],
       builder: FlutterSmartDialog.init(),
     );
