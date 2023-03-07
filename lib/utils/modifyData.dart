@@ -16,12 +16,7 @@ Future<String?> uploadData(String tableName) async {
   } else {
     throw "错误的表名 $tableName";
   }
-  try {
-    await pushDataToServer(data, tableName);
-  } catch (e,tr) {
-    print(tr);
-    return "网络请求错误";
-  }
+  await pushDataToServer(data, tableName);
   if (tableName == "password") {
     await Store().select([PassWordModel.isModify.equal(true)]).update(jsonData: {"isModify": false});
   } else {

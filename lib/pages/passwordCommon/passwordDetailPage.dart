@@ -285,18 +285,12 @@ class _ViewPageState extends State<ViewPage> {
                     color: inputTextColor,
                     fontSize: 20,
                   ),
-                  // controller:TextEditingController(text: widget.detailData.data.password),
                   decoration: const InputDecoration(
                     hintText: "密码",
                     hintStyle: TextStyle(
                       color: inputTextColor,
                       fontSize: 20,
                     ),
-                    // prefixText: "407640432",
-                    // prefixStyle: TextStyle(
-                    //   color: textColor,
-                    //   fontSize: 20,
-                    // ),
                     border: InputBorder.none,
                   ),
                   readOnly: !isModify,
@@ -358,6 +352,7 @@ class _ViewPageState extends State<ViewPage> {
                     _sliderValue = data;
                     passwordLength = data.toInt();
                     _errorText = '';
+                    randomPassword();
                   });
                 },
                 onChangeStart: (data) {},

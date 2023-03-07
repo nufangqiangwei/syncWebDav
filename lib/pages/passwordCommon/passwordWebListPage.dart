@@ -7,13 +7,9 @@ import '../drawer.dart';
 import './searchPage.dart';
 import 'data.dart';
 
-class WebSiteListPage extends StatefulWidget {
+class WebSiteListPage extends StatelessWidget {
   const WebSiteListPage({Key? key}) : super(key: key);
-  @override
-  State<StatefulWidget> createState() => _PppPasswordPage();
-}
 
-class _PppPasswordPage extends State<WebSiteListPage> {
   @override
   Widget build(BuildContext context) {
     List<WebSite> webSiteList = PassWordDataController.webSiteList;
@@ -27,8 +23,8 @@ class _PppPasswordPage extends State<WebSiteListPage> {
             itemCount: webSiteList.length + 2,
             itemBuilder: (BuildContext context, int index) {
               if (index == 0) {
-                return const  Padding(
-                  padding:  EdgeInsets.only(right: 15, left: 15, top: 10),
+                return const Padding(
+                  padding: EdgeInsets.only(right: 15, left: 15, top: 10),
                   child: SAppBarSearch(),
                 );
               }
@@ -41,8 +37,7 @@ class _PppPasswordPage extends State<WebSiteListPage> {
               return Padding(
                 padding: const EdgeInsets.only(
                     left: 15, top: 15, right: 15, bottom: 0),
-                child: WebSitePage(
-                    web: webSiteList[index - 2]),
+                child: WebSitePage(web: webSiteList[index - 2]),
               );
             }),
         drawer: const MyDrawer(),
@@ -107,8 +102,7 @@ class _WebSitePageState extends State<WebSitePage> {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           child: ConstrainedBox(
-                            constraints:
-                            BoxConstraints(maxWidth: maxWidth - 170),
+                            constraints: BoxConstraints(maxWidth: maxWidth - 170),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [

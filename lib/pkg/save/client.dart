@@ -12,7 +12,7 @@ class Store {
   late DbModel model;
 
   Store() {
-    getDb();
+    _getDb();
   }
 
   // 构建表达式
@@ -34,10 +34,10 @@ class Store {
 
   // 查询结果
   Future<List<DbValue>> all() async {
-    await getDb();
+    await _getDb();
     _getWhereBaseModel();
     List<Map<String, dynamic>> queryData =
-        (await getDb()).selectData(model.tableName, _whereArgs);
+        (await _getDb()).selectData(model.tableName, _whereArgs);
     List<DbValue> result = [];
 
     for (var i = 0; i < queryData.length; i++) {
@@ -48,13 +48,11 @@ class Store {
   }
 
   Future<DbValue> getModel() async {
-    await getDb();
-    if (_whereArgs.isNotEmpty) {
-      model = _whereArgs[0].table;
-    }
+    await _getDb();
+    _getWhereBaseModel();
     DbValue result;
     if (model.isOnly) {
-      List<dynamic> data = (await getDb()).getBucket(model.tableName);
+      List<dynamic> data = (await _getDb()).getBucket(model.tableName);
       if (data.isEmpty) {
         result = model.fromMap(null);
       } else {
@@ -62,7 +60,7 @@ class Store {
       }
     } else {
       List<Map<String, dynamic>> query =
-          (await getDb()).selectData(model.tableName, _whereArgs);
+          (await _getDb()).selectData(model.tableName, _whereArgs);
 
       if (query.isNotEmpty) {
         result = model.fromMap(query[0]);
@@ -73,14 +71,14 @@ class Store {
     return result;
   }
 
-  Future<DB> getDb() async {
+  Future<DB> _getDb() async {
     DB db = DB.getInstance();
     await db.init();
     return db;
   }
 
   update({DbValue? modelData, Map<String, dynamic>? jsonData}) async {
-    await getDb();
+    await _getDb();
     Map<String, dynamic> mapData = {};
     String indexField;
     if (modelData != null) {
@@ -97,7 +95,7 @@ class Store {
       throw ("请先指定model");
     }
     if (model.isOnly) {
-      (await getDb()).updateOnlyRowTable(model.tableName, mapData);
+      (await _getDb()).updateOnlyRowTable(model.tableName, mapData);
       return;
     }
     if(mapData[indexField]!=null){
@@ -109,11 +107,11 @@ class Store {
     }
 
 
-    (await getDb()).update(model.tableName, _whereArgs, mapData);
+    (await _getDb()).update(model.tableName, _whereArgs, mapData);
   }
 
   insert({DbValue? modelData, Map<String, dynamic>? jsonData}) async {
-    await getDb();
+    await _getDb();
     Map<String, dynamic> mapData = {};
     String indexField;
     if (modelData != null) {
@@ -135,7 +133,7 @@ class Store {
     }
 
     if (model.isOnly) {
-      (await getDb()).update(
+      (await _getDb()).update(
           model.tableName,
           [
             Method(
@@ -147,12 +145,12 @@ class Store {
           mapData);
       return;
     }
-    (await getDb()).insertInto(model.tableName, [mapData]);
+    (await _getDb()).insertInto(model.tableName, [mapData]);
   }
 
   insertAll(
       {List<DbValue>? modelData, List<Map<String, dynamic>>? jsonData}) async {
-    await getDb();
+    await _getDb();
     List<Map<String, dynamic>> insertData = [];
     if (modelData != null) {
       insertData = modelData.map<Map<String, dynamic>>((e) => e.toMap())
@@ -164,14 +162,14 @@ class Store {
     if (model.isOnly) {
       throw ("唯一数据无法执行批量插入");
     }
-    (await getDb()).insertInto(model.tableName, insertData);
+    (await _getDb()).insertInto(model.tableName, insertData);
   }
 
   updateAll(List<DbValue> modelDatas) async {
-    await getDb();
+    await _getDb();
     for (var index = 0; index < modelDatas.length; index++) {
       DbValue data = modelDatas[index];
-      (await getDb()).update(
+      (await _getDb()).update(
           data.getModel().tableName,
           [
             Method(
@@ -204,13 +202,13 @@ class Store {
   }
 
   lastModel()async{
-    await getDb();
+    await _getDb();
     if (_whereArgs.isNotEmpty) {
       model = _whereArgs[0].table;
     }
     DbValue result;
     if (model.isOnly) {
-      List<dynamic> data = (await getDb()).getBucket(model.tableName);
+      List<dynamic> data = (await _getDb()).getBucket(model.tableName);
       if (data.isEmpty) {
         result = model.fromMap(null);
       } else {
@@ -218,7 +216,7 @@ class Store {
       }
     } else {
       List<Map<String, dynamic>> query =
-          (await getDb()).selectData(model.tableName, _whereArgs);
+          (await _getDb()).selectData(model.tableName, _whereArgs);
 
       if (query.isNotEmpty) {
         result = model.fromMap(query[query.length-1]);

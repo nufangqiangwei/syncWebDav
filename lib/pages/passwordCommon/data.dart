@@ -5,6 +5,7 @@ import 'package:sync_webdav/model/JsonModel.dart';
 import '../../common/passwordUtils.dart';
 import '../../pkg/save/client.dart';
 import '../../pkg/save/model.dart';
+import '../../utils/log.dart';
 import '../../utils/modifyData.dart';
 
 class _WebSiteAccountData {
@@ -88,6 +89,7 @@ class PassWordDataController{
     }
     _data.decodeData = await decodePassword(_data.webSiteData);
     _data.selectWebSite = webSite;
+    selectAccount(0);
     _webSiteModifyCallback.value = !_webSiteModifyCallback.value;
   }
 
@@ -95,6 +97,10 @@ class PassWordDataController{
     if (index < 0){
       _data.decodeData.add(AccountData('',''));
       index = _data.decodeData.length-1;
+    }
+    // index 等于0的时候，列表还是空的时候添加个默认值
+    if (index == 0 && _data.decodeData.isEmpty) {
+      _data.decodeData.add(AccountData('', ''));
     }
     if(_data.decodeData.length < index){
       throw ("错误的序号");
@@ -116,7 +122,12 @@ class PassWordDataController{
     }
     _data.webSiteData = encodeData;
     // 上传到服务器
-    uploadData("password");
+    try{
+      await uploadData("password");
+    }catch(e,tr){
+      log!.e("上传备份到服务器出错: ",tr);
+    }
+    _accountModifyCallback.value =!_accountModifyCallback.value;
   }
 
 

@@ -83,7 +83,6 @@ class _AccountListPageState extends State<AccountListPage> {
               padding: const EdgeInsets.only(
                   left: 15, top: 15, right: 15, bottom: 0),
               child: AccountPage(
-                password: PassWordDataController.webSiteAccount[index - 1],
                 index: index - 1,
               ),
             );
@@ -95,20 +94,14 @@ class _AccountListPageState extends State<AccountListPage> {
   }
 }
 
-class AccountPage extends StatefulWidget {
+class AccountPage extends StatelessWidget {
   const AccountPage(
-      {required this.password,
-        required this.index,
+      {required this.index,
         Key? key})
       : super(key: key);
-  final AccountData password;
   final int index;
 
-  @override
-  State<StatefulWidget> createState() => _AccountPageState();
-}
 
-class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
@@ -123,7 +116,7 @@ class _AccountPageState extends State<AccountPage> {
           children: [
             InkWell(
               onTap: () {
-                PassWordDataController.selectAccount(widget.index);
+                PassWordDataController.selectAccount(index);
               },
               child: Row(
                 children: [
@@ -153,11 +146,11 @@ class _AccountPageState extends State<AccountPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.password.userName,
+                            PassWordDataController.webSiteAccount[index].userName,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            widget.password.password,
+                            PassWordDataController.webSiteAccount[index].password,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
