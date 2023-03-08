@@ -15,6 +15,7 @@ class _WebSiteAccountData {
   late int selectIndex = -1;
   late List<AccountData> decodeData=[];
   late AccountData accountData = AccountData('', '');
+  late AccountData unmodifiedAccountData = AccountData('', '');
 }
 
 class PassWordDataController{
@@ -58,7 +59,10 @@ class PassWordDataController{
   static AccountData get selectAccountData =>_data.accountData;
 
   static set setSelectAccountUserName(String userName){
-    _data.accountData.userName = userName;
+    // 用户名禁止修改，只有新建账号的时候才能修改用户名。
+    if(_data.unmodifiedAccountData.userName == ''){
+      _data.accountData.userName = userName;
+    }
   }
   static set setSelectAccountPassword(String password){
     _data.accountData.password = password;
@@ -79,7 +83,6 @@ class PassWordDataController{
   }
 
   static switchToWebSite(WebSite webSite) async{
-    _data.accountData = AccountData('','');
     _data.webSiteData = await Store()
         .select([PassWordModel.webKey.equal(webSite.webKey)])
         .from(PassWordModel())
@@ -95,18 +98,16 @@ class PassWordDataController{
 
   static selectAccount(int index){
     if (index < 0){
-      _data.accountData=AccountData('','');
+      _data.accountData = AccountData('','');
+      _data.unmodifiedAccountData = AccountData('','');
       index = -1;
     }
-    // index 等于0的时候，列表还是空的时候添加个默认值
-    // if (index == 0 && _data.decodeData.isEmpty) {
-    //   _data.decodeData.add(AccountData('', ''));
-    // }
     if(_data.decodeData.length < index){
       throw ("错误的序号");
     }
     if(_data.decodeData.isNotEmpty && index >= 0){
       _data.accountData = _data.decodeData[index];
+      _data.unmodifiedAccountData = AccountData(_data.accountData.userName,_data.accountData.password);
     }
     _data.selectIndex = index;
     _accountModifyCallback.value =!_accountModifyCallback.value;
@@ -116,8 +117,24 @@ class PassWordDataController{
     if(_data.accountData.userName == ''){
       return;
     }
+    if(_data.accountData.password == _data.unmodifiedAccountData.password){
+      print('未修改密码');
+      return;
+    }else{
+      print('修改密码');
+      _data.accountData.lastUsePassword += " ${_data.unmodifiedAccountData.password}";
+      _data.accountData.lastModifyTime =  DateTime.now().millisecondsSinceEpoch;
+    }
+
+    if(_data.selectIndex<0){
+      _data.decodeData.add(_data.accountData);
+    }else if(_data.decodeData.isEmpty){
+      _data.decodeData.add(_data.accountData);
+    }else{
+      _data.decodeData[_data.selectIndex] = _data.accountData;
+    }
+
     _data.webSiteData.version = _data.webSiteData.version + 1;
-    _data.decodeData.add(_data.accountData);
     bool isNewData = _data.webSiteData.value == '';
     _data.webSiteData.isModify = true;
     PassWord encodeData = await encodePassword(_data.webSiteData, _data.decodeData);
@@ -130,7 +147,7 @@ class PassWordDataController{
     }
     _data.webSiteData = encodeData;
     // 上传到服务器
-    uploadData("password");
+    await uploadData("password");
 
     print("保存事件");
     _webSiteModifyCallback.value = !_webSiteModifyCallback.value;

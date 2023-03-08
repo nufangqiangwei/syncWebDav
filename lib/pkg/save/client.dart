@@ -151,11 +151,12 @@ class Store {
   insertAll(
       {List<DbValue>? modelData, List<Map<String, dynamic>>? jsonData}) async {
     await _getDb();
+    _getWhereBaseModel();
     List<Map<String, dynamic>> insertData = [];
     if (modelData != null) {
-      insertData = modelData.map<Map<String, dynamic>>((e) => e.toMap())
-          as List<Map<String, dynamic>>;
-      model = modelData[0].getModel();
+      for (final item in modelData) {
+        insertData.add(item.toMap());
+      }
     } else if (jsonData != null) {
       insertData = jsonData;
     }
@@ -165,10 +166,10 @@ class Store {
     (await _getDb()).insertInto(model.tableName, insertData);
   }
 
-  updateAll(List<DbValue> modelDatas) async {
+  updateAll(List<DbValue> modelData) async {
     await _getDb();
-    for (var index = 0; index < modelDatas.length; index++) {
-      DbValue data = modelDatas[index];
+    for (var index = 0; index < modelData.length; index++) {
+      DbValue data = modelData[index];
       (await _getDb()).update(
           data.getModel().tableName,
           [
@@ -341,7 +342,6 @@ class DB {
     }
     dynamic i = _databaseData[key];
     if (i == null) {
-      print("不存在的表$key");
       _databaseData[key] = x;
       i = _databaseData[key];
     }

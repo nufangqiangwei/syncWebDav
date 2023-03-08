@@ -36,7 +36,6 @@ class EncryptUtils {
       _encryptAes = Encrypter(AES(_keyAes, mode: mode, padding: padding));
       return;
     }
-    print("密钥长度为16/24/32位");
   }
 
   ///初始化RAS加密启动时调用

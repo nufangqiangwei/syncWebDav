@@ -6,40 +6,31 @@ part of 'JsonModel.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-AccountData _$PassWordDataFromJson(Map<String, dynamic> json) => AccountData(
+AccountData _$AccountDataFromJson(Map<String, dynamic> json) => AccountData(
       json['userName'] as String,
       json['password'] as String,
+      lastUsePassword: json['lastUsePassword'] as String? ?? '',
+      lastModifyTime: json['lastModifyTime'] as int? ?? 0,
     );
 
-Map<String, dynamic> _$PassWordDataToJson(AccountData instance) =>
+Map<String, dynamic> _$AccountDataToJson(AccountData instance) =>
     <String, dynamic>{
       'userName': instance.userName,
       'password': instance.password,
-    };
-
-DecodePassWordData _$DecodePassWordDataFromJson(Map<String, dynamic> json) =>
-    DecodePassWordData(
-      json['webKey'] as String,
-      (json['data'] as List<dynamic>)
-          .map((e) => AccountData.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      json['lastModifyTime'] as String?,
-    );
-
-Map<String, dynamic> _$DecodePassWordDataToJson(DecodePassWordData instance) =>
-    <String, dynamic>{
-      'webKey': instance.webKey,
-      'data': instance.data,
+      'lastUsePassword': instance.lastUsePassword,
       'lastModifyTime': instance.lastModifyTime,
     };
 
-AccountMark _$AccountMarkFromJson(Map<String, dynamic> json) => AccountMark(
-      json['keyName'] as String,
-      json['value'] as String,
+ServerGetPasswordDataResponse _$ServerGetPasswordDataResponseFromJson(
+        Map<String, dynamic> json) =>
+    ServerGetPasswordDataResponse(
+      json['webKey'] as String,
+      json['webData'] as String,
     );
 
-Map<String, dynamic> _$AccountMarkToJson(AccountMark instance) =>
+Map<String, dynamic> _$ServerGetPasswordDataResponseToJson(
+        ServerGetPasswordDataResponse instance) =>
     <String, dynamic>{
-      'keyName': instance.keyName,
-      'value': instance.value,
+      'webKey': instance.webKey,
+      'webData': instance.webData,
     };

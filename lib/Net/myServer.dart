@@ -1,6 +1,7 @@
 
 import 'package:dio/dio.dart';
 import 'package:sync_webdav/common/Global.dart';
+import '../model/JsonModel.dart';
 import '../pkg/save/model.dart';
 import '../utils/rsaUtils.dart';
 
@@ -9,7 +10,6 @@ String getEncryptStr() {
     throw "尚未添加密钥";
   }
   var webRsa = RSAUtils(globalParams.webPubKey,"");
-  print("获取token'");
   return webRsa.encodeString('''{
     "UserId":${globalParams.userId},
     "EncryptStr":"${globalParams.encryptStr}",
@@ -18,7 +18,7 @@ String getEncryptStr() {
 }
 
 // 'https://ouliguojiashengsiyi.xyz/'
-const webHost = 'http://192.168.1.87:5000';
+const webHost = 'http://127.0.0.1:5000';
 const webPathPrefix = '';
 
 register(String userPubKey, String encryptStr) async {
@@ -72,10 +72,10 @@ uploadPasswordData(List<Map<String,String>> data) async{
       data: requestData);
 }
 
-Future<List<Map<String, String>>> getPasswordData(int version) async {
+Future<List<ServerGetPasswordDataResponse>> getPasswordData([int? version]) async {
   Map<String, dynamic> requestData = {
     "EncryptStr": getEncryptStr(),
-    "Version": version,
+    // "Version": version,
   };
   Response<Map<String, dynamic>> response = await Dio()
       .post<Map<String, dynamic>>(webHost + webPathPrefix + "/GetUserData",
@@ -83,11 +83,13 @@ Future<List<Map<String, String>>> getPasswordData(int version) async {
   if (response.statusCode != 200) {
     throw response.statusMessage ?? "获取备份失败";
   }
-  if (response.data!['version'] != version) {
-    throw "获取备份失败,返回的不是指定的版本";
+  // if (response.data!['version'] != version) {
+  //   throw "获取备份失败,返回的不是指定的版本";
+  // }
+  List<ServerGetPasswordDataResponse> data =[];
+  for (var i = 0; i < response.data!['data'].length; i++) {
+    data.add(ServerGetPasswordDataResponse.fromJson(response.data!['data'][i]));
   }
-  List<Map<String, String>> data =
-      response.data!['data'] as List<Map<String, String>>;
   return data;
 }
 

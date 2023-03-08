@@ -1,41 +1,32 @@
 import 'package:json_annotation/json_annotation.dart';
 
-
-
 part 'JsonModel.g.dart';
 
 @JsonSerializable()
-class AccountData{
-  AccountData(this.userName,this.password);
+class AccountData {
+  AccountData(this.userName, this.password,
+      {this.lastUsePassword = '', this.lastModifyTime = 0});
 
   late String userName;
   late String password;
+  late String lastUsePassword;
+  late int lastModifyTime;
 
-  factory AccountData.fromJson(Map<String, dynamic> json) => _$PassWordDataFromJson(json);
-  Map<String, dynamic> toJson() => _$PassWordDataToJson(this);
-}
+  factory AccountData.fromJson(Map<String, dynamic> json) =>
+      _$AccountDataFromJson(json);
 
-
-///这个标注是告诉生成器，这个类是需要生成Model类的
-@JsonSerializable()
-class DecodePassWordData{
-  DecodePassWordData(this.webKey, this.data, this.lastModifyTime);
-
-  final String webKey;
-  final List<AccountData> data;
-  final String? lastModifyTime;
-  //不同的类使用不同的mixin即可
-  factory DecodePassWordData.fromJson(Map<String, dynamic> json) => _$DecodePassWordDataFromJson(json);
-  Map<String, dynamic> toJson() => _$DecodePassWordDataToJson(this);
+  Map<String, dynamic> toJson() => _$AccountDataToJson(this);
 }
 
 @JsonSerializable()
-class AccountMark{
-  AccountMark(this.keyName,this.value);
+class ServerGetPasswordDataResponse {
+  ServerGetPasswordDataResponse(this.webKey, this.webData);
 
-  late String keyName;
-  late String value;
+  late String webKey;
+  late String webData;
 
-  factory AccountMark.fromJson(Map<String, dynamic> json) => _$AccountMarkFromJson(json);
-  Map<String, dynamic> toJson() => _$AccountMarkToJson(this);
+  factory ServerGetPasswordDataResponse.fromJson(Map<String, dynamic> json) =>
+      _$ServerGetPasswordDataResponseFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ServerGetPasswordDataResponseToJson(this);
 }
