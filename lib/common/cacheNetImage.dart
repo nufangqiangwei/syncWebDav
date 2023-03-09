@@ -20,6 +20,7 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
         this.scale = 1.0,
         this.headers,
         this.isLocalCache = false,
+        this.errorAssetsImage = "",
       });
 
   @override
@@ -32,6 +33,8 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
   final Map<String, String>? headers;
 
   final bool isLocalCache;
+
+  final String errorAssetsImage;
 
   @override
   Future<NetworkImage> obtainKey(ImageConfiguration configuration) {
@@ -99,9 +102,16 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
       });
       final HttpClientResponse response = await request.close();
       if (response.statusCode != HttpStatus.ok) {
-        // The network may be only temporarily unavailable, or the file will be
-        // added on the server later. Avoid having future calls to resolve
-        // fail to check the network again.
+        // 请求出错，展示本地的静态文件
+        if(errorAssetsImage != ""){
+          var file = File(errorAssetsImage);
+          bool exist = await file.exists();
+          if (!exist) {
+              throw AssertionError('$errorAssetsImage 文件不存在');
+          }
+          final Uint8List bytes = await file.readAsBytes();
+          return await PaintingBinding.instance.instantiateImageCodec(bytes);
+        }
         throw NetworkImageLoadException(statusCode: response.statusCode, uri: resolved);
       }
 
@@ -152,5 +162,28 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
 }
 
 
+class DefaultWebSiteIcon extends StatefulWidget{
+  const DefaultWebSiteIcon({Key? key,
+    required this.url,
+    this.width,
+    this.height,
+    this.fit,
+  }) : super(key: key);
 
+  final String url ;
+  final double? width;
+  final double? height;
+  final BoxFit? fit;
+  @override
+  State<StatefulWidget> createState() =>_DefaultWebSiteIcon();
+}
+class _DefaultWebSiteIcon extends State<DefaultWebSiteIcon>{
+  @override
+  Widget build(BuildContext context) {
+    return Image(image: MyLocalCacheNetworkImage(
+      widget.url,errorAssetsImage:"assets/icons/defaultWebsite.ico"
+    ));
+  }
+
+}
 

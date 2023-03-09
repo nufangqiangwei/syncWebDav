@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sync_webdav/pages/passwordCommon/passwordUtils.dart';
 
-import '../../model/JsonModel.dart';
-import '../../pkg/save/model.dart';
+import '../../common/cacheNetImage.dart';
 import './searchPage.dart';
 import 'data.dart';
 
@@ -66,20 +65,11 @@ class _AccountListPageState extends State<AccountListPage> {
           actions: [
             Padding(
               padding: const EdgeInsets.all(5),
-              child: FadeInImage.assetNetwork(
+              child: DefaultWebSiteIcon(
+                url:PassWordDataController.selectWebSite.icon,
                 width: 45,
                 height: 45,
                 fit: BoxFit.fill,
-                placeholder: "assets/icons/defaultWebsite.ico",
-                image: "assets/icons/defaultWebsite.ico",
-                imageErrorBuilder: (context, error, stackTrace) {
-                  return Image.asset(
-                    "assets/icons/defaultWebsite.ico",
-                    width: 45,
-                    height: 45,
-                    fit: BoxFit.fill,
-                  );
-                },
               ),
             )
           ],
@@ -137,20 +127,11 @@ class AccountPage extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: FadeInImage.assetNetwork(
+                    child: DefaultWebSiteIcon(
                       width: 40,
                       height: 40,
                       fit: BoxFit.fill,
-                      placeholder: "assets/icons/defaultUser.png",
-                      image: "assets/icons/defaultUser.png",
-                      imageErrorBuilder: (context, error, stackTrace) {
-                        return Image.asset(
-                          "assets/icons/defaultUser.png",
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.fill,
-                        );
-                      },
+                      url: PassWordDataController.selectWebSite.icon,
                     ),
                   ),
                   Padding(

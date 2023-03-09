@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:sync_webdav/pages/passwordCommon/passwordUtils.dart';
 
+import '../../common/cacheNetImage.dart';
 import '../../pkg/save/model.dart';
 import '../drawer.dart';
 import './searchPage.dart';
@@ -83,20 +84,11 @@ class _WebSitePageState extends State<WebSitePage> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: FadeInImage.assetNetwork(
+                          child: DefaultWebSiteIcon(
+                            url:widget.web.icon,
                             width: 40,
                             height: 40,
                             fit: BoxFit.fill,
-                            placeholder: "assets/icons/google.ico",
-                            image: "assets/icons/defaultWebsite.ico",
-                            imageErrorBuilder: (context, error, stackTrace) {
-                              return Image.asset(
-                                "assets/icons/defaultWebsite.ico",
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.fill,
-                              );
-                            },
                           ),
                         ),
                         Padding(

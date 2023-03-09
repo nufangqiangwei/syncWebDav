@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
-import '../../common/passwordUtils.dart';
-import '../../pkg/save/client.dart';
-import '../../utils/modifyData.dart';
+import '../../common/cacheNetImage.dart';
 import '../../utils/utils.dart';
 import './passwordUtils.dart';
 import 'data.dart';
@@ -38,20 +36,11 @@ class PasswordDetailPage extends StatelessWidget {
           actions: [
             Padding(
               padding: const EdgeInsets.all(5),
-              child: FadeInImage.assetNetwork(
+              child: DefaultWebSiteIcon(
+                url:PassWordDataController.selectWebSite.icon,
                 width: 45,
                 height: 45,
                 fit: BoxFit.fill,
-                placeholder: "assets/icons/google.ico",
-                image: "assets/icons/defaultWebsite.ico",
-                imageErrorBuilder: (context, error, stackTrace) {
-                  return Image.asset(
-                    "assets/icons/defaultWebsite.ico",
-                    width: 45,
-                    height: 45,
-                    fit: BoxFit.fill,
-                  );
-                },
               ),
             )
           ],
