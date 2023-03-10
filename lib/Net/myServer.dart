@@ -9,10 +9,9 @@ String getEncryptStr() {
   if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
     throw "尚未添加密钥";
   }
-  var webRsa = RSAUtils(globalParams.webPubKey,"");
-  return webRsa.encodeString('''{
+  var webRsa = RSAUtils.initRsa(globalParams.webPubKey,"");
+  return webRsa.encryptRsa('''{
     "UserId":${globalParams.userId},
-    "EncryptStr":"${globalParams.encryptStr}",
     "Timestamp":${DateTime.now().millisecondsSinceEpoch}
   }''');
 }
@@ -46,36 +45,23 @@ Future<List<WebSite>> getWebSiteList() async {
 pushDataToServer(data, String dataType) async {
   Map<String, dynamic> requestData = {
     "EncryptStr": getEncryptStr(),
-    "UserData":data,
+    "Signed":globalParams.userRSA.sign(globalParams.encryptStr),
+    "DataType": dataType,
+    "UserData": data,
   };
-  String webPath;
-  if (dataType == "password") {
-    webPath = '/SaveUserData';
-  } else {
-    webPath = '/SaveUserNote';
-  }
   Response<Map<String, dynamic>> response = await Dio()
-      .post<Map<String, dynamic>>(webHost + webPathPrefix + webPath,
+      .post<Map<String, dynamic>>(webHost + webPathPrefix + '/SaveUserData',
           data: requestData);
   if (response.statusCode != 200) {
     throw response.statusMessage ?? "备份数据失败";
   }
 }
 
-uploadPasswordData(List<Map<String,String>> data) async{
-  Map<String, dynamic> requestData = {
-    "EncryptStr": getEncryptStr(),
-    "UserData":data,
-  };
-  await Dio()
-      .post<Map<String, dynamic>>(webHost + webPathPrefix + '/SaveUserData',
-      data: requestData);
-}
-
 Future<List<ServerGetPasswordDataResponse>> getPasswordData([int? version]) async {
   Map<String, dynamic> requestData = {
     "EncryptStr": getEncryptStr(),
-    // "Version": version,
+    "Signed":globalParams.userRSA.sign(globalParams.encryptStr),
+    "DataType":"password",
   };
   Response<Map<String, dynamic>> response = await Dio()
       .post<Map<String, dynamic>>(webHost + webPathPrefix + "/GetUserData",
@@ -93,21 +79,3 @@ Future<List<ServerGetPasswordDataResponse>> getPasswordData([int? version]) asyn
   return data;
 }
 
-Future<List<int>> getDataVersion() async {
-  Map<String, dynamic> requestData = {
-    "EncryptStr": getEncryptStr(),
-    "dataType": "password",
-  };
-  Response<Map<String, dynamic>> response = await Dio()
-      .post<Map<String, dynamic>>(webHost + webPathPrefix + "/GetUserData",
-          data: requestData);
-  if (response.statusCode != 200) {
-    throw response.statusMessage ?? "获取版本号失败";
-  }
-  List<dynamic> message = response.data!['data'];
-  if (message.isEmpty){
-    return [];
-  }
-  List<int> data =message as List<int>;
-  return data;
-}

@@ -14,7 +14,7 @@ Future<List<AccountData>> decodePassword(PassWord data) async {
     if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
       throw "缺少密钥";
     }
-    s = globalParams.userRSA.decodeString(data.value);
+    s = globalParams.userRSA.decryptRsa(data.value);
   } else {
     s = data.value;
   }
@@ -33,7 +33,7 @@ Future<PassWord> encodePassword(PassWord data, List<AccountData> detail) async {
     data.isEncryption = false;
     return data;
   }
-  data.value = globalParams.userRSA.encodeString(encodeStr);
+  data.value = globalParams.userRSA.encryptRsa(encodeStr);
   data.isEncryption = true;
   return data;
 }

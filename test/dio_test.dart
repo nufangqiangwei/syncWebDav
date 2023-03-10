@@ -85,14 +85,14 @@ Future<void> main() async{
   // };
   // await pushDataToServer(testData.toString(),"password");
 
-  var webRsa = RSAUtils(webPubKey,webPriKey);
-  var xx = webRsa.encodeString('''{
+  var webRsa = RSAUtils.initRsa(webPubKey,webPriKey);
+  var xx = webRsa.encryptRsa('''{
     "UserId":12,
     "EncryptStr":"$encryptStr",
     "Timestamp":${DateTime.now().millisecondsSinceEpoch}
   }''');
   print("密文: $xx");
-  var yy = webRsa.decodeString(xx);
+  var yy = webRsa.decryptRsa(xx);
   print("明文: $yy");
 
 }

@@ -349,16 +349,16 @@ class _UserSettingPageState extends State<UserSettingPage> {
       return;
     }
 
-    RSAUtils newRsaClient = RSAUtils(pubController.text, priController.text);
+    RSAUtils newRsaClient = RSAUtils.initRsa(pubController.text, priController.text);
     // todo 替换 password 表中的数据
     List<DbValue> dbData =await Store().from(PassWordModel()).all();
     if (dbData is List<PassWord>){
       for (final da in dbData) {
         if (da.isEncryption) {
           da.value = newRsaClient
-              .encodeString(globalParams.userRSA.decodeString(da.value));
+              .encryptRsa(globalParams.userRSA.decryptRsa(da.value));
         } else {
-          da.value = newRsaClient.encodeString(da.value);
+          da.value = newRsaClient.encryptRsa(da.value);
           da.isEncryption = true;
         }
       }
@@ -417,7 +417,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
       return;
     }
     if (globalParams.encryptStr == "") {
-      globalParams.encryptStr = getRandomPassword(10);
+      globalParams.encryptStr = getRandomPassword(16);
     }
     await register(globalParams.publicKeyStr, globalParams.encryptStr);
     setState(() {});

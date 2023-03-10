@@ -1,15 +1,56 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:encrypt/encrypt.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pointycastle/export.dart';
 import 'package:sync_webdav/utils/rsaUtils.dart';
 
-String pub_1024 = """-----BEGIN RSA PUBLIC KEY-----
+const web_pub = """-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtHMaK0Pq+04kv3hmjUdY
+V7N1UACTTpqpC0bWSM/cClzrupB1JLsWfxHpab8T7rAS+sXdqcklH1zhnvgrtkWn
+sCiEb5ONAfBrIy0raBaPHxKhFNtJOtveWmTcDGOfY6HcRrF+Smrexowih+TmVDs+
+aFNYF2TjRSxukkW3HMqCb9sohx4csWnnBbt8PJE1vjUUPlKGBtaQTkpcHgqRFVPX
+5ni/LQ2STYlBLM+fQuvebRvTjNO9U93TKp6LtjrQHh4ouKHWN9nDIKY483n7pOw3
+tb2Ea5awTHiNg53WJnwwyWPNdWta6O1Z0otykrUU34jQs/CAbH6VtFjIP/vNGfsF
+jwIDAQAB
+-----END PUBLIC KEY-----""";
+const web_priv = """-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC0cxorQ+r7TiS/
+eGaNR1hXs3VQAJNOmqkLRtZIz9wKXOu6kHUkuxZ/EelpvxPusBL6xd2pySUfXOGe
++Cu2RaewKIRvk40B8GsjLStoFo8fEqEU20k6295aZNwMY59jodxGsX5Kat7GjCKH
+5OZUOz5oU1gXZONFLG6SRbccyoJv2yiHHhyxaecFu3w8kTW+NRQ+UoYG1pBOSlwe
+CpEVU9fmeL8tDZJNiUEsz59C695tG9OM071T3dMqnou2OtAeHii4odY32cMgpjjz
+efuk7De1vYRrlrBMeI2DndYmfDDJY811a1ro7VnSi3KStRTfiNCz8IBsfpW0WMg/
++80Z+wWPAgMBAAECggEAJLShJxnaq6HaocQJAEX592T+wPZNAJk/N5cCMa9ucAE0
+xi9qVL1ltxVaqHMAx/Wy9qXXEBllXrrS/jY3Fg2XLaMgRV37OeDAulgO0057cHOm
+popwm/NriHGpvS9qlaawGwUxzkts43BP+dqa65ldeXUynxebj0+ZclGSDN44qC3R
+sdaDXyQRR8De7tAcEYHGvp3N6HhSvJ25ITWohJ2r+K548C56BbFvMfY43UnhfMgh
+QTsskCeyrgchJg5Wp1oNdnaGVrMHwQEU9g6SuSDlDq4TIDDN6zoNyhFQbTA+6Hr0
+71C+ShpB3UzhwJelDvj8ZLMrtPepVuREbMtv27A6KQKBgQDlVjRqp0xdxmvcZ3mI
+N/cU4Dx3ktRoNxtljNyBPHdG0di9Neqw2KUSB8D/eHioLMzgoPlMOaY6Z46/nb5w
+SYUEAkng1bjDwOGIH4WnBZUmIKdCkMOar3Y8x2d13lhItO9Ixgv6GH7icvIjhzgL
+fG7crjBaarfxR9AC11IldKO8rQKBgQDJbdw/xFdUhLCberOSr3mK1YBWRLmt3MIL
+7Ctl2ow/OqOgDdiKYqOupcACS1QlKqxuH4VzoYTfzOqse70YYXXjvMbmcFURgFwN
+Yq7Hu6wi0OI4SVJwYxKyDjVx4bJWBj9MPbu3LLZdQ+6DWIFnDJvMn4oaNqK+zHtX
+hqk4SH22qwKBgQCpydC0xXd8VdK1MsZ/Wy/KfNlHjaVEIshdvpPh+mo0PFhCfRBs
+LXjIiIUSnpZ1q/ViuMrY7DVtOA4vPxIm/8dC2I7prlFEXCCdLvk8Vp29xJ8QYSzv
+8MeQ5/BpC1xBN/OP5VAosMn/zSoHs6yClHVfXHbf+fKE563Q7KkcoeY3YQKBgB4R
+dzpRndOxBwf+lgXEifkui7zU/36zoIfVFlla+WqK31gKGRP3S4XLmlD9W688oobB
+z9MF/mbGGRXsVrrn+YgoauyFQj2dkqAw5fRM0JJV6h8K2vKJ54WK13GLhmqO/i3s
+XTQnyYU8mcMjmBWA7VTrT9s/4qVmstbK9EHBmHqHAoGAHnSVyffqzQO4dF4r0KJ1
+5NONYRl/nL3PJl8dI7q1xOrNQ4peoeOQkYi3WZ9jJS2pfm//F6yvn5X9bWq0nDFe
+dmAgHGaKaPtdRvIDDTYHBFT9Cb56hJ8e+2DfSPHW3VjfMtxhs1KBNCo7cDezLHUM
+5ZR/ozG5r+GjGRf/DfHONe8=
+-----END PRIVATE KEY-----""";
+
+const pub_1024 = """-----BEGIN RSA PUBLIC KEY-----
 MIGJAoGBAKOXRuEquzfnfC0SV/hymeg31ICCqcUsY7YMrgtsQwnYkVei+1OG747X
 nIl7gaW38Fk70YOW/dCCjB0y/wzdQJCdWccUYAS6YTYGT9xY8B111QbY43+ij/OX
 qRXQ5InvFKMX+OxWhpvHXbFo4jm3rRY77ul9SBxG+LaMsJmJxAh9AgMBAAE=
 -----END RSA PUBLIC KEY-----
 """;
-String pri_1024 = """-----BEGIN RSA PRIVATE KEY-----
+const pri_1024 = """-----BEGIN RSA PRIVATE KEY-----
 MIICXQIBAAKBgQCjl0bhKrs353wtElf4cpnoN9SAgqnFLGO2DK4LbEMJ2JFXovtT
 hu+O15yJe4Glt/BZO9GDlv3QgowdMv8M3UCQnVnHFGAEumE2Bk/cWPAdddUG2ON/
 oo/zl6kV0OSJ7xSjF/jsVoabx12xaOI5t60WO+7pfUgcRvi2jLCZicQIfQIDAQAB
@@ -26,7 +67,7 @@ zy3/VO+HGgJMvctsI0xRST0WM4Kd2xqBsuXubJvfSkiK
 -----END RSA PRIVATE KEY-----
 """;
 
-String pub_2048 = """-----BEGIN PUBLIC KEY-----
+const pub_2048 = """-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA9bZqZJ3VLG9JJfDhExnX
 FvGGueVIFfRtqSAvFjBtg36d7DcwBRVglOMqjkDMpeH01PaYnMNbLJ08LJ+c/vqm
 l1A8sNJqRGpv/tamgYJjeYf9IutaD2YGFvlM4Wm9a++0vox4733at7YMM/UUnsHd
@@ -36,7 +77,7 @@ etBr/JbvAUfO8lVfHwVuLEGbYnEfXF10FrQ6TBAtSydUXq8Li4qpe2/JkYN0AYFM
 OQIDAQAB
 -----END PUBLIC KEY-----
 """;
-String pri_2048 = """-----BEGIN PRIVATE KEY-----
+const pri_2048 = """-----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQD1tmpkndUsb0kl
 8OETGdcW8Ya55UgV9G2pIC8WMG2Dfp3sNzAFFWCU4yqOQMyl4fTU9picw1ssnTws
 n5z++qaXUDyw0mpEam/+1qaBgmN5h/0i61oPZgYW+Uzhab1r77S+jHjvfdq3tgwz
@@ -66,7 +107,7 @@ HpPtkjElGzdvDuGpAKUACCZIrL1dD4mKLWfQx2UcpvB66KTdPejg/nMRL7PyKC93
 -----END PRIVATE KEY-----
 """;
 
-String pub_4096 = '''-----BEGIN PUBLIC KEY-----
+const pub_4096 = '''-----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA1k0/nL1v2jEbqPSrjVZK
 t6j122VdXwizeHl9b7OuQNn2gBcTOSsgLOmRAeGYaP0/tgqGW+RptPBWi6B6eY5z
 D3Odb00YNisGCCxqKlphJu2cXhFg8Pg454NbE6Jno0RZmESPcReJUFQX2Q9NmNfJ
@@ -81,7 +122,7 @@ VJL+BFR5hpnGiov2+42wIE5SpNlRptSrwHpZYDoDs0wW4x9vreTW6uFiPPnuA0DO
 1QySWDNEX+/BDYT2Yzr8S1MCAwEAAQ==
 -----END PUBLIC KEY-----
 ''';
-String pri_4096 = '''-----BEGIN PRIVATE KEY-----
+const pri_4096 = '''-----BEGIN PRIVATE KEY-----
 MIIJRQIBADANBgkqhkiG9w0BAQEFAASCCS8wggkrAgEAAoICAQDWTT+cvW/aMRuo
 9KuNVkq3qPXbZV1fCLN4eX1vs65A2faAFxM5KyAs6ZEB4Zho/T+2CoZb5Gm08FaL
 oHp5jnMPc51vTRg2KwYILGoqWmEm7ZxeEWDw+Djng1sTomejRFmYRI9xF4lQVBfZ
@@ -135,7 +176,7 @@ N7ErCJV5MPpB5FuvJr3uCmtx17exoD62hg==
 -----END PRIVATE KEY-----
 ''';
 
-String text =
+const text =
     """项目共计 4 个，每个项目（只支持 IE ）都需要和额外的客户自研中间件、插件（ ActiveX ）、多种硬件设备对接。此前未做过和硬件对接的设备，低估了对接的难度
 中间件、插件、硬件设备的对接我万万没想到，什么文档都没有。只能去搜历史代码学习测试，或者到相关部门去问问。而此前沟通过程中，我心中默认对接是有文档或专人指导的，没有问清楚
 前端使用框架（ 2006 年的框架和版本）过于老旧，由于对前端了解不足，错误的估计了学习曲线，团队前端同事开发前期非常吃力，进度在这块也拖延了一大段
@@ -155,14 +196,13 @@ String text =
 一般采取排除法来锁定核心重难点。把所有的页面可见功能点和隐含功能点列上，以排除法排除独立的关联少的模块。留下的就是重难点的核心要素
 针对每个核心要素搞清楚联系关系，得到最终的功能关系图（业务架构图）""";
 
-RSAUtils initRSA() {
-  return RSAUtils(pub_4096, pri_4096);
-}
+const signStr = "qwertyuikjhgfdsa";
+
 
 Future<void> main() async {
-  var rsaClient = initRSA();
-  String str = rsaClient.encodeString(text);
-  print(rsaClient.decodeString(str)==text);
+  RSAUtils client = RSAUtils.initRsa(web_pub, web_priv);
+  // String str = rsaClient.encodeString(text);
+  // print(rsaClient.decodeString(str)==text);
   // print("1024 BlockSize: inputBlockSize:${a1.inputBlockSize}; outputBlockSize: ${a1.outputBlockSize}");
   // print("2048 BlockSize: inputBlockSize:${a2.inputBlockSize}; outputBlockSize: ${a2.outputBlockSize}");
   // print("4096 BlockSize: inputBlockSize:${a3.inputBlockSize}; outputBlockSize: ${a3.outputBlockSize}");
@@ -175,6 +215,19 @@ Future<void> main() async {
   //       "1024 BlockSize: inputBlockSize:$inputBlockSize; outputBlockSize: $outputBlockSize");
   // }
   // await yaunshenTest();
+
+  String a = client.encryptRsa(text);
+  print(client.decryptRsa(a) == text);
+
+  String s = client.sign(signStr);
+  print(s);
+  String x = "QUpxj8SX2qPK8BcwzV3bxm7ZynoNAHCVOjbsBgaf7ZuKLG4eq+tNiBmlyj3xJe12IbD6kWrSWjGlnrWa+tZ6oIRcLCsSkcTWMPwhfHelWzgKO7MqyqfeyPfI/3TVQZqyxvm9Nozx7I6xzgo/KTQNDdSYHAKVZITg6USU17L14Oyl1ILI3pE3tCPBuyaxUXygXKydJRsHgf8OT3tOIQt0pBvN4oILIDZ/HWC0RXglmB+nMu9RsWE3yz2gnkSam/CsT3kaS4GLIouv3Zcu9/CVK3bBkj3IPVcCQ9OcQ5HYf55rfsJbv/A5961Jal8LPB6dFQo5j7GAT3mUQJiMGJeJ1w==";
+  print(x);
+  print(client.verify(signStr,s));
+  print(client.verify(signStr,x));
+
+  // String b = base64Encode(rsaClient.decryptByPublicKey(Uint8List.fromList(utf8.encode(a))));
+  // print(b);
 }
 
 yaunshenTest() async {

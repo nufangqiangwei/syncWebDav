@@ -57,25 +57,6 @@ for (var remoteWebSite in response) {
   return true;
 }
 
-// 同步到最新版本的数据
-syncNoteBookVersion() async {
-  List<int> version = await getDataVersion();
-  if (version.isEmpty || globalParams.passwordVersion == version.last) return;
-  if (globalParams.passwordVersion < version.last) {
-    List<ServerGetPasswordDataResponse> data = await getPasswordData(version.last);
-    for (var i in data) {
-      String webKey = i.webKey;
-      String webData = i.webData;
-      if (webKey == "") {
-        print(data.toString());
-        print("第 $i数据出错");
-        continue;
-      }
-      Store().from(NoteBookModel()).select([NoteBookModel.description.equal(webKey)]).update(jsonData: {"value":webData});
-    }
-  }
-}
-
 // mergeData(List<AccountData> oldData, List<AccountData> newData) {
 //   List<AccountData> oldData1 = oldData;
 //   List<AccountData> newData1 = newData;

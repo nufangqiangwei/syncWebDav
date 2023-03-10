@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sync_webdav/common/staticVariable.dart';
-import '../utils/rsaUtils.dart';
 import '../pkg/save/client.dart';
 import '../pkg/save/model.dart';
+import '../utils/rsaUtils.dart';
 
 class GlobalParams extends ChangeNotifier {
   final Map<String, List<VoidCallback>> _fieldCallback = {};
@@ -83,7 +83,7 @@ class GlobalParams extends ChangeNotifier {
     if (publicKeyStr == '' || privateKeyStr == '') {
       return false;
     }
-    userRSA = RSAUtils(publicKeyStr, privateKeyStr);
+    userRSA = RSAUtils.initRsa(publicKeyStr, privateKeyStr);
   }
 
   setUserConfig(int userId, String webPubKey, String encryptStr) async {
