@@ -147,7 +147,7 @@ class PassWordDataController{
     }
     _data.webSiteData = encodeData;
     // 上传到服务器
-    await uploadData("password");
+    uploadData("password");
 
     print("保存事件");
     _webSiteModifyCallback.value = !_webSiteModifyCallback.value;

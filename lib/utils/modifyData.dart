@@ -26,7 +26,7 @@ Future<String?> uploadData(String tableName) async {
           jsonData: {"isModify": false});
     }
   } catch (e, tr) {
-    log!.e("上传备份到服务器出错: ", tr);
+    log!.e("上传备份到服务器出错: ");
   }
 
   return null;

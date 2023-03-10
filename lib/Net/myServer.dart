@@ -9,7 +9,7 @@ String getEncryptStr() {
   if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
     throw "尚未添加密钥";
   }
-  var webRsa = RSAUtils.initRsa(globalParams.webPubKey,"");
+  var webRsa = RSAUtils.initRsa(globalParams.webPubKey);
   return webRsa.encryptRsa('''{
     "UserId":${globalParams.userId},
     "Timestamp":${DateTime.now().millisecondsSinceEpoch}
@@ -63,6 +63,7 @@ Future<List<ServerGetPasswordDataResponse>> getPasswordData([int? version]) asyn
     "Signed":globalParams.userRSA.sign(globalParams.encryptStr),
     "DataType":"password",
   };
+  print(requestData['Signed']);
   Response<Map<String, dynamic>> response = await Dio()
       .post<Map<String, dynamic>>(webHost + webPathPrefix + "/GetUserData",
           data: requestData);

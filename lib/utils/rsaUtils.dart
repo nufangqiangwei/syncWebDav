@@ -37,10 +37,12 @@ class RSAUtils {
   }
 
   ///初始化RAS加密启动时调用
-  RSAUtils.initRsa(String publicKeyString, String privateKeyString) {
+  RSAUtils.initRsa(String publicKeyString, [String? privateKeyString]) {
     _publicKey = RSAKeyParser().parse(publicKeyString) as RSAPublicKey;
-    if (privateKeyString != "") {
+    if (privateKeyString != null) {
       _privateKey = RSAKeyParser().parse(privateKeyString) as RSAPrivateKey;
+    }else {
+      _privateKey = null;
     }
     _encryptRsa = Encrypter(
       RSA(publicKey: _publicKey, privateKey: _privateKey),

@@ -1,8 +1,8 @@
+import 'package:sync_webdav/Net/myServer.dart';
 import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/pages/passwordCommon/data.dart';
 import 'package:sync_webdav/pkg/save/client.dart';
 import 'package:sync_webdav/utils/log.dart';
-import 'package:sync_webdav/utils/syncData.dart';
 import 'package:sync_webdav/utils/utils.dart';
 
 initApp() async {
@@ -22,15 +22,15 @@ Future<void> main() async {
   await initApp();
   // await testModifyPassword();
   // await syncPasswordVersion();
-  await selectWebSite(0);
-  print("选择的账号信息：用户名：${PassWordDataController.selectAccountData.userName} ,密码：${PassWordDataController.selectAccountData.password}");
-  await testModifyPassword();
-  print("选择的账号信息：用户名：${PassWordDataController.selectAccountData.userName} ,密码：${PassWordDataController.selectAccountData.password}");
-  await selectWebSite(3);
-  print("选择的账号信息：用户名：${PassWordDataController.selectAccountData.userName} ,密码：${PassWordDataController.selectAccountData.password}");
-  await testModifyPassword();
-  print("选择的账号信息：用户名：${PassWordDataController.selectAccountData.userName} ,密码：${PassWordDataController.selectAccountData.password}");
-
+  // await selectWebSite(0);
+  // print("选择的账号信息：用户名：${PassWordDataController.selectAccountData.userName} ,密码：${PassWordDataController.selectAccountData.password}");
+  // await testModifyPassword();
+  // print("选择的账号信息：用户名：${PassWordDataController.selectAccountData.userName} ,密码：${PassWordDataController.selectAccountData.password}");
+  // await selectWebSite(3);
+  // print("选择的账号信息：用户名：${PassWordDataController.selectAccountData.userName} ,密码：${PassWordDataController.selectAccountData.password}");
+  // await testModifyPassword();
+  // print("选择的账号信息：用户名：${PassWordDataController.selectAccountData.userName} ,密码：${PassWordDataController.selectAccountData.password}");
+  print(await getPasswordData());
 }
 
 selectWebSite(int index) async {
