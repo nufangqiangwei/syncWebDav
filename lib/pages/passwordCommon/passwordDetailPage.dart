@@ -32,7 +32,7 @@ class PasswordDetailPage extends StatelessWidget {
             },
             icon: const Icon(Icons.arrow_back),
           ),
-          title: const Text("账号列表"),
+          title: const Text("账号修改"),
           actions: [
             Padding(
               padding: const EdgeInsets.all(5),
@@ -129,8 +129,8 @@ class ViewPage extends StatefulWidget {
 }
 
 class _ViewPageState extends State<ViewPage> {
-  double _sliderValue = 8;
-  int passwordLength = 8;
+  double _sliderValue = 16;
+  int passwordLength = 16;
   String _errorText = '';
   bool isModify = false;
   bool modifyPassword = false;
@@ -147,6 +147,7 @@ class _ViewPageState extends State<ViewPage> {
         });
       }
     });
+
   }
 
   @override
@@ -171,6 +172,11 @@ class _ViewPageState extends State<ViewPage> {
       if (PassWordDataController.selectAccountData.password.isNotEmpty) {
         _sliderValue = PassWordDataController.selectAccountData.password.length.toDouble();
         passwordLength = PassWordDataController.selectAccountData.password.length;
+      }
+      if(PassWordDataController.selectAccountData.userName == ""&& PassWordDataController.selectAccountData.password==""){
+        var pa = getRandomPassword(passwordLength);
+        passwordController.text = pa;
+        PassWordDataController.setSelectAccountPassword = pa;
       }
     }
 

@@ -10,10 +10,10 @@ import 'package:sync_webdav/pages/passwordCommon/passwordDetailPage.dart';
 import 'package:sync_webdav/pkg/save/model.dart';
 import 'package:sync_webdav/pkg/save/client.dart';
 
-const double webSiteMaxWidth = 600;
+const double webSiteMaxWidth = 400;
 const double webSiteMinWidth = 500;
 
-const double accountMaxWidth = 400;
+const double accountMaxWidth = 600;
 const double accountMinWidth = 300;
 
 const double detailMaxWidth = 3000;
@@ -37,6 +37,7 @@ class _PassWordPageState extends State<PassWordPage> {
         setState((){});
       }
     });
+    PassWordDataController.switchToWebSite(PassWordDataController.webSiteList[0]);
   }
 
   List<double> showWidth(BuildContext context) {

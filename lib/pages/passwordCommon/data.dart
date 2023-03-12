@@ -109,6 +109,10 @@ class PassWordDataController{
       _data.accountData = _data.decodeData[index];
       _data.unmodifiedAccountData = AccountData(_data.accountData.userName,_data.accountData.password);
     }
+    if(_data.decodeData.isEmpty){
+      _data.accountData = AccountData('','');
+      _data.unmodifiedAccountData = AccountData('','');
+    }
     _data.selectIndex = index;
     _accountModifyCallback.value =!_accountModifyCallback.value;
   }
@@ -118,10 +122,8 @@ class PassWordDataController{
       return;
     }
     if(_data.accountData.password == _data.unmodifiedAccountData.password){
-      print('未修改密码');
       return;
     }else{
-      print('修改密码');
       _data.accountData.lastUsePassword += " ${_data.unmodifiedAccountData.password}";
       _data.accountData.lastModifyTime =  DateTime.now().millisecondsSinceEpoch;
     }
@@ -140,16 +142,13 @@ class PassWordDataController{
     PassWord encodeData = await encodePassword(_data.webSiteData, _data.decodeData);
     if (isNewData) {
       await Store().insert(modelData: encodeData);
-      print("新增");
     } else {
-      print("更新");
       await Store().update(modelData: encodeData);
     }
     _data.webSiteData = encodeData;
     // 上传到服务器
     uploadData("password");
 
-    print("保存事件");
     _webSiteModifyCallback.value = !_webSiteModifyCallback.value;
     _accountModifyCallback.value =!_accountModifyCallback.value;
 

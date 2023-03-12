@@ -777,17 +777,17 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
               //   onPressed: modifyWebSitePath,
               // ),
               SettingsTile.navigation(
-                title: const Text("下载站点数据"),
+                title: const Text("同步网站列表"),
                 onPressed: (context) {
                   synchronizeWebSite();
                 },
               ),
               SettingsTile.navigation(
-                title: const Text("备份到服务器"),
+                title: const Text("密码数据备份到服务器"),
                 onPressed: uploadDataToServer,
               ),
               SettingsTile.navigation(
-                title: const Text("下载服务器数据"),
+                title: const Text("下载服务器密码数据"),
                 onPressed: (context){syncPasswordVersion();},
               ),
               SettingsTile.navigation(

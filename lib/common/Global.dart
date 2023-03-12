@@ -40,7 +40,6 @@ class GlobalParams extends ChangeNotifier {
   Future<bool> initAppConfig() async {
     // Store();
     sleep(const Duration(seconds: 1));
-    print("初始化数据");
     await getCachePath();
     await getUserInfo();
     await refreshWebSiteList();
@@ -52,13 +51,15 @@ class GlobalParams extends ChangeNotifier {
     if (kIsWeb) {
       throw ("未知的web平台");
     } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      cachePath = (await getApplicationDocumentsDirectory()).path;
-      print("pc平台缓存地址$cachePath");
+      cachePath = (await getApplicationDocumentsDirectory()).path+"/myAggregationApp";
     } else if (Platform.isAndroid || Platform.isIOS) {
-      cachePath = (await getTemporaryDirectory()).path;
-      print("移动平台缓存地址$cachePath");
+      cachePath = (await getTemporaryDirectory()).path+"/myAggregationApp";
     } else if (Platform.isFuchsia) {
       throw ("未知的平台");
+    }
+    Directory directory = Directory(cachePath);
+    if(!await directory.exists()){
+      await directory.create();
     }
   }
 
@@ -70,7 +71,6 @@ class GlobalParams extends ChangeNotifier {
     if (_webSiteList.isEmpty) {
       _webSiteList = InitWebData;
     }
-    print("站点数${_webSiteList.length}");
   }
 
   getUserInfo() async {

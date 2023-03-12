@@ -5,15 +5,21 @@ import '../model/JsonModel.dart';
 import '../pkg/save/model.dart';
 import '../utils/rsaUtils.dart';
 
-String getEncryptStr() {
+getEncryptStr(Map<String, dynamic> requestData) {
   if (globalParams.publicKeyStr == "" || globalParams.privateKeyStr == "") {
     throw "尚未添加密钥";
   }
   var webRsa = RSAUtils.initRsa(globalParams.webPubKey);
-  return webRsa.encryptRsa('''{
+  int timestamp = DateTime.now().millisecondsSinceEpoch;
+  String signed = globalParams.userRSA.sign(globalParams.encryptStr+timestamp.toString());
+  String encryptStr = webRsa.encryptRsa('''{
     "UserId":${globalParams.userId},
-    "Timestamp":${DateTime.now().millisecondsSinceEpoch}
+    "Timestamp":$timestamp
   }''');
+
+  requestData["EncryptStr"]=encryptStr;
+  requestData["Signed"]=signed;
+  return ;
 }
 
 // 'https://ouliguojiashengsiyi.xyz/'
@@ -44,11 +50,10 @@ Future<List<WebSite>> getWebSiteList() async {
 //  需要登录的接口
 pushDataToServer(data, String dataType) async {
   Map<String, dynamic> requestData = {
-    "EncryptStr": getEncryptStr(),
-    "Signed":globalParams.userRSA.sign(globalParams.encryptStr),
     "DataType": dataType,
     "UserData": data,
   };
+  getEncryptStr(requestData);
   Response<Map<String, dynamic>> response = await Dio()
       .post<Map<String, dynamic>>(webHost + webPathPrefix + '/SaveUserData',
           data: requestData);
@@ -59,11 +64,9 @@ pushDataToServer(data, String dataType) async {
 
 Future<List<ServerGetPasswordDataResponse>> getPasswordData([int? version]) async {
   Map<String, dynamic> requestData = {
-    "EncryptStr": getEncryptStr(),
-    "Signed":globalParams.userRSA.sign(globalParams.encryptStr),
     "DataType":"password",
   };
-  print(requestData['Signed']);
+  getEncryptStr(requestData);
   Response<Map<String, dynamic>> response = await Dio()
       .post<Map<String, dynamic>>(webHost + webPathPrefix + "/GetUserData",
           data: requestData);

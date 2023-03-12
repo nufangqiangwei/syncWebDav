@@ -49,7 +49,7 @@ Future<List<Map<String, String>>> uploadPasswordData() async {
     }
   }
   for (final webKey in result.keys) {
-    data.add({"webKey": webKey, "fromData": result[webKey] ?? ''});
+    data.add({"DataKey": webKey, "Value": result[webKey] ?? ''});
   }
   return data;
 }

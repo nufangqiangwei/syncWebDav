@@ -1,5 +1,4 @@
-import 'dart:convert';
-import 'dart:typed_data';
+import 'dart:convert' as convert;
 
 import 'package:encrypt/encrypt.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,41 +6,41 @@ import 'package:pointycastle/export.dart';
 import 'package:sync_webdav/utils/rsaUtils.dart';
 
 const web_pub = """-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtHMaK0Pq+04kv3hmjUdY
-V7N1UACTTpqpC0bWSM/cClzrupB1JLsWfxHpab8T7rAS+sXdqcklH1zhnvgrtkWn
-sCiEb5ONAfBrIy0raBaPHxKhFNtJOtveWmTcDGOfY6HcRrF+Smrexowih+TmVDs+
-aFNYF2TjRSxukkW3HMqCb9sohx4csWnnBbt8PJE1vjUUPlKGBtaQTkpcHgqRFVPX
-5ni/LQ2STYlBLM+fQuvebRvTjNO9U93TKp6LtjrQHh4ouKHWN9nDIKY483n7pOw3
-tb2Ea5awTHiNg53WJnwwyWPNdWta6O1Z0otykrUU34jQs/CAbH6VtFjIP/vNGfsF
-jwIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAueCsckXrWhnTk9WsHo7l
+dlfoA0OMRRjp6/Gyu39G/Lbln3jsYwDhhW0b4t+xyUABH9DQX+LTb023y0OWqKtP
+iJguyd+PqE2Zzqo4iDfJmd6zj6x6ScMJmVhZtiNVJ2unQXj5p6iVPhnBQi95NtY8
+ODhvpyEIifUM5d7v2Y/VQEoqv4BE548XPqpTci0qGHXkSgW30WyOpQJoQO6XbhFS
+5fCNKZgioJy6ECu6WIk8FHa12RsA5rXbdDlE4Ru32kO+V283svtd4tBW7sZsEq3b
+DmwtgVk3DL7kwhSn3EmbtwDHLrbiRESUb8MzXKml7GPNSLHhAOEcATSjGjzlhO41
+QQIDAQAB
 -----END PUBLIC KEY-----""";
 const web_priv = """-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC0cxorQ+r7TiS/
-eGaNR1hXs3VQAJNOmqkLRtZIz9wKXOu6kHUkuxZ/EelpvxPusBL6xd2pySUfXOGe
-+Cu2RaewKIRvk40B8GsjLStoFo8fEqEU20k6295aZNwMY59jodxGsX5Kat7GjCKH
-5OZUOz5oU1gXZONFLG6SRbccyoJv2yiHHhyxaecFu3w8kTW+NRQ+UoYG1pBOSlwe
-CpEVU9fmeL8tDZJNiUEsz59C695tG9OM071T3dMqnou2OtAeHii4odY32cMgpjjz
-efuk7De1vYRrlrBMeI2DndYmfDDJY811a1ro7VnSi3KStRTfiNCz8IBsfpW0WMg/
-+80Z+wWPAgMBAAECggEAJLShJxnaq6HaocQJAEX592T+wPZNAJk/N5cCMa9ucAE0
-xi9qVL1ltxVaqHMAx/Wy9qXXEBllXrrS/jY3Fg2XLaMgRV37OeDAulgO0057cHOm
-popwm/NriHGpvS9qlaawGwUxzkts43BP+dqa65ldeXUynxebj0+ZclGSDN44qC3R
-sdaDXyQRR8De7tAcEYHGvp3N6HhSvJ25ITWohJ2r+K548C56BbFvMfY43UnhfMgh
-QTsskCeyrgchJg5Wp1oNdnaGVrMHwQEU9g6SuSDlDq4TIDDN6zoNyhFQbTA+6Hr0
-71C+ShpB3UzhwJelDvj8ZLMrtPepVuREbMtv27A6KQKBgQDlVjRqp0xdxmvcZ3mI
-N/cU4Dx3ktRoNxtljNyBPHdG0di9Neqw2KUSB8D/eHioLMzgoPlMOaY6Z46/nb5w
-SYUEAkng1bjDwOGIH4WnBZUmIKdCkMOar3Y8x2d13lhItO9Ixgv6GH7icvIjhzgL
-fG7crjBaarfxR9AC11IldKO8rQKBgQDJbdw/xFdUhLCberOSr3mK1YBWRLmt3MIL
-7Ctl2ow/OqOgDdiKYqOupcACS1QlKqxuH4VzoYTfzOqse70YYXXjvMbmcFURgFwN
-Yq7Hu6wi0OI4SVJwYxKyDjVx4bJWBj9MPbu3LLZdQ+6DWIFnDJvMn4oaNqK+zHtX
-hqk4SH22qwKBgQCpydC0xXd8VdK1MsZ/Wy/KfNlHjaVEIshdvpPh+mo0PFhCfRBs
-LXjIiIUSnpZ1q/ViuMrY7DVtOA4vPxIm/8dC2I7prlFEXCCdLvk8Vp29xJ8QYSzv
-8MeQ5/BpC1xBN/OP5VAosMn/zSoHs6yClHVfXHbf+fKE563Q7KkcoeY3YQKBgB4R
-dzpRndOxBwf+lgXEifkui7zU/36zoIfVFlla+WqK31gKGRP3S4XLmlD9W688oobB
-z9MF/mbGGRXsVrrn+YgoauyFQj2dkqAw5fRM0JJV6h8K2vKJ54WK13GLhmqO/i3s
-XTQnyYU8mcMjmBWA7VTrT9s/4qVmstbK9EHBmHqHAoGAHnSVyffqzQO4dF4r0KJ1
-5NONYRl/nL3PJl8dI7q1xOrNQ4peoeOQkYi3WZ9jJS2pfm//F6yvn5X9bWq0nDFe
-dmAgHGaKaPtdRvIDDTYHBFT9Cb56hJ8e+2DfSPHW3VjfMtxhs1KBNCo7cDezLHUM
-5ZR/ozG5r+GjGRf/DfHONe8=
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC54KxyRetaGdOT
+1awejuV2V+gDQ4xFGOnr8bK7f0b8tuWfeOxjAOGFbRvi37HJQAEf0NBf4tNvTbfL
+Q5aoq0+ImC7J34+oTZnOqjiIN8mZ3rOPrHpJwwmZWFm2I1Una6dBePmnqJU+GcFC
+L3k21jw4OG+nIQiJ9Qzl3u/Zj9VASiq/gETnjxc+qlNyLSoYdeRKBbfRbI6lAmhA
+7pduEVLl8I0pmCKgnLoQK7pYiTwUdrXZGwDmtdt0OUThG7faQ75Xbzey+13i0Fbu
+xmwSrdsObC2BWTcMvuTCFKfcSZu3AMcutuJERJRvwzNcqaXsY81IseEA4RwBNKMa
+POWE7jVBAgMBAAECggEBAJCVC24DpvK5vhJzFOPcIO5xqD3Jr/UbUPE/WthvQydV
+mLz30V+dEs63NQa/G0pAZ994jGzZQb+FA16vXyQpxL6qKVLLe7HdUrMnQrvqMP1n
+9eHetmxjsja+O2Hqj9UO7tWFpSPdhOD+JY424SFfeQ3+EBM/JaYxn2u6gnSHZcgP
+09cM6OOG6KzUjYNwZ5mU0hBr0aUlZ3eerxXcw/FmLl3FPp6+kQ3sRjj03DPvUk1J
+Vf+YEnlnCws8R5fCWfxthDURPL3xqlChpFSKzDLhtyempsBNXmrEEG2aEkWQDxZW
+gN4ceTz2VZ0BOO8k9cfs7NyaVzH9tDn5IfTRAh7GZ9UCgYEA7920T+4r4tQmU15H
+Vqdl2JxZjHsDdDY/bUltLtijYIEwDQGbmxyaLY0bzLoGO1zTmHKFtiTS1M+eoeS9
+pxd8YcZddsmGVzH+ugvEe7momgQLyGEBqZbZuWppPoA0P7Tb171n41jmwe+dlkWd
+WCzUw58zBHp+wwnUbtyz2X6JGZMCgYEAxmFVXFZRe0aohxX2UAOouO1BSyBMtN17
+rmfXLEziBMD3LUKciYrDQep44nEH8MzKhmsgqzHtXmdheoOsCpcPkqtd3bOQvEuR
+adVeFiTajtPXCOUVU1Yx2Oj8KKy/hGwjUoBAgDr9jNIE86FPj+B6hPn+wm37v+Qm
+d8t72EQAKlsCgYAzy+RL/lpruPQtvIYbKDrN87VCqK2uQqifqONy4kUlacA+jsJT
+VHHWtEn0g5ck6n6mxNQq6Pi+C7dtrj9l/aRWWMeGBy6DVcBz3GapcQX/fDAvLQN2
+46RQbbIcVQLzXtK6W6Q7a88owd19vbqkd8naFF6n8Ou+ojjFV9Nee/yPEQKBgD+z
+OWmw/fELu0nFL5Z51k+rP3AUKw1YoUJbbah394t3Oud5oDI6MICV/cMYcGhOGioX
+dCIEoifSImboqPGtl/6MsFNkOXF9AnBtZwzNQLDkLQRaKwLbhp4UEgQtlEG9R4pS
+TGPgjVIOjjB898NHXZAdhkSAdHollISa/mVvUG5JAoGAKSEYpn1eILMSESKjJXi0
+xvaThRnJzRSHM4OmFRsyrY/crts0JYHCt5tAAm+6CdB+CYGgB31tcd1ixBJ3SU6W
+9h+FuP7qtQ5kQ9S7j5LxzJSK5yb5WkFFLT/j4BuVoI+0sxxkgoA8dmb2cNURRPK+
+VrhAegWp3ToX4IqUcw8cyWs=
 -----END PRIVATE KEY-----""";
 
 const pub_1024 = """-----BEGIN RSA PUBLIC KEY-----
@@ -196,9 +195,11 @@ const text =
 一般采取排除法来锁定核心重难点。把所有的页面可见功能点和隐含功能点列上，以排除法排除独立的关联少的模块。留下的就是重难点的核心要素
 针对每个核心要素搞清楚联系关系，得到最终的功能关系图（业务架构图）""";
 
-const signStr = "qwertyuikjhgfdsa";
+const signStr = "JJDdjIJRq2";
 
-
+const dartSignStr = 'A/J3EEJCqW6qCXNiN/ivgfiLtIzVp7oYxIQmSRMgqp/YkrFrsWqi5/wqUO72+RkE2ABgay2heYjChwkjHQc69TSIrjkrzMvQbDqmKVpds60u2JwrSwzpiTDEiOMmaJpIA/gmyAA6gh/upwDrQe66EtwPlwORLhIvi0uuxe1ngXAsVgQCqizDjzUgayUgpjFy4DdWTZD6qZ3ngCRZnTheyokCq7c9K08Anbt2bUJpsmLyMOel5kX1/BQE1sO9XOs1QfZMjkRs/6mmHBCruO1mQwGHdM6o2lgB6CnrEUOgivSKviuU3G79CmdTHlzqeQJtY4kNfXhJ/e7/FXhc0P8gLw==';
+const pythonSignStr = 'AnPuTlfUqiaBYmVhkVtlTnX2Kofxtxl6TyD27WOLaMlHHgpOO0BjDRfYEGHELpse/mBDU0xBJGv6zfOYT9WPcQyjSAbkwrxezSLeOWdVFZQWc5q1KgIzmAWKT4V4/8AdIEvKYNIlLOiZZJbg+Uczivq7yyGdqZgfrs6qIHQutpqqmDc3+ZRCPLic4NzNjpZRfR8aqOklC2F7rALgjAjDo85uL6KDBjokTXgKuFxn1MZB9lbejUk9w8j8HXy3y2Z6ZrABiz3Dk/RuStZBJfj4A8CAsk7aKGyt03rogVm4xE+ndEWJZDXvF5HKaxhnK6fvFDAfIsL4+qHiFrLiXMKi/g==';
+const goSHA256SignStr = 'df396O0kACD4f6zfLF7Y7P2TNN6K7XrsaWgVmXDlssPq0OZIWjh3PpQHCVBGYniARHUCkHUlsPMkqIAQZ9vKTlgfm66HLiSVm3mCgVe9l0MdSNL5G+iad1ye0tcV8RKxH5qaigK0X7s3HV1vTxOGLUF3PloVffUx3gzFm1BYebf564HmHM3MfeVWkUJFOEgks3vuwiYC1Pnq0Ez+bfjDpcK7ubYN0OKPCx0F6xm666HCqUB0jk07nWUx+69zFMiZbZmZ5JnLQ65QzMuUGnUBpQP8Wl8gDn0s9PKqcNooya2EgmcjWZ9/rTfSRn6tqHGF1GLSAdqR94vMBE+n8eUlOg==';
 Future<void> main() async {
   RSAUtils client = RSAUtils.initRsa(web_pub, web_priv);
   // String str = rsaClient.encodeString(text);
@@ -216,15 +217,12 @@ Future<void> main() async {
   // }
   // await yaunshenTest();
 
-  String a = client.encryptRsa(text);
-  print(client.decryptRsa(a) == text);
-
   String s = client.sign(signStr);
   print(s);
-  String x = "QUpxj8SX2qPK8BcwzV3bxm7ZynoNAHCVOjbsBgaf7ZuKLG4eq+tNiBmlyj3xJe12IbD6kWrSWjGlnrWa+tZ6oIRcLCsSkcTWMPwhfHelWzgKO7MqyqfeyPfI/3TVQZqyxvm9Nozx7I6xzgo/KTQNDdSYHAKVZITg6USU17L14Oyl1ILI3pE3tCPBuyaxUXygXKydJRsHgf8OT3tOIQt0pBvN4oILIDZ/HWC0RXglmB+nMu9RsWE3yz2gnkSam/CsT3kaS4GLIouv3Zcu9/CVK3bBkj3IPVcCQ9OcQ5HYf55rfsJbv/A5961Jal8LPB6dFQo5j7GAT3mUQJiMGJeJ1w==";
-  print(x);
   print(client.verify(signStr,s));
-  print(client.verify(signStr,x));
+  print(client.verify(signStr,dartSignStr));
+  print(client.verify(signStr,pythonSignStr));
+  print(client.verify(signStr,goSHA256SignStr));
 
   // String b = base64Encode(rsaClient.decryptByPublicKey(Uint8List.fromList(utf8.encode(a))));
   // print(b);
@@ -240,4 +238,14 @@ yaunshenTest() async {
   final encrypted = encrypter.encrypt(text);
   print(encrypted.base64);
   print(encrypter.decrypt(encrypted));
+}
+
+
+// base64Test(){
+//   const base64Str = "AA0OEwRDFA==";
+//   print(base64.decode(base64Str));
+// }
+
+encodeSignStrTest(){
+  print(convert.utf8.encode(signStr));
 }

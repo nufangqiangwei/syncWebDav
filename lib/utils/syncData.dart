@@ -1,5 +1,4 @@
 import 'package:sync_webdav/Net/myServer.dart';
-import 'package:sync_webdav/common/Global.dart';
 import '../common/passwordUtils.dart';
 import '../model/JsonModel.dart';
 import '../pkg/save/model.dart';
@@ -33,9 +32,8 @@ for (var remoteWebSite in response) {
       }
       updateData.add(localValue);
     }else {
-      print(remoteWebSite.toJson());
       insertData.add(PassWord.fromMap(
-          {"WebKey": remoteWebSite.webKey,
+          {"webKey": remoteWebSite.webKey,
             "value":remoteWebSite.webData,
             "isModify":false,
             "isEncryption":true,

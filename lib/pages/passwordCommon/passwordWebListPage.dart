@@ -78,6 +78,7 @@ class _WebSitePageState extends State<WebSitePage> {
                   constraints: BoxConstraints(maxWidth: maxWidth - 90),
                   child: InkWell(
                     onTap: () {
+                      PassWordDataController.pageChange.value = 'account';
                       PassWordDataController.switchToWebSite(widget.web);
                     },
                     child: Row(

@@ -84,7 +84,18 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
       ) async {
     try {
       assert(key == this);
-
+      if(key.url==""){
+        if(errorAssetsImage!=""){
+          var file = File(errorAssetsImage);
+          bool exist = await file.exists();
+          if (!exist) {
+            throw AssertionError('$errorAssetsImage 文件不存在');
+          }
+          final Uint8List bytes = await file.readAsBytes();
+          return await PaintingBinding.instance.instantiateImageCodec(bytes);
+        }
+        throw AssertionError("图片地址与静态文件地址均未指定");
+      }
       /// 如果本地缓存过图片，直接返回图片
       if (isLocalCache == true && globalParams.cachePath != "") {
         final Uint8List? bytes = await CacheFile.getImageFromLocal(key.url);
@@ -181,9 +192,33 @@ class _DefaultWebSiteIcon extends State<DefaultWebSiteIcon>{
   @override
   Widget build(BuildContext context) {
     return Image(image: MyLocalCacheNetworkImage(
-      widget.url,errorAssetsImage:"assets/icons/defaultWebsite.ico"
+      widget.url,errorAssetsImage:"assets/icons/defaultWebsite.ico",isLocalCache:true
     ));
   }
 
 }
 
+class DefaultUserIcon extends StatefulWidget{
+  const DefaultUserIcon({Key? key,
+    required this.url,
+    this.width,
+    this.height,
+    this.fit,
+  }) : super(key: key);
+
+  final String url ;
+  final double? width;
+  final double? height;
+  final BoxFit? fit;
+  @override
+  State<StatefulWidget> createState() =>_DefaultUserIcon();
+}
+class _DefaultUserIcon extends State<DefaultUserIcon>{
+  @override
+  Widget build(BuildContext context) {
+    return Image(image: MyLocalCacheNetworkImage(
+        widget.url,errorAssetsImage:"assets/icons/defaultUser.png",isLocalCache:true
+    ));
+  }
+
+}

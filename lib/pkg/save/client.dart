@@ -258,7 +258,6 @@ class DB {
     } else if (Platform.isFuchsia) {
       throw ("未知的平台");
     }
-    print("本地文件路径：$filePath");
     File f = File(filePath);
     if (!await f.exists()) {
       await f.create();
