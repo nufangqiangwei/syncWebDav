@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sync_webdav/common/Global.dart';
 
 import '../utils/cacheFile.dart';
@@ -86,13 +87,7 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
       assert(key == this);
       if(key.url==""){
         if(errorAssetsImage!=""){
-          var file = File(errorAssetsImage);
-          bool exist = await file.exists();
-          if (!exist) {
-            throw AssertionError('$errorAssetsImage 文件不存在');
-          }
-          final Uint8List bytes = await file.readAsBytes();
-          return await PaintingBinding.instance.instantiateImageCodec(bytes);
+          return await PaintingBinding.instance.instantiateImageCodecFromBuffer(await rootBundle.loadBuffer(errorAssetsImage));
         }
         throw AssertionError("图片地址与静态文件地址均未指定");
       }
@@ -115,13 +110,7 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
       if (response.statusCode != HttpStatus.ok) {
         // 请求出错，展示本地的静态文件
         if(errorAssetsImage != ""){
-          var file = File(errorAssetsImage);
-          bool exist = await file.exists();
-          if (!exist) {
-              throw AssertionError('$errorAssetsImage 文件不存在');
-          }
-          final Uint8List bytes = await file.readAsBytes();
-          return await PaintingBinding.instance.instantiateImageCodec(bytes);
+          return await PaintingBinding.instance.instantiateImageCodecFromBuffer(await rootBundle.loadBuffer(errorAssetsImage));
         }
         throw NetworkImageLoadException(statusCode: response.statusCode, uri: resolved);
       }
