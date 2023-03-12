@@ -23,7 +23,7 @@ getEncryptStr(Map<String, dynamic> requestData) {
 }
 
 // 'https://ouliguojiashengsiyi.xyz/'
-const webHost = 'http://127.0.0.1:5000';
+const webHost = 'http://123.207.213.25';
 const webPathPrefix = '';
 
 register(String userPubKey, String encryptStr) async {
