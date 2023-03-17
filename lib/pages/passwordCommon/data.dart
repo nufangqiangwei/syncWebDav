@@ -1,17 +1,19 @@
 import 'package:flutter/cupertino.dart';
+import 'package:isar/isar.dart';
 import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/model/JsonModel.dart';
 
 import '../../common/passwordUtils.dart';
-import '../../pkg/save/client.dart';
-import '../../pkg/save/model.dart';
+// import '../../pkg/save/client.dart';
+// import '../../pkg/save/model.dart';
+import '../../model/dbModel.dart';
 import '../../utils/modifyData.dart';
 
 class _WebSiteAccountData {
   _WebSiteAccountData();
 
-  late WebSite selectWebSite= WebSite.fromMap({});
-  late PassWord webSiteData= PassWord.fromMap({});
+  late WebSite selectWebSite;
+  late PassWord webSiteData;
   late int selectIndex = -1;
   late List<AccountData> decodeData=[];
   late AccountData accountData = AccountData('', '');
@@ -83,12 +85,12 @@ class PassWordDataController{
   }
 
   static switchToWebSite(WebSite webSite) async{
-    _data.webSiteData = await Store()
-        .select([PassWordModel.webKey.equal(webSite.webKey)])
-        .from(PassWordModel())
-        .lastModel() as PassWord;
-    if (_data.webSiteData.webKey == ''){
+    PassWord? queryData =
+      await DB.getInstance().orm.passWords.filter().webKeyEqualTo(webSite.webKey).findFirst();
+    if (queryData == null){
+      _data.webSiteData = PassWord();
       _data.webSiteData.webKey = webSite.webKey;
+      _data.webSiteData.version = 0;
     }
     _data.decodeData = await decodePassword(_data.webSiteData);
     _data.selectWebSite = webSite;
@@ -137,14 +139,9 @@ class PassWordDataController{
     }
 
     _data.webSiteData.version = _data.webSiteData.version + 1;
-    bool isNewData = _data.webSiteData.value == '';
     _data.webSiteData.isModify = true;
     PassWord encodeData = await encodePassword(_data.webSiteData, _data.decodeData);
-    if (isNewData) {
-      await Store().insert(modelData: encodeData);
-    } else {
-      await Store().update(modelData: encodeData);
-    }
+    _data.webSiteData.id = await DB.getInstance().orm.passWords.put(encodeData);
     _data.webSiteData = encodeData;
     // 上传到服务器
     uploadData("password");

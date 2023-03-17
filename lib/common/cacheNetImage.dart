@@ -87,7 +87,16 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
       assert(key == this);
       if(key.url==""){
         if(errorAssetsImage!=""){
-          return await PaintingBinding.instance.instantiateImageCodecFromBuffer(await rootBundle.loadBuffer(errorAssetsImage));
+          ByteData? data;
+          try {
+            data = await rootBundle.load(errorAssetsImage);
+          } on FlutterError {
+            rethrow;
+          }
+          if (data == null) {
+            throw StateError('Unable to read data');
+          }
+          return decode(data.buffer.asUint8List());
         }
         throw AssertionError("图片地址与静态文件地址均未指定");
       }
@@ -110,7 +119,16 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
       if (response.statusCode != HttpStatus.ok) {
         // 请求出错，展示本地的静态文件
         if(errorAssetsImage != ""){
-          return await PaintingBinding.instance.instantiateImageCodecFromBuffer(await rootBundle.loadBuffer(errorAssetsImage));
+          ByteData? data;
+          try {
+            data = await rootBundle.load(errorAssetsImage);
+          } on FlutterError {
+            rethrow;
+          }
+          if (data == null) {
+            throw StateError('Unable to read data');
+          }
+          return decode(data.buffer.asUint8List());
         }
         throw NetworkImageLoadException(statusCode: response.statusCode, uri: resolved);
       }

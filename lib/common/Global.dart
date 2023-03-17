@@ -2,15 +2,17 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sync_webdav/common/staticVariable.dart';
-import '../pkg/save/client.dart';
-import '../pkg/save/model.dart';
+// import '../pkg/save/client.dart';
+// import '../pkg/save/model.dart';
 import '../utils/rsaUtils.dart';
+import '../model/dbModel.dart';
 
 class GlobalParams extends ChangeNotifier {
   final Map<String, List<VoidCallback>> _fieldCallback = {};
-  late SysConfig _sysConfig = SysConfig.fromMap({"userId": -1});
+  late SysConfig _sysConfig;
 
   // web Setting params
   int get userId => _sysConfig.userId;
@@ -64,18 +66,21 @@ class GlobalParams extends ChangeNotifier {
   }
 
   refreshWebSiteList() async {
-    List<DbValue> queryData = await Store().from(WebSiteModel()).all();
-    if (queryData is List<WebSite>) {
+    List<WebSite?> queryData = await DB.getInstance().orm.webSites.where().findAll();
+    if (queryData.isNotEmpty && queryData is List<WebSite>) {
       _webSiteList = queryData;
-    }
-    if (_webSiteList.isEmpty) {
-      _webSiteList = InitWebData;
     }
   }
 
   getUserInfo() async {
-    SysConfig config =
-        await Store().from(SysConfigModel()).getModel() as SysConfig;
+    // SysConfig config =
+    //     await Store().from(SysConfigModel()).getModel() as SysConfig;
+    SysConfig? config = await  DB.getInstance().orm.sysConfigs.get(0);
+    if (config == null) {
+      config = SysConfig();
+      config.id =
+      await DB.getInstance().orm.sysConfigs.put(config);
+    }
     _sysConfig = config;
   }
 
@@ -90,12 +95,12 @@ class GlobalParams extends ChangeNotifier {
     _sysConfig.userId = userId;
     _sysConfig.webRsaPub = webPubKey;
     _sysConfig.encryptStr = encryptStr;
-    await Store().update(modelData: _sysConfig);
+    await DB.getInstance().orm.sysConfigs.put(_sysConfig);
   }
 
   setWebInfo(int passwordVersion) async {
     _sysConfig.passwordVersion = passwordVersion;
-    await Store().update(modelData: _sysConfig);
+    await DB.getInstance().orm.sysConfigs.put(_sysConfig);
     //////////////////////////////
     this.passwordVersion = passwordVersion;
   }
@@ -103,7 +108,7 @@ class GlobalParams extends ChangeNotifier {
   setUserRsaKey(String pubKey, String priKey)async {
     _sysConfig.userRsaPub = pubKey;
     _sysConfig.userRsaPri = priKey;
-    await Store().update(modelData: _sysConfig);
+    await DB.getInstance().orm.sysConfigs.put(_sysConfig);
   }
 
   clearUserInfo() {}

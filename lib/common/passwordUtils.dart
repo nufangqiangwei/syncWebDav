@@ -1,11 +1,14 @@
 import 'dart:convert';
 
 import 'package:sync_webdav/model/JsonModel.dart';
-import '../pkg/save/model.dart';
-
+// import '../pkg/save/model.dart';
+import '../model/dbModel.dart';
 import 'Global.dart';
 
-Future<List<AccountData>> decodePassword(PassWord data) async {
+Future<List<AccountData>> decodePassword(PassWord? data) async {
+  if (data == null){
+    return [];
+  }
   String s = "";
   if (data.value == '') {
     return [];
