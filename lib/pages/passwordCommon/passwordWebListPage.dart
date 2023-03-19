@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:sync_webdav/pages/passwordCommon/passwordUtils.dart';
 
 import '../../common/cacheNetImage.dart';
-import '../../pkg/save/model.dart';
+// import '../../pkg/save/model.dart';
+import '../../model/dbModel.dart';
 import '../drawer.dart';
 import './searchPage.dart';
 import 'data.dart';

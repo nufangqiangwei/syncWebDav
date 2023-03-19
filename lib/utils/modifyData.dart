@@ -1,9 +1,10 @@
+import 'package:isar/isar.dart';
 import 'package:sync_webdav/Net/myServer.dart';
 import 'package:sync_webdav/common/Global.dart';
-import '../pkg/save/client.dart';
-import '../pkg/save/model.dart';
+// import '../pkg/save/client.dart';
+// import '../pkg/save/model.dart';
 import '../../utils/log.dart';
-
+import '../model/dbModel.dart';
 Future<String?> uploadData(String tableName) async {
   if (globalParams.userId == -1) {
     return null;
@@ -13,17 +14,25 @@ Future<String?> uploadData(String tableName) async {
     if (tableName == "password") {
       data = await uploadPasswordData();
     } else if (tableName == "notebook") {
-      data = await Store().select([NoteBookModel.isModify.equal(true)]).all();
+      data = [];
     } else {
       throw "错误的表名 $tableName";
     }
     await pushDataToServer(data, tableName);
     if (tableName == "password") {
-      await Store().select([PassWordModel.isModify.equal(true)]).update(
-          jsonData: {"isModify": false});
+      List<PassWord?> q = await DB.getInstance().orm.passWords.filter().isModifyEqualTo(true).findAll();
+      List<PassWord> saveData = [];
+      for(var i in q){
+        if (i != null){
+          i.isModify = false;
+          saveData.add(i);
+        }
+      }
+      await DB.getInstance().orm.writeTxn(() async {
+        await DB.getInstance().orm.passWords.putAll(saveData);
+      });
+
     } else {
-      await Store().select([NoteBookModel.isModify.equal(true)]).update(
-          jsonData: {"isModify": false});
     }
   } catch (e, tr) {
     log!.e("上传备份到服务器出错: ");
@@ -33,8 +42,8 @@ Future<String?> uploadData(String tableName) async {
 }
 
 Future<List<Map<String, String>>> uploadPasswordData() async {
-  List<DbValue> query =
-      await Store().select([PassWordModel.isModify.equal(true)]).all();
+  List<PassWord?> query = await DB.getInstance().orm.passWords.filter().isModifyEqualTo(true).findAll();
+
   // 显示转换列表数据类型
   List<PassWord> queryData = List<PassWord>.from(query);
   List<Map<String, String>> data = [];

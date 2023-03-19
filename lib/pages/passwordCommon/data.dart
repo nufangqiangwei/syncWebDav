@@ -12,8 +12,8 @@ import '../../utils/modifyData.dart';
 class _WebSiteAccountData {
   _WebSiteAccountData();
 
-  late WebSite selectWebSite;
-  late PassWord webSiteData;
+  late WebSite selectWebSite=WebSite();
+  late PassWord webSiteData=PassWord();
   late int selectIndex = -1;
   late List<AccountData> decodeData=[];
   late AccountData accountData = AccountData('', '');
@@ -91,6 +91,8 @@ class PassWordDataController{
       _data.webSiteData = PassWord();
       _data.webSiteData.webKey = webSite.webKey;
       _data.webSiteData.version = 0;
+    }else{
+      _data.webSiteData = queryData;
     }
     _data.decodeData = await decodePassword(_data.webSiteData);
     _data.selectWebSite = webSite;
@@ -141,7 +143,10 @@ class PassWordDataController{
     _data.webSiteData.version = _data.webSiteData.version + 1;
     _data.webSiteData.isModify = true;
     PassWord encodeData = await encodePassword(_data.webSiteData, _data.decodeData);
-    _data.webSiteData.id = await DB.getInstance().orm.passWords.put(encodeData);
+    await DB.getInstance().orm.writeTxn(() async {
+      _data.webSiteData.id = await DB.getInstance().orm.passWords.put(encodeData);
+    });
+
     _data.webSiteData = encodeData;
     // 上传到服务器
     uploadData("password");

@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:provider/provider.dart';
-import 'package:sync_webdav/pkg/save/client.dart';
 import 'package:sync_webdav/utils/log.dart';
 import 'package:sync_webdav/utils/route.dart';
 
 import 'common/Global.dart';
+import 'model/dbModel.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await initLog();
   // await  initDatabase();
-  await DB.getInstance().init();
+  await globalParams.getCachePath();
+  await DB.getInstance().openOrm();
   await globalParams.initAppConfig();
   runApp(
     MultiProvider(

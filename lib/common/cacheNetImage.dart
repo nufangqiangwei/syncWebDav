@@ -117,6 +117,7 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
       });
       final HttpClientResponse response = await request.close();
       if (response.statusCode != HttpStatus.ok) {
+        print(response.statusCode);
         // 请求出错，展示本地的静态文件
         if(errorAssetsImage != ""){
           ByteData? data;

@@ -31,7 +31,7 @@ class GlobalParams extends ChangeNotifier {
   late int lastPushTime = 0;
   late int passwordVersion = 0;
   late String cachePath = '';
-
+  late String dbPath='';
   // webSite params
   late List<WebSite> _webSiteList = [];
   late double windowsWith = 0;
@@ -42,20 +42,26 @@ class GlobalParams extends ChangeNotifier {
   Future<bool> initAppConfig() async {
     // Store();
     sleep(const Duration(seconds: 1));
-    await getCachePath();
+    // await getCachePath();
     await getUserInfo();
     await refreshWebSiteList();
     await loadRsaClient();
     return true;
   }
 
+  // 保证在最开始启动程序的时候就初始化缓存文件地址，后续初始化orm的时候需要指定这个文件地址使用。
   getCachePath() async {
     if (kIsWeb) {
       throw ("未知的web平台");
-    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      cachePath = (await getApplicationDocumentsDirectory()).path+"/myAggregationApp";
-    } else if (Platform.isAndroid || Platform.isIOS) {
+    } else if (Platform.isAndroid){
       cachePath = (await getTemporaryDirectory()).path+"/myAggregationApp";
+      dbPath = (await getApplicationSupportDirectory()).path;
+    }else if (Platform.isWindows || Platform.isLinux ) {
+      cachePath = (await getApplicationDocumentsDirectory()).path+"/myAggregationApp";
+      dbPath = (await getApplicationSupportDirectory()).path;
+    } else if (Platform.isIOS || Platform.isMacOS) {
+      cachePath = (await getTemporaryDirectory()).path+"/myAggregationApp";
+      dbPath = (await getLibraryDirectory()).path;
     } else if (Platform.isFuchsia) {
       throw ("未知的平台");
     }
@@ -63,25 +69,43 @@ class GlobalParams extends ChangeNotifier {
     if(!await directory.exists()){
       await directory.create();
     }
+    print("缓存文件地址：$cachePath ， 数据库文件储存地址：$dbPath");
   }
 
   refreshWebSiteList() async {
     List<WebSite?> queryData = await DB.getInstance().orm.webSites.where().findAll();
     if (queryData.isNotEmpty && queryData is List<WebSite>) {
       _webSiteList = queryData;
+    }else{
+      for (var i in InitWebData){
+        _webSiteList.add(
+          WebSite()
+              ..icon=i['icon']??""
+              ..url=i['url']??""
+              ..webKey=i['webKey']??""
+              ..name=i['name']??""
+        );
+      }
+
     }
   }
 
   getUserInfo() async {
     // SysConfig config =
     //     await Store().from(SysConfigModel()).getModel() as SysConfig;
-    SysConfig? config = await  DB.getInstance().orm.sysConfigs.get(0);
+    SysConfig? config = await  DB.getInstance().orm.sysConfigs.get(1);
     if (config == null) {
-      config = SysConfig();
-      config.id =
-      await DB.getInstance().orm.sysConfigs.put(config);
+      await DB.getInstance().orm.writeTxn(() async {
+        _sysConfig = SysConfig();
+        _sysConfig.userId=-1;
+        _sysConfig.id =
+        await DB.getInstance().orm.sysConfigs.put(_sysConfig);
+      });
+
+    }else{
+      _sysConfig = config;
     }
-    _sysConfig = config;
+
   }
 
   loadRsaClient() async {
@@ -95,12 +119,17 @@ class GlobalParams extends ChangeNotifier {
     _sysConfig.userId = userId;
     _sysConfig.webRsaPub = webPubKey;
     _sysConfig.encryptStr = encryptStr;
-    await DB.getInstance().orm.sysConfigs.put(_sysConfig);
+    await DB.getInstance().orm.writeTxn(() async {
+      await DB.getInstance().orm.sysConfigs.put(_sysConfig);
+    });
+
   }
 
   setWebInfo(int passwordVersion) async {
     _sysConfig.passwordVersion = passwordVersion;
-    await DB.getInstance().orm.sysConfigs.put(_sysConfig);
+    await DB.getInstance().orm.writeTxn(() async {
+      await DB.getInstance().orm.sysConfigs.put(_sysConfig);
+    });
     //////////////////////////////
     this.passwordVersion = passwordVersion;
   }
@@ -108,7 +137,9 @@ class GlobalParams extends ChangeNotifier {
   setUserRsaKey(String pubKey, String priKey)async {
     _sysConfig.userRsaPub = pubKey;
     _sysConfig.userRsaPri = priKey;
-    await DB.getInstance().orm.sysConfigs.put(_sysConfig);
+    await DB.getInstance().orm.writeTxn(() async {
+      await DB.getInstance().orm.sysConfigs.put(_sysConfig);
+    });
   }
 
   clearUserInfo() {}

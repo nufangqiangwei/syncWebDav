@@ -2,7 +2,7 @@
 import 'package:dio/dio.dart';
 import 'package:sync_webdav/common/Global.dart';
 import '../model/JsonModel.dart';
-import '../pkg/save/model.dart';
+import 'package:sync_webdav/model/dbModel.dart';
 import '../utils/rsaUtils.dart';
 
 getEncryptStr(Map<String, dynamic> requestData) {
@@ -23,7 +23,7 @@ getEncryptStr(Map<String, dynamic> requestData) {
 }
 
 // 'https://ouliguojiashengsiyi.xyz/'
-const webHost = 'http://123.207.213.25';
+const webHost = 'http://127.0.0.1';
 const webPathPrefix = '';
 
 register(String userPubKey, String encryptStr) async {
@@ -42,7 +42,12 @@ Future<List<WebSite>> getWebSiteList() async {
   var webSiteList = response.data?['data'] as List<dynamic>;
   List<WebSite> result = [];
   for (var i = 0; i < webSiteList.length; i++) {
-    result.add(WebSite.fromMap(webSiteList[i]));
+    WebSite a = WebSite()
+    ..icon = webSiteList[i]["icon"]
+    ..name = webSiteList[i]["name"]
+    ..webKey = webSiteList[i]["webKey"]
+    ..url = webSiteList[i]["url"];
+    result.add(a);
   }
   return result;
 }

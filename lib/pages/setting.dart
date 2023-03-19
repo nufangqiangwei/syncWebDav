@@ -4,13 +4,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
+import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:settings_ui/settings_ui.dart';
 import 'package:sync_webdav/Net/myServer.dart';
 import 'package:sync_webdav/common/Global.dart';
 import 'package:sync_webdav/common/encryption.dart';
-import 'package:sync_webdav/pkg/save/model.dart';
 import 'package:sync_webdav/utils/components.dart';
 import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:group_button/group_button.dart';
@@ -19,7 +19,7 @@ import 'dart:io';
 
 import 'package:sync_webdav/utils/modifyData.dart';
 
-import '../pkg/save/client.dart';
+import 'package:sync_webdav/model/dbModel.dart';
 import '../utils/rsaUtils.dart';
 import '../utils/syncData.dart';
 
@@ -351,23 +351,24 @@ class _UserSettingPageState extends State<UserSettingPage> {
 
     RSAUtils newRsaClient = RSAUtils.initRsa(pubController.text, priController.text);
     // todo 替换 password 表中的数据
-    List<DbValue> dbData =await Store().from(PassWordModel()).all();
-    if (dbData is List<PassWord>){
-      for (final da in dbData) {
-        if (da.isEncryption) {
-          da.value = newRsaClient
-              .encryptRsa(globalParams.userRSA.decryptRsa(da.value));
-        } else {
-          da.value = newRsaClient.encryptRsa(da.value);
-          da.isEncryption = true;
-        }
+    List<PassWord> dbData = await DB.getInstance().orm.passWords.where().findAll();
+    for (final da in dbData) {
+      if (da.isEncryption) {
+        da.value = newRsaClient
+            .encryptRsa(globalParams.userRSA.decryptRsa(da.value));
+      } else {
+        da.value = newRsaClient.encryptRsa(da.value);
+        da.isEncryption = true;
       }
     }
+
 
     await globalParams.setUserRsaKey(pubController.text,priController.text);
 
     await globalParams.loadRsaClient();
-    await Store().updateAll(dbData);
+    await DB.getInstance().orm.writeTxn(() async {
+      await DB.getInstance().orm.passWords.putAll(dbData);
+    });
     if (ModalRoute.of(context)?.settings.name=="/userSetting"){
       SmartDialog.show(
         tag: "modifyKeyTitle",
@@ -670,12 +671,13 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
       );
       return ;
     }
-    List<DbValue> localWebSiteList = await Store().from(WebSiteModel()).all();
-    if(localWebSiteList is! List<WebSite>) return ;
+    List<WebSite> localWebSiteList = await DB.getInstance().orm.webSites.where().findAll();
 
     var result = differenceList<WebSite>(remoteWebSiteList,localWebSiteList,func: (WebSite data){return data.name;});
     if (result.right.isNotEmpty){
-      Store().insertAll(modelData:result.right);
+      await DB.getInstance().orm.writeTxn(() async {
+        await DB.getInstance().orm.webSites.putAll(result.right);
+      });
       globalParams.refreshWebSiteList();
     }
 
@@ -717,7 +719,7 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
 
   outPassWordData(BuildContext context) async {
     String path = selectFolder(context);
-    List<PassWord> localData = await Store().from(PassWordModel()).all() as List<PassWord>;
+    List<PassWord> localData = await DB.getInstance().orm.passWords.where().findAll();
 
     Map<String, String> jsonData = {};
     for (var i = 0; i < localData.length; i++) {

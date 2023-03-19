@@ -8,9 +8,7 @@ void main() {
   // String name = "package:pathpathdart";
   // String extensionName = name.split('/').last.split('.').last;
   // print(extensionName);
-  for (final i in InitWebData) {
-    print(i.icon);
-  }
+
 }
 
 

@@ -1,8 +1,11 @@
+import 'package:isar/isar.dart';
 import 'package:sync_webdav/Net/myServer.dart';
 import '../common/passwordUtils.dart';
 import '../model/JsonModel.dart';
-import '../pkg/save/model.dart';
-import '../pkg/save/client.dart';
+
+// import '../pkg/save/model.dart';
+// import '../pkg/save/client.dart';
+import '../model/dbModel.dart';
 
 // 同步到最新版本的数据
 Future<bool> syncPasswordVersion() async {
@@ -12,43 +15,46 @@ Future<bool> syncPasswordVersion() async {
   } catch (e) {
     return false;
   }
-  List<DbValue> queryData  = await Store().from(PassWordModel()).all();
-  Map <String,PassWord>localData={};
+  List<PassWord?> queryData =
+      await DB.getInstance().orm.passWords.where().findAll();
+  Map<String, PassWord> localData = {};
   for (var item in queryData) {
     item as PassWord;
     localData[item.webKey] = item;
   }
   List<PassWord> insertData = [];
   List<PassWord> updateData = [];
-  List<Map<String, String>> updateWeb = [];// 需要上传到服务器的数据
-for (var remoteWebSite in response) {
+  List<Map<String, String>> updateWeb = []; // 需要上传到服务器的数据
+  for (var remoteWebSite in response) {
     PassWord? localValue = localData.remove(remoteWebSite.webKey);
-    if(localValue != null) {
+    if (localValue != null) {
       // 更新
-      if(await _checkRemoteData(localValue, remoteWebSite.webData)){
-        updateWeb.add(
-            {"webKey": localValue.webKey, "fromData": localValue.value}
-        );
+      if (await _checkRemoteData(localValue, remoteWebSite.webData)) {
+        updateWeb
+            .add({"webKey": localValue.webKey, "fromData": localValue.value});
       }
       updateData.add(localValue);
-    }else {
-      insertData.add(PassWord.fromMap(
-          {"webKey": remoteWebSite.webKey,
-            "value":remoteWebSite.webData,
-            "isModify":false,
-            "isEncryption":true,
-          }
-      ));
+    } else {
+      PassWord a = PassWord()
+        ..webKey = remoteWebSite.webKey
+        ..value = remoteWebSite.webData
+        ..isModify = false
+        ..isEncryption = true;
+      insertData.add(a);
     }
   }
-  Store db = Store().from(PassWordModel());
-  if(insertData.isNotEmpty) {
-    await db.insertAll(modelData:insertData);
+
+  if (insertData.isNotEmpty) {
+    await DB.getInstance().orm.writeTxn(() async {
+      await DB.getInstance().orm.passWords.putAll(insertData);
+    });
   }
-  if(updateData.isNotEmpty) {
-    await db.updateAll(updateData);
+  if (updateData.isNotEmpty) {
+    await DB.getInstance().orm.writeTxn(() async {
+      await DB.getInstance().orm.passWords.putAll(updateData);
+    });
   }
-  if(updateWeb.isNotEmpty) {
+  if (updateWeb.isNotEmpty) {
     // 上传本地比线上还新的数据
     await pushDataToServer(updateWeb, 'password');
   }
@@ -71,39 +77,40 @@ for (var remoteWebSite in response) {
 // }
 
 // 对比账号最后修改时间，本地数据可能比线上新
-Future<bool> _checkRemoteData(PassWord local,String remote)async{
+Future<bool> _checkRemoteData(PassWord local, String remote) async {
   List<AccountData> localPassword = await decodePassword(local);
-  List<AccountData> remotePassword = await decodePassword(PassWord.fromMap(
-      {"value": remote,"isEncryption":true}));
+  PassWord remoteData = PassWord()
+  ..value=remote
+  ..isEncryption=true;
+  List<AccountData> remotePassword = await decodePassword(remoteData);
   List<AccountData> mergeAccountList = [];
-  bool mustUpdateRemote=false;
-  Map<String,AccountData> localPasswordDict = {};
-  Map<String,AccountData> remotePasswordDict = {};
-  for(var i in localPassword){
+  bool mustUpdateRemote = false;
+  Map<String, AccountData> localPasswordDict = {};
+  Map<String, AccountData> remotePasswordDict = {};
+  for (var i in localPassword) {
     localPasswordDict[i.userName] = i;
   }
-  for(var i in remotePassword){
+  for (var i in remotePassword) {
     remotePasswordDict[i.userName] = i;
   }
-  for(var i in localPasswordDict.entries){
+  for (var i in localPasswordDict.entries) {
     String userName = i.key;
     AccountData localValue = i.value;
     AccountData? remoteValue = remotePasswordDict.remove(userName);
-    if(remoteValue != null){
-      if(localValue.lastModifyTime > remoteValue.lastModifyTime){
+    if (remoteValue != null) {
+      if (localValue.lastModifyTime > remoteValue.lastModifyTime) {
         // 本地数据比线上数据新，需要上传到线上
         mergeAccountList.add(localValue);
         mustUpdateRemote = true;
-      }else if(localValue.lastModifyTime <= remoteValue.lastModifyTime){
+      } else if (localValue.lastModifyTime <= remoteValue.lastModifyTime) {
         // 线上数据比本地新，保存为线上的数据
         mergeAccountList.add(remoteValue);
       }
-    }else{
+    } else {
       // 线上不存在的账号，不做修改
       mergeAccountList.add(localValue);
     }
   }
-  await encodePassword(local,mergeAccountList);
+  await encodePassword(local, mergeAccountList);
   return mustUpdateRemote;
 }
-
