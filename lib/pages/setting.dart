@@ -324,8 +324,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
       return;
     }
     // 准备替换密钥
-    SmartDialog.show(
-      tag: "modifyKeyTitle",
+    await SmartDialog.show<bool>(
       alignment: Alignment.center,
       builder: (_) {
         return AlertDialog(
@@ -340,11 +339,12 @@ class _UserSettingPageState extends State<UserSettingPage> {
             ]);
       },
     );
+    SmartDialog.showLoading();
     // 校验密钥是否正确
     if (!await examineKey()) {
       // 关闭之前的弹窗
-      await Future.delayed(const Duration(seconds: 5));
-      SmartDialog.dismiss(tag: "modifyKeyTitle");
+      // await Future.delayed(const Duration(seconds: 5));
+      SmartDialog.dismiss();
       promptDialog(context, "密钥不正确，请检查密钥是否完整填写");
       return;
     }
@@ -369,25 +369,23 @@ class _UserSettingPageState extends State<UserSettingPage> {
     await DB.getInstance().orm.writeTxn(() async {
       await DB.getInstance().orm.passWords.putAll(dbData);
     });
-    if (ModalRoute.of(context)?.settings.name=="/userSetting"){
-      SmartDialog.show(
-        tag: "modifyKeyTitle",
-        alignment: Alignment.center,
-        builder: (_) {
-          return AlertDialog(
-              title: const Text("提示"),
-              content: const Text("修改成功"),
-              actions: <Widget>[
-                TextButton(
-                    child: const Text("确定"),
-                    onPressed: () {
-                      SmartDialog.dismiss();
-                    })
-              ]);
-        },
-      );
-    }
-
+    SmartDialog.dismiss();
+    SmartDialog.show(
+      tag: "modifyKeyTitle",
+      alignment: Alignment.center,
+      builder: (_) {
+        return AlertDialog(
+            title: const Text("提示"),
+            content: const Text("修改成功"),
+            actions: <Widget>[
+              TextButton(
+                  child: const Text("确定"),
+                  onPressed: () {
+                    SmartDialog.dismiss();
+                  })
+            ]);
+      },
+    );
   }
 
   String butterText() {
@@ -405,7 +403,7 @@ class _UserSettingPageState extends State<UserSettingPage> {
   }
 
   logoutServer() async {
-    globalParams.clearUserInfo();
+    await globalParams.clearUserInfo();
     setState(() {});
   }
 
@@ -420,7 +418,15 @@ class _UserSettingPageState extends State<UserSettingPage> {
     if (globalParams.encryptStr == "") {
       globalParams.encryptStr = getRandomPassword(16);
     }
-    await register(globalParams.publicKeyStr, globalParams.encryptStr);
+    SmartDialog.showLoading();
+    try{
+      await register(globalParams.publicKeyStr, globalParams.encryptStr);
+    }catch(e){
+      SmartDialog.dismiss();
+      SmartDialog.showToast("网站请求失败");
+      return ;
+    }
+    SmartDialog.dismiss();
     setState(() {});
     promptDialog(context, "登录成功");
   }
@@ -734,6 +740,7 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
   }
 
   uploadDataToServer(BuildContext context) async {
+    SmartDialog.showLoading();
     List<String> uploadList = ["password"];
     aa(String type) async {
       String? err = await uploadData(type);
@@ -760,6 +767,7 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
     for (int i = 0; i < uploadList.length; i++) {
       await aa(uploadList[i]);
     }
+    SmartDialog.dismiss();
   }
 
   @override
@@ -785,12 +793,16 @@ class _DatabaseSettingPageState extends State<DatabaseSettingPage> {
                 },
               ),
               SettingsTile.navigation(
-                title: const Text("密码数据备份到服务器"),
+                title: const Text("上传密码数据"),
                 onPressed: uploadDataToServer,
               ),
               SettingsTile.navigation(
-                title: const Text("下载服务器密码数据"),
-                onPressed: (context){syncPasswordVersion();},
+                title: const Text("下载密码数据"),
+                onPressed: (context)async{
+                  SmartDialog.showLoading();
+                  await syncPasswordVersion();
+                  SmartDialog.dismiss();
+                  },
               ),
               SettingsTile.navigation(
                 title: const Text("导出到"),

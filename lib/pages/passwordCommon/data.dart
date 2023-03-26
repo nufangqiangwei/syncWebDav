@@ -125,17 +125,21 @@ class PassWordDataController{
     if(_data.accountData.userName == ''){
       return;
     }
-    if(_data.accountData.password == _data.unmodifiedAccountData.password){
+    if(_data.accountData.userName == _data.unmodifiedAccountData.userName &&
+      _data.accountData.password == _data.unmodifiedAccountData.password){
       return;
-    }else{
+    }else if(_data.accountData.userName == _data.unmodifiedAccountData.userName &&
+        _data.accountData.password != _data.unmodifiedAccountData.password){
       _data.accountData.lastUsePassword += " ${_data.unmodifiedAccountData.password}";
       _data.accountData.lastModifyTime =  DateTime.now().millisecondsSinceEpoch;
     }
 
     if(_data.selectIndex<0){
       _data.decodeData.add(_data.accountData);
+      _data.selectIndex = _data.decodeData.length-1;
     }else if(_data.decodeData.isEmpty){
       _data.decodeData.add(_data.accountData);
+      _data.selectIndex = _data.decodeData.length-1;
     }else{
       _data.decodeData[_data.selectIndex] = _data.accountData;
     }

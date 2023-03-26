@@ -21,6 +21,12 @@ class WebSite  {
   late String url='';
   late String webKey='';
   WebSite([this.icon='', this.name='', this.url='', this.webKey='']);
+
+  @override
+  String toString() {
+    // TODO: implement toString
+    return '$name - $webKey';
+  }
 }
 
 @collection

@@ -134,6 +134,7 @@ class _ViewPageState extends State<ViewPage> {
   String _errorText = '';
   bool isModify = false;
   bool modifyPassword = false;
+  bool _showToast = true;
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController userNameController = TextEditingController();
 
@@ -309,7 +310,24 @@ class _ViewPageState extends State<ViewPage> {
                     border: InputBorder.none,
                   ),
                   readOnly: !isModify,
-                  onChanged: (String value) {},
+                  onChanged: (String value) {
+                    print(passwordController.text);
+                    print(value);
+                    if (value.length<8 || value.length>30){
+                      if (_showToast){
+                        _showToast = false;
+                        SmartDialog.showToast("密码长度应在8-30之间");
+                      }
+                      return ;
+                    }
+                    _sliderValue = passwordController.text.length.toDouble();
+                    passwordLength = passwordController.text.length;
+                    PassWordDataController.setSelectAccountPassword = value;
+                    Future.delayed(const Duration(seconds: 5),(){
+                      _showToast=true;
+                    });
+                    setState(() {});
+                  },
                 ),
               ),
               IconButton(

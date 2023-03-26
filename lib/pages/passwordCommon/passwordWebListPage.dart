@@ -14,38 +14,75 @@ class WebSiteListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<WebSite> webSiteList = PassWordDataController.webSiteList;
     return Theme(
       data: pageThem,
       child: Scaffold(
         appBar: AppBar(
           title: const Text("密码管理"),
         ),
-        body: ListView.builder(
-            itemCount: webSiteList.length + 2,
-            itemBuilder: (BuildContext context, int index) {
-              if (index == 0) {
-                return const Padding(
-                  padding: EdgeInsets.only(right: 15, left: 15, top: 10),
-                  child: SAppBarSearch(),
-                );
-              }
-              if (index == 1) {
-                return const Padding(
-                  padding: EdgeInsets.all(15),
-                  child: SelectGroupBy(),
-                );
-              }
-              return Padding(
-                padding: const EdgeInsets.only(
-                    left: 15, top: 15, right: 15, bottom: 0),
-                child: WebSitePage(web: webSiteList[index - 2]),
-              );
-            }),
+        body: _WebSiteList(),
         drawer: const MyDrawer(),
       ),
     );
   }
+}
+
+
+class _WebSiteList extends StatefulWidget{
+  @override
+  State<_WebSiteList> createState() =>_WebSiteListState();
+
+}
+class _WebSiteListState extends State<_WebSiteList>{
+
+  late  List<WebSite> webSiteList;
+
+  @override
+  initState(){
+    super.initState();
+    webSiteList = PassWordDataController.webSiteList;
+  }
+
+  void searchWeb(String inputText){
+    if (inputText == "") {
+      webSiteList = PassWordDataController.webSiteList;
+    }else{
+      webSiteList =
+      PassWordDataController.webSiteList.where((e) =>e.webKey.contains(inputText) || e.name.contains(inputText)).toList();
+    }
+    if (webSiteList.isNotEmpty) {
+      PassWordDataController.switchToWebSite(webSiteList[0]);
+    }
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+        itemCount: webSiteList.length + 2,
+        itemBuilder: (BuildContext context, int index) {
+          if (index == 0) {
+            return  Padding(
+              padding: const EdgeInsets.only(right: 15, left: 15, top: 10),
+              child: SAppBarSearch(
+                onSearch:searchWeb,
+              ),
+            );
+          }
+          if (index == 1) {
+            return const Padding(
+              padding: EdgeInsets.all(15),
+              child: SelectGroupBy(),
+            );
+          }
+          return Padding(
+            padding: const EdgeInsets.only(
+                left: 15, top: 15, right: 15, bottom: 0),
+            child: WebSitePage(web: webSiteList[index - 2]),
+          );
+        });
+  }
+
 }
 
 class WebSitePage extends StatefulWidget {

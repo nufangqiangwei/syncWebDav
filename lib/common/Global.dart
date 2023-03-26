@@ -142,7 +142,12 @@ class GlobalParams extends ChangeNotifier {
     });
   }
 
-  clearUserInfo() {}
+  clearUserInfo() async{
+    _sysConfig.userId = -1;
+    await DB.getInstance().orm.writeTxn(() async {
+      await DB.getInstance().orm.sysConfigs.put(_sysConfig);
+    });
+  }
 
   listingFieldModify(String fieldName, VoidCallback callback) {
     if (!_fieldCallback.containsKey(fieldName)) {
