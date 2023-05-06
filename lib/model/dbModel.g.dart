@@ -7,7 +7,7 @@ part of 'dbModel.dart';
 // **************************************************************************
 
 // coverage:ignore-file
-// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters
+// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
 
 extension GetSysConfigCollection on Isar {
   IsarCollection<SysConfig> get sysConfigs => this.collection();
@@ -59,7 +59,7 @@ const SysConfigSchema = CollectionSchema(
   getId: _sysConfigGetId,
   getLinks: _sysConfigGetLinks,
   attach: _sysConfigAttach,
-  version: '3.0.5',
+  version: '3.1.0+1',
 );
 
 int _sysConfigEstimateSize(
@@ -1174,7 +1174,7 @@ extension SysConfigQueryProperty
 }
 
 // coverage:ignore-file
-// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters
+// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
 
 extension GetWebSiteCollection on Isar {
   IsarCollection<WebSite> get webSites => this.collection();
@@ -1216,7 +1216,7 @@ const WebSiteSchema = CollectionSchema(
   getId: _webSiteGetId,
   getLinks: _webSiteGetLinks,
   attach: _webSiteAttach,
-  version: '3.0.5',
+  version: '3.1.0+1',
 );
 
 int _webSiteEstimateSize(
@@ -1250,12 +1250,13 @@ WebSite _webSiteDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = WebSite();
-  object.icon = reader.readString(offsets[0]);
+  final object = WebSite(
+    reader.readStringOrNull(offsets[0]) ?? '',
+    reader.readStringOrNull(offsets[1]) ?? '',
+    reader.readStringOrNull(offsets[2]) ?? '',
+    reader.readStringOrNull(offsets[3]) ?? '',
+  );
   object.id = id;
-  object.name = reader.readString(offsets[1]);
-  object.url = reader.readString(offsets[2]);
-  object.webKey = reader.readString(offsets[3]);
   return object;
 }
 
@@ -1267,13 +1268,13 @@ P _webSiteDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -2125,7 +2126,7 @@ extension WebSiteQueryProperty
 }
 
 // coverage:ignore-file
-// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters
+// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
 
 extension GetPassWordCollection on Isar {
   IsarCollection<PassWord> get passWords => this.collection();
@@ -2172,7 +2173,7 @@ const PassWordSchema = CollectionSchema(
   getId: _passWordGetId,
   getLinks: _passWordGetLinks,
   attach: _passWordAttach,
-  version: '3.0.5',
+  version: '3.1.0+1',
 );
 
 int _passWordEstimateSize(
@@ -2205,13 +2206,14 @@ PassWord _passWordDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = PassWord();
+  final object = PassWord(
+    reader.readStringOrNull(offsets[4]) ?? '',
+    reader.readStringOrNull(offsets[2]) ?? '',
+    reader.readLongOrNull(offsets[3]) ?? 0,
+    reader.readBoolOrNull(offsets[1]) ?? false,
+    reader.readBoolOrNull(offsets[0]) ?? false,
+  );
   object.id = id;
-  object.isEncryption = reader.readBool(offsets[0]);
-  object.isModify = reader.readBool(offsets[1]);
-  object.value = reader.readString(offsets[2]);
-  object.version = reader.readLong(offsets[3]);
-  object.webKey = reader.readString(offsets[4]);
   return object;
 }
 
@@ -2223,15 +2225,15 @@ P _passWordDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readBool(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 3:
-      return (reader.readLong(offset)) as P;
+      return (reader.readLongOrNull(offset) ?? 0) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }

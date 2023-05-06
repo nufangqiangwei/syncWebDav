@@ -67,7 +67,12 @@ class MyLocalCacheNetworkImage extends ImageProvider<NetworkImage> implements Ne
   // We set `autoUncompress` to false to ensure that we can trust the value of
   // the `Content-Length` HTTP header. We automatically uncompress the content
   // in our call to [consolidateHttpClientResponseBytes].
-  static final HttpClient _sharedHttpClient = HttpClient()..autoUncompress = false;
+  // 这个 HttpClient 不支持web，得找替代方案
+  static final HttpClient _sharedHttpClient = HttpClient()
+    ..autoUncompress = false
+    ..badCertificateCallback =
+        (X509Certificate cert, String host, int port) => true
+  ;
 
   static HttpClient get _httpClient {
     HttpClient client = _sharedHttpClient;
@@ -200,7 +205,7 @@ class _DefaultWebSiteIcon extends State<DefaultWebSiteIcon>{
   @override
   Widget build(BuildContext context) {
     return Image(image: MyLocalCacheNetworkImage(
-      widget.url,errorAssetsImage:"assets/icons/defaultWebsite.ico",isLocalCache:true
+      widget.url,errorAssetsImage:"assets/icons/defaultWebsite.ico",
     ));
   }
 
@@ -225,7 +230,7 @@ class _DefaultUserIcon extends State<DefaultUserIcon>{
   @override
   Widget build(BuildContext context) {
     return Image(image: MyLocalCacheNetworkImage(
-        widget.url,errorAssetsImage:"assets/icons/defaultUser.png",isLocalCache:true
+        widget.url,errorAssetsImage:"assets/icons/defaultUser.png",
     ));
   }
 

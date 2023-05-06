@@ -72,21 +72,24 @@ class GlobalParams extends ChangeNotifier {
     print("缓存文件地址：$cachePath ， 数据库文件储存地址：$dbPath");
   }
 
+  staticWebSiteData(){
+    for (var i in InitWebData){
+      _webSiteList.add(
+          WebSite()
+            ..icon=i['icon']??""
+            ..url=i['url']??""
+            ..webKey=i['webKey']??""
+            ..name=i['name']??""
+      );
+    }
+  }
+
   refreshWebSiteList() async {
     List<WebSite?> queryData = await DB.getInstance().orm.webSites.where().findAll();
     if (queryData.isNotEmpty && queryData is List<WebSite>) {
       _webSiteList = queryData;
     }else{
-      for (var i in InitWebData){
-        _webSiteList.add(
-          WebSite()
-              ..icon=i['icon']??""
-              ..url=i['url']??""
-              ..webKey=i['webKey']??""
-              ..name=i['name']??""
-        );
-      }
-
+      staticWebSiteData();
     }
   }
 

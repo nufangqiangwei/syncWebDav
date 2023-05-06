@@ -35,7 +35,7 @@ Future<String?> uploadData(String tableName) async {
     } else {
     }
   } catch (e, tr) {
-    log!.e("上传备份到服务器出错: ");
+    // log!.e("上传备份到服务器出错: ");
   }
 
   return null;

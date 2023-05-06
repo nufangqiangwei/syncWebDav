@@ -100,6 +100,10 @@ class PassWordDataController{
     _webSiteModifyCallback.value = !_webSiteModifyCallback.value;
   }
 
+  static addWebSite(WebSite data){
+    globalParams.webSiteList.add(data);
+  }
+
   static selectAccount(int index){
     if (index < 0){
       _data.accountData = AccountData('','');

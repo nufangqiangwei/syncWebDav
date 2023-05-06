@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sync_webdav/common/Global.dart';
-import 'package:sync_webdav/common/passwordUtils.dart';
-import 'package:sync_webdav/model/JsonModel.dart';
 import 'package:sync_webdav/pages/passwordCommon/data.dart';
 import 'package:sync_webdav/pages/passwordCommon/passwordWebListPage.dart';
 import 'package:sync_webdav/pages/passwordCommon/passwordAccountListPage.dart';
 import 'package:sync_webdav/pages/passwordCommon/passwordDetailPage.dart';
-import 'package:sync_webdav/pkg/save/model.dart';
-import 'package:sync_webdav/pkg/save/client.dart';
 
-const double webSiteMaxWidth = 400;
+const double webSiteMaxWidth = 600;
 const double webSiteMinWidth = 500;
 
 const double accountMaxWidth = 600;

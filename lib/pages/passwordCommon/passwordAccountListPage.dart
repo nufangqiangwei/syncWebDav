@@ -43,7 +43,7 @@ class _AccountListPageState extends State<AccountListPage> {
         PassWordDataController.blackPage("detail");
         PassWordDataController.selectAccount(-1);
       },
-      tooltip: 'Increment',
+      tooltip: '添加账号',
       child: const Icon(
         Icons.add,
         color: Colors.white,

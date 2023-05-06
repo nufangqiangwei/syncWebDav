@@ -1,8 +1,10 @@
 // 网站页
 import 'package:flutter/material.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:sync_webdav/pages/passwordCommon/passwordUtils.dart';
 
 import '../../common/cacheNetImage.dart';
+
 // import '../../pkg/save/model.dart';
 import '../../model/dbModel.dart';
 import '../drawer.dart';
@@ -43,14 +45,29 @@ class WebSiteListPage extends StatelessWidget {
               );
             }),
         drawer: const MyDrawer(),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            SmartDialog.show(
+              backDismiss: false,
+              clickMaskDismiss: false,
+                builder:(_){
+                return const AddWebSitePage();
+                },
+            );
+          },
+          tooltip: '添加网站',
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
 }
 
 class WebSitePage extends StatefulWidget {
-  const WebSitePage({required this.web,  Key? key})
-      : super(key: key);
+  const WebSitePage({required this.web, Key? key}) : super(key: key);
   final WebSite web;
 
   @override
@@ -84,19 +101,26 @@ class _WebSitePageState extends State<WebSitePage> {
                     },
                     child: Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: DefaultWebSiteIcon(
-                            url:widget.web.icon,
-                            width: 40,
-                            height: 40,
-                            fit: BoxFit.fill,
-                          ),
+                        const Padding(
+                          padding:  EdgeInsets.symmetric(horizontal: 20),
+                          // child: DefaultWebSiteIcon(
+                          //   url: widget.web.icon,
+                          //   width: 40,
+                          //   height: 40,
+                          //   fit: BoxFit.fill,
+                          // ),
+                            child:Image(
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.fill,
+                              image: AssetImage('assets/icons/defaultWebsite.ico')
+                            )
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           child: ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: maxWidth - 170),
+                            constraints:
+                                BoxConstraints(maxWidth: maxWidth - 170),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -200,6 +224,195 @@ class _SelectGroupBy extends State<SelectGroupBy> {
           ),
         );
       },
+    );
+  }
+}
+
+class AddWebSitePage extends StatefulWidget {
+  const AddWebSitePage({Key? key}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState()=>_AddWebSitePage();
+}
+
+class _AddWebSitePage extends State<AddWebSitePage> {
+  late String _webSiteName = '';
+  late String _webSiteKey = '';
+
+  late String nameErrorText = '';
+  late String keyErrorText = '';
+
+  String _getNameErrorText(){
+    return nameErrorText;
+  }
+  String _getKeyErrorText(){
+    return keyErrorText;
+  }
+
+  save() {
+    print("啊啊啊啊");
+    setState((){
+      nameErrorText = "网站名重复";
+    });
+    for (int i = 0; i <PassWordDataController.webSiteList.length; i++) {
+      if(PassWordDataController.webSiteList[i].name == _webSiteName ) {
+        setState((){
+          nameErrorText = "网站名重复";
+        });
+        return ;
+      }
+      if(PassWordDataController.webSiteList[i].webKey == _webSiteKey) {
+        setState((){
+          keyErrorText = "网站标识重复";
+        });
+        return ;
+      }
+    }
+    PassWordDataController.addWebSite(WebSite('',_webSiteName,'',_webSiteKey));
+    SmartDialog.dismiss();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double windowWidth = MediaQuery.of(context).size.width;
+    double containerWidth = windowWidth * 0.8;
+    if (containerWidth < 500) {
+      containerWidth = 500;
+    }
+    print("组件显示宽度: $containerWidth");
+    return Theme(
+      data:ThemeData(
+        primaryColor:Colors.green,
+      ),
+      child: Container(
+        height: 480,
+        width: 500,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+
+        ),
+        alignment: Alignment.topCenter,
+        child: SingleChildScrollView(
+          child: Wrap(
+            direction: Axis.vertical,
+            crossAxisAlignment: WrapCrossAlignment.start,
+            spacing: 10,
+            children: [
+              const Text("网站名",style: TextStyle(color: Colors.black),),
+              SizedBox(
+                height: 100,
+                width: 400,
+                child: TextField(
+                  style: const TextStyle(
+                    color: black,
+                    fontSize: 20,
+                  ),
+
+                  decoration:  InputDecoration(
+                    contentPadding:const EdgeInsets.all(10.0),
+                    // hintText: "网站名称",
+                    // hintStyle: const TextStyle(
+                    //   color: black,
+                    //   fontSize: 20,
+                    // ),
+                    errorText: _getNameErrorText(),
+                    errorStyle:const TextStyle(
+                      color: black,
+                    ),
+                    border: const OutlineInputBorder(
+                      ///设置边框四个角的弧度
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                      ///用来配置边框的样式
+                      borderSide: BorderSide(
+                        ///设置边框的颜色
+                        color: Colors.blueAccent,
+                        ///设置边框的粗细
+                        width: 5.0,
+                      ),
+                    ),
+                    disabledBorder:const OutlineInputBorder(
+                      ///设置边框四个角的弧度
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                      ///用来配置边框的样式
+                      borderSide: BorderSide(
+                        ///设置边框的颜色
+                        color: Colors.yellow,
+                        ///设置边框的粗细
+                        width: 9.0,
+                      ),
+                    ),
+                    ///用来配置输入框获取焦点时的颜色
+                    focusedBorder:const OutlineInputBorder(
+                      ///设置边框四个角的弧度
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                      ///用来配置边框的样式
+                      borderSide: BorderSide(
+                        ///设置边框的颜色
+                        color: Colors.green,
+                        ///设置边框的粗细
+                        width: 5.0,
+                      ),
+                    ),
+
+
+                    // enabledBorder:OutlineInputBorder(
+                    //     borderRadius: BorderRadius.circular(20.0),
+                    //     borderSide: const BorderSide(
+                    //         color: Colors.blue,
+                    //         width: 5,
+                    //     ),
+                    // ),
+                    // focusedBorder:OutlineInputBorder(
+                    //     borderRadius: BorderRadius.circular(20),
+                    //     borderSide:const BorderSide(
+                    //       color: Colors.orange,
+                    //       width: 5,
+                    //     ),
+                    //     gapPadding: 20, // 设置 labelText 与边框的间距
+                    // ),
+
+                  ),
+
+                  onChanged: (String value) {
+                    _webSiteName = value;
+                  },
+                ),
+              ),
+              const Text("网站标识",style: TextStyle(color: Colors.black),),
+              SizedBox(
+                height: 80,
+                width: 400,
+                child: TextField(
+                  style: const TextStyle(
+                    color: black,
+                    fontSize: 20,
+                  ),
+                  decoration:  InputDecoration(
+                    hintText: "标识",
+                    hintStyle:const TextStyle(
+                      color: black,
+                      fontSize: 20,
+                    ),
+                    border: InputBorder.none,
+                    errorText: _getKeyErrorText(),
+                    errorStyle:const TextStyle(
+                      color: black,
+                    ),
+                  ),
+                  onChanged: (String value) {
+                    _webSiteKey = value;
+                  },
+                ),
+              ),
+              ElevatedButton(
+                onPressed: save,
+                child: const Text('保存'),
+              )
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
