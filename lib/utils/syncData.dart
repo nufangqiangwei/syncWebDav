@@ -15,6 +15,7 @@ Future<bool> syncPasswordVersion() async {
   } catch (e) {
     return false;
   }
+  print('数据长度：${response.length}');
   List<PassWord?> queryData =
       await DB.getInstance().orm.passWords.where().findAll();
   Map<String, PassWord> localData = {};

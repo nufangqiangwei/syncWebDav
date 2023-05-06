@@ -54,7 +54,7 @@ class SAppBarSearch extends StatefulWidget implements PreferredSizeWidget {
   final ValueChanged? onChanged;
 
 // 点击键盘搜索
-  final ValueChanged? onSearch;
+  final ValueChanged<String>? onSearch;
 
   @override
   _SAppBarSearchState createState() => _SAppBarSearchState();
